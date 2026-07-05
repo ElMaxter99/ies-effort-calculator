@@ -69,6 +69,7 @@ export class App implements OnDestroy {
     return [...set].sort((a, b) => a.localeCompare(b));
   });
 
+  sidebarOpen = signal(true);
   currentView = signal<ViewType>('map');
 
   origins = signal<Origin[]>([
@@ -365,7 +366,12 @@ export class App implements OnDestroy {
 
   changeView(view: ViewType) {
     this.currentView.set(view);
-    setTimeout(() => this.map?.invalidateSize(), 50);
+    if (view !== 'table') {
+      setTimeout(() => {
+        this.updateMap();
+        setTimeout(() => this.map?.invalidateSize(), 50);
+      }, 50);
+    }
   }
 
   async addOrigin() {
@@ -607,6 +613,11 @@ export class App implements OnDestroy {
     this.centres.set([]);
     this.filteredCentres.set([]);
     this.error.set('');
+  }
+
+  scrollToUpload() {
+    const el = document.querySelector('#drop-zone');
+    el?.scrollIntoView({ behavior: 'smooth' });
   }
 
   loadSamplePdf() {

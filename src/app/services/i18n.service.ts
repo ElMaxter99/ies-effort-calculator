@@ -14,6 +14,23 @@ export interface I18nTranslations {
   dataTable: string;
   distanceCalculation: string;
 
+  heroTitle: string;
+  heroDescription: string;
+  ctaStart: string;
+  feature1Title: string;
+  feature1Desc: string;
+  feature2Title: string;
+  feature2Desc: string;
+  feature3Title: string;
+  feature3Desc: string;
+  uploadTitle: string;
+  uploadDesc: string;
+  dropPrompt: string;
+  dropHint: string;
+  footerCopyright: string;
+  footerPrivacy: string;
+  footerTerms: string;
+
   selectModalities: string;
   selectModalitiesDesc: string;
   searchModality: string;
@@ -65,6 +82,8 @@ export interface I18nTranslations {
   zoomOut: string;
   help: string;
   langToggle: string;
+  collapseSidebar: string;
+  expandSidebar: string;
 
   selectAtLeastOneModality: string;
   addComparisonOrigin: string;
@@ -118,6 +137,23 @@ export class I18nService {
 const CA: I18nTranslations = {
   appTitle: 'Calculador d\'Esforç de Desplaçament IES',
   landingDescription: 'Puja el fitxer PDF de vacants per a visualitzar en un mapa interactiu la ubicació dels centres educatius i calcular la distància i l\'esforç de desplaçament des dels teus orígens.',
+
+  heroTitle: 'Gestiona les teues vacants amb intel·ligència',
+  heroDescription: 'Puja el PDF oficial de vacants, calcula distàncies des dels teus punts d\'interès i visualitza l\'esforç de desplaçament en un mapa interactiu.',
+  ctaStart: 'Començar ara',
+  feature1Title: 'Extracció Automàtica',
+  feature1Desc: 'Parsit intelligent de noms de centres, ubicacions i places vacants directament des dels documents oficials de la Generalitat.',
+  feature2Title: 'Càlcul Geodèsic',
+  feature2Desc: 'Utilitzem la fórmula de Haversine per determinar la distància exacta des de múltiples punts d\'origen personalitzats.',
+  feature3Title: 'Mapa Interactiu',
+  feature3Desc: 'Visualització estratègica de l\'esforç de desplaçament amb codis de color: Baix, Moderat, Alt i Molt Alt.',
+  uploadTitle: 'Prepara la teua ruta',
+  uploadDesc: 'Posa a prova el sistema amb el teu propi fitxer de vacants en format PDF.',
+  dropPrompt: 'Arrossega el PDF aquí o fes clic per seleccionar el fitxer',
+  dropHint: 'Només fitxers PDF vàlids (Màx. 10MB)',
+  footerCopyright: '© 2024 Calculador d\'Esforç de Desplaçament IES',
+  footerPrivacy: 'Privacitat',
+  footerTerms: 'Termes d\'ús',
   processingPDF: 'Processant PDF...',
   dropPDF: 'Deixa anar el PDF ací o fes clic per a seleccionar',
   validPDFOnly: 'Només fitxers PDF vàlids',
@@ -178,6 +214,8 @@ const CA: I18nTranslations = {
   zoomOut: 'Reduir',
   help: 'Ajuda',
   langToggle: 'Castellano',
+  collapseSidebar: 'Contraure barra lateral',
+  expandSidebar: 'Expandir barra lateral',
 
   selectAtLeastOneModality: 'Selecciona almenys una modalitat',
   addComparisonOrigin: 'Afig un origen de comparació',
@@ -220,6 +258,23 @@ const CA: I18nTranslations = {
 const ES: I18nTranslations = {
   appTitle: 'Calculador de Esfuerzo de Desplazamiento IES',
   landingDescription: 'Sube el archivo PDF de vacantes para visualizar en un mapa interactivo la ubicación de los centros educativos y calcular la distancia y el esfuerzo de desplazamiento desde tus orígenes.',
+
+  heroTitle: 'Gestiona tus vacantes con inteligencia',
+  heroDescription: 'Sube el PDF oficial de vacantes, calcula distancias desde tus puntos de interés y visualiza el esfuerzo de desplazamiento en un mapa interactivo.',
+  ctaStart: 'Empezar ahora',
+  feature1Title: 'Extracción Automática',
+  feature1Desc: 'Parseo inteligente de nombres de centros, ubicaciones y plazas vacantes directamente desde los documentos oficiales de la Generalitat.',
+  feature2Title: 'Cálculo Geodésico',
+  feature2Desc: 'Utilizamos la fórmula de Haversine para determinar la distancia exacta desde múltiples puntos de origen personalizados.',
+  feature3Title: 'Mapa Interactivo',
+  feature3Desc: 'Visualización estratégica del esfuerzo de desplazamiento con códigos de color: Bajo, Moderado, Alto y Muy Alto.',
+  uploadTitle: 'Prepara tu ruta',
+  uploadDesc: 'Pon a prueba el sistema con tu propio archivo de vacantes en formato PDF.',
+  dropPrompt: 'Arrastra el PDF aquí o haz clic para seleccionar el archivo',
+  dropHint: 'Sólo archivos PDF válidos (Máx. 10MB)',
+  footerCopyright: '© 2024 Calculador de Esfuerzo de Desplazamiento IES',
+  footerPrivacy: 'Privacidad',
+  footerTerms: 'Términos de uso',
   processingPDF: 'Procesando PDF...',
   dropPDF: 'Suelta el PDF aquí o haz clic para seleccionar',
   validPDFOnly: 'Solo archivos PDF válidos',
@@ -280,6 +335,8 @@ const ES: I18nTranslations = {
   zoomOut: 'Reducir',
   help: 'Ayuda',
   langToggle: 'Valencià',
+  collapseSidebar: 'Contraer barra lateral',
+  expandSidebar: 'Expandir barra lateral',
 
   selectAtLeastOneModality: 'Selecciona al menos una modalidad',
   addComparisonOrigin: 'Añade un origen de comparación',

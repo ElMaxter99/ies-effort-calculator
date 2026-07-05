@@ -319,21 +319,23 @@ export class App implements OnDestroy {
     this.step.set('main');
 
     const filteredCentres = this.filteredCentres();
-    const uniqueLocalities = [...new Set(filteredCentres.map((c) => c.locality.replace(/ - .*$/, '').trim().toLowerCase()))];
-    if (uniqueLocalities.length === 0) return;
+    const centreKeys = [...new Set(filteredCentres.map((c) => `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase()))];
+    if (centreKeys.length === 0) return;
 
     this.geocoding.set(true);
     this.calculating.set(true);
 
-    const results = await this.geo.geocodeBatch(uniqueLocalities);
+    const results = await this.geo.geocodeBatch(centreKeys);
     const t = this.i18n.t();
 
     this.geoProgress.set({ current: 0, total: filteredCentres.length, message: t.calculatingForCentres(filteredCentres.length) });
 
     for (let i = 0; i < filteredCentres.length; i++) {
       const c = filteredCentres[i];
-      const key = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
-      const geoCentre = results.get(key);
+      const key = `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase();
+      const fallbackKey = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
+      let geoCentre = results.get(key);
+      if (!geoCentre) geoCentre = this.geo.getCached(fallbackKey);
 
       if (geoCentre) {
         c.coordinates = { lat: geoCentre.lat, lng: geoCentre.lng };
@@ -441,13 +443,13 @@ export class App implements OnDestroy {
     if (!origin.coordinates) return;
 
     const currentCentres = this.step() === 'main' ? this.filteredCentres() : this.centres();
-    const uniqueLocalities = [...new Set(currentCentres.map((c) => c.locality.replace(/ - .*$/, '').trim().toLowerCase()))];
+    const centreKeys = [...new Set(currentCentres.map((c) => `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase()))];
 
-    if (uniqueLocalities.length === 0) return;
+    if (centreKeys.length === 0) return;
 
-    // Only geocode localities without coordinates yet
-    const pending = uniqueLocalities.filter((loc) => {
-      const c = currentCentres.find((x) => x.locality.replace(/ - .*$/, '').trim().toLowerCase() === loc);
+    // Only geocode centres without coordinates yet
+    const pending = centreKeys.filter((k) => {
+      const c = currentCentres.find((x) => `${x.name}, ${x.locality.replace(/ - .*$/, '').trim()}`.toLowerCase() === k);
       return !c?.coordinates;
     });
 
@@ -461,8 +463,10 @@ export class App implements OnDestroy {
 
     for (let i = 0; i < currentCentres.length; i++) {
       const c = currentCentres[i];
-      const key = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
-      const geoCentre = this.geo.getCached(key);
+      const key = `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase();
+      const fallbackKey = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
+      let geoCentre = this.geo.getCached(key);
+      if (!geoCentre) geoCentre = this.geo.getCached(fallbackKey);
 
       if (geoCentre) {
         c.coordinates = { lat: geoCentre.lat, lng: geoCentre.lng };
@@ -494,17 +498,19 @@ export class App implements OnDestroy {
 
     if (this.step() === 'main') {
       const visibleCentres = this.filteredCentres();
-      const localitiesWithoutGeo = [...new Set(
+      const pendingKeys = [...new Set(
         visibleCentres
           .filter((c) => !c.coordinates)
-          .map((c) => c.locality.replace(/ - .*$/, '').trim().toLowerCase())
+          .map((c) => `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase())
       )];
-      if (localitiesWithoutGeo.length > 0) {
-        const results = await this.geo.geocodeBatch(localitiesWithoutGeo);
+      if (pendingKeys.length > 0) {
+        const results = await this.geo.geocodeBatch(pendingKeys);
         for (const c of this.centres()) {
           if (c.coordinates) continue;
-          const key = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
-          const geo = results.get(key);
+          const key = `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase();
+          const fallbackKey = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
+          let geo = results.get(key);
+          if (!geo) geo = this.geo.getCached(fallbackKey);
           if (geo) {
             c.coordinates = { lat: geo.lat, lng: geo.lng };
           }

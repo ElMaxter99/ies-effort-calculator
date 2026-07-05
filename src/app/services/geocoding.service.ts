@@ -95,7 +95,7 @@ export class GeocodingService {
   }
 
   async geocodeBatch(places: string[]): Promise<Map<string, GeoResult | null>> {
-    const unique = [...new Set(places.map((p) => p.replace(/ - .*$/, '').trim().toLowerCase()))];
+    const unique = [...new Set(places.map((p) => p.trim().toLowerCase()))];
     const results = new Map<string, GeoResult | null>();
     const pending: string[] = [];
 

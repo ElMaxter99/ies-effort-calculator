@@ -191,12 +191,12 @@ const CA: I18nTranslations = {
   completeRows: (n: number) => `Completat! ${n} files processades.`,
 
   geocodingOrigin: 'Geocodificant origen...',
-  geocodingLocalities: 'Geocodificant localitats...',
-  geocodingProgress: (current: number, total: number) => `Geocodificant ${current} de ${total} localitats...`,
-  geocodingComplete: (total: number) => `Geocodificació completa (${total} localitats)`,
+  geocodingLocalities: 'Geocodificant centres...',
+  geocodingProgress: (current: number, total: number) => `Geocodificant ${current} de ${total} centres...`,
+  geocodingComplete: (total: number) => `Geocodificació completa (${total} centres)`,
   calculatingForCentres: (n: number) => `Calculant distàncies per a ${n} centres...`,
   calculatingProgress: (i: number, n: number) => `Calculant distàncies... ${i}/${n}`,
-  geocodingNew: (n: number) => `Geocodificant ${n} noves localitats...`,
+  geocodingNew: (n: number) => `Geocodificant ${n} nous centres...`,
 
   positionsInCentres: (positions: number, centres: number) => `${positions} places en ${centres} centres`,
   itinerantCount: (n: number) => `(${n} itinerant)`,
@@ -293,12 +293,12 @@ const ES: I18nTranslations = {
   completeRows: (n: number) => `¡Completado! ${n} filas procesadas.`,
 
   geocodingOrigin: 'Geocodificando origen...',
-  geocodingLocalities: 'Geocodificando localidades...',
-  geocodingProgress: (current: number, total: number) => `Geocodificando ${current} de ${total} localidades...`,
-  geocodingComplete: (total: number) => `Geocodificación completa (${total} localidades)`,
+  geocodingLocalities: 'Geocodificando centros...',
+  geocodingProgress: (current: number, total: number) => `Geocodificando ${current} de ${total} centros...`,
+  geocodingComplete: (total: number) => `Geocodificación completa (${total} centros)`,
   calculatingForCentres: (n: number) => `Calculando distancias para ${n} centros...`,
   calculatingProgress: (i: number, n: number) => `Calculando distancias... ${i}/${n}`,
-  geocodingNew: (n: number) => `Geocodificando ${n} nuevas localidades...`,
+  geocodingNew: (n: number) => `Geocodificando ${n} nuevos centros...`,
 
   positionsInCentres: (positions: number, centres: number) => `${positions} plazas en ${centres} centros`,
   itinerantCount: (n: number) => `(${n} itinerante)`,

@@ -27,6 +27,7 @@ export class App implements OnDestroy {
     setTimeout(() => this.mostrarDropdownModalitats.set(false), 200);
   }
 
+  step = signal<'landing' | 'modalitats' | 'origen' | 'main'>('landing');
   pdfCarregat = signal(false);
   dragging = signal(false);
   proces = signal<ProcesInfo | null>(null);
@@ -275,8 +276,65 @@ export class App implements OnDestroy {
 
     this.centres.set(centresArr);
     this.centresFiltrats.set(centresArr);
+    this.filtreModalitats.set(new Set(this.modalitatsDisponibles()));
+    this.step.set('modalitats');
+  }
+
+  continuarAmbModalitats() {
+    if (this.filtreModalitats().size === 0) {
+      this.error.set('Selecciona almenys una modalitat');
+      return;
+    }
+    this.error.set('');
+    this.step.set('origen');
+  }
+
+  async continuarAmbOrigen() {
+    const origin = this.origins().find((o) => o.id === this.originActiu());
+    if (!origin?.coordenades) {
+      this.error.set('Afig un origen de comparació');
+      return;
+    }
+    this.error.set('');
+    this.step.set('main');
+
+    const centresFiltrats = this.centresFiltrats();
+    const localitatsUniques = [...new Set(centresFiltrats.map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase()))];
+    if (localitatsUniques.length === 0) return;
+
+    this.geocodificant.set(true);
+    this.calculant.set(true);
+
+    const results = await this.geo.geocodificaBatch(localitatsUniques);
+
+    this.geoProgress.set({ actual: 0, total: centresFiltrats.length, missatge: `Calculant distàncies per a ${centresFiltrats.length} centres...` });
+
+    for (let i = 0; i < centresFiltrats.length; i++) {
+      const c = centresFiltrats[i];
+      const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
+      const geoCentre = results.get(clau);
+
+      if (geoCentre) {
+        c.coordenades = { lat: geoCentre.lat, lng: geoCentre.lng };
+        c.distanciaKm = parseFloat(
+          this.geo.distanciaHaversine(origin.coordenades.lat, origin.coordenades.lng, geoCentre.lat, geoCentre.lng).toFixed(1),
+        );
+        c.nivellEsforc = this.geo.nivellEsforc(c.distanciaKm);
+      }
+
+      if (i % 50 === 0) {
+        this.centres.set([...this.centres()]);
+        this.geoProgress.set({ actual: i + 1, total: centresFiltrats.length, missatge: `Calculant distàncies... ${i + 1}/${centresFiltrats.length}` });
+      }
+    }
+
+    this.centres.set([...this.centres()]);
     this.aplicarFiltre();
-    this.localitzarCentres();
+    this.updateMap();
+
+    this.geocodificant.set(false);
+    this.calculant.set(false);
+    this.geoProgress.set({ actual: 0, total: 0, missatge: '' });
   }
 
   private async localitzarCentres() {
@@ -333,15 +391,22 @@ export class App implements OnDestroy {
 
     this.origins.update((o) => [...o, nouOrigen]);
     this.originActiu.set(id);
-    await this.calcularDistanciesPerOrigen(nouOrigen);
+
+    if (this.step() !== 'origen') {
+      await this.calcularDistanciesPerOrigen(nouOrigen);
+    }
 
     this.geocodificant.set(false);
-    this.calculant.set(false);
+    if (this.step() !== 'origen') this.calculant.set(false);
     this.geoProgress.set({ actual: 0, total: 0, missatge: '' });
   }
 
-  seleccionarOrigen(id: string) {
+  async seleccionarOrigen(id: string) {
     this.originActiu.set(id);
+    const origin = this.origins().find((o) => o.id === id);
+    if (origin?.coordenades) {
+      await this.calcularDistanciesPerOrigen(origin);
+    }
     this.updateMap();
   }
 
@@ -357,21 +422,28 @@ export class App implements OnDestroy {
   async calcularDistanciesPerOrigen(origen: Origen) {
     if (!origen.coordenades) return;
 
-    const centresActuals = this.centres();
+    const centresActuals = this.step() === 'main' ? this.centresFiltrats() : this.centres();
     const localitatsUniques = [...new Set(centresActuals.map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase()))];
 
     if (localitatsUniques.length === 0) return;
 
-    this.geoProgress.set({ actual: 0, total: localitatsUniques.length, missatge: `Geocodificant ${localitatsUniques.length} localitats úniques...` });
+    // Only geocode localities that don't have coordinates yet
+    const pendents = localitatsUniques.filter((loc) => {
+      const c = centresActuals.find((x) => x.localitat.replace(/ - .*$/, '').trim().toLowerCase() === loc);
+      return !c?.coordenades;
+    });
 
-    const results = await this.geo.geocodificaBatch(localitatsUniques);
+    if (pendents.length > 0) {
+      this.geoProgress.set({ actual: 0, total: pendents.length, missatge: `Geocodificant ${pendents.length} localitats noves...` });
+      await this.geo.geocodificaBatch(pendents);
+    }
 
     this.geoProgress.set({ actual: 0, total: centresActuals.length, missatge: `Calculant distàncies per a ${centresActuals.length} centres...` });
 
     for (let i = 0; i < centresActuals.length; i++) {
       const c = centresActuals[i];
       const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
-      const geoCentre = results.get(clau);
+      const geoCentre = this.geo.consultaCache(clau);
 
       if (geoCentre) {
         c.coordenades = { lat: geoCentre.lat, lng: geoCentre.lng };
@@ -382,23 +454,46 @@ export class App implements OnDestroy {
       }
 
       if (i % 50 === 0) {
-        this.centres.set([...centresActuals]);
-        this.geoProgress.set({ actual: i, total: centresActuals.length, missatge: `Calculant distàncies... ${i}/${centresActuals.length}` });
+        this.centres.set([...this.centres()]);
+        this.geoProgress.set({ actual: i + 1, total: centresActuals.length, missatge: `Calculant distàncies... ${i + 1}/${centresActuals.length}` });
       }
     }
 
-    this.centres.set([...centresActuals]);
+    this.centres.set([...this.centres()]);
     this.aplicarFiltre();
     this.updateMap();
   }
 
-  toggleModalitat(m: string) {
+  async toggleModalitat(m: string) {
     this.filtreModalitats.update((s) => {
       const nou = new Set(s);
       if (nou.has(m)) nou.delete(m); else nou.add(m);
       return nou;
     });
     this.aplicarFiltre();
+
+    if (this.step() === 'main') {
+      const centresVisibles = this.centresFiltrats();
+      const localitatsSenseGeo = [...new Set(
+        centresVisibles
+          .filter((c) => !c.coordenades)
+          .map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase())
+      )];
+      if (localitatsSenseGeo.length > 0) {
+        const results = await this.geo.geocodificaBatch(localitatsSenseGeo);
+        for (const c of this.centres()) {
+          if (c.coordenades) continue;
+          const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
+          const geo = results.get(clau);
+          if (geo) {
+            c.coordenades = { lat: geo.lat, lng: geo.lng };
+          }
+        }
+        this.centres.set([...this.centres()]);
+        this.aplicarFiltre();
+        this.updateMap();
+      }
+    }
   }
 
   modalitatSeleccionada(m: string): boolean {
@@ -451,6 +546,14 @@ export class App implements OnDestroy {
 
   getDescripcioNivell(nivell?: string): string {
     return this.geo.descripcioNivell(nivell || '');
+  }
+
+  tornarALanding() {
+    this.step.set('landing');
+    this.pdfCarregat.set(false);
+    this.centres.set([]);
+    this.centresFiltrats.set([]);
+    this.error.set('');
   }
 
   carregarPdfExemple() {

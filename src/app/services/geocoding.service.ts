@@ -173,6 +173,10 @@ export class GeocodingService {
     }
   }
 
+  consultaCache(clau: string): GeoResult | undefined {
+    return this.cache.get(clau);
+  }
+
   esborraCache() {
     this.cache.clear();
     localStorage.removeItem(CACHE_KEY);

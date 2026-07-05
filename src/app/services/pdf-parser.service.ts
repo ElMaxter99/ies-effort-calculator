@@ -68,6 +68,7 @@ export class PdfParserService {
 
     const rows: IesRow[] = [];
     const ySorted = [...groups.keys()].sort((a, b) => b - a);
+    let lastRow: IesRow | null = null;
 
     for (const y of ySorted) {
       const items = groups.get(y)!;
@@ -106,7 +107,9 @@ export class PdfParserService {
         }
       }
 
-      if ((centre || locality) && !centre.startsWith('CENTRE') && !locality.startsWith('LOCALITAT') && num > 0) {
+      const isValid = (centre || locality) && !centre.startsWith('CENTRE') && !locality.startsWith('LOCALITAT') && num > 0;
+
+      if (isValid) {
         const cleanObservations = observations.replace(/[üº]/g, '').trim();
         let itinerantCentre: string | undefined;
         let hours: string | undefined;
@@ -122,7 +125,26 @@ export class PdfParserService {
           }
         }
 
-        rows.push({ number: num, centre, locality, code, locationCode, observations: cleanObservations, isItinerant, itinerantCentre, hours, modality });
+        const row: IesRow = { number: num, centre, locality, code, locationCode, observations: cleanObservations, isItinerant, itinerantCentre, hours, modality };
+        rows.push(row);
+        lastRow = row;
+      } else if (isItinerant && lastRow && !lastRow.isItinerant) {
+        const hasMarker = items.some((i) => /[üº]/.test(i.str));
+        if (hasMarker) {
+          lastRow.isItinerant = true;
+          if (observations.trim()) {
+            const clean = observations.replace(/[üº]/g, '').trim();
+            if (lastRow.observations) lastRow.observations += ' ' + clean;
+            else lastRow.observations = clean;
+          }
+          const obsClean = lastRow.observations || '';
+          const matchHours = obsClean.match(/(\d+[,.]?\d*)/);
+          if (matchHours) lastRow.hours = matchHours[1];
+          const parts = obsClean.replace(/-\s*\d+[,.]?\d*/, '').trim();
+          if (parts && /IES|CENTRE|COL\.?|CEIP/i.test(parts)) {
+            lastRow.itinerantCentre = parts.replace(/[üº]/g, '').trim();
+          }
+        }
       }
     }
 

@@ -84,6 +84,7 @@ export interface I18nTranslations {
   filterByLocality: string;
   filterByModality: string;
   showOnlyItinerant: string;
+  showOnlyObservations: string;
   modality: string;
   ies: string;
   locality: string;
@@ -114,6 +115,7 @@ export interface I18nTranslations {
   errorLoadingPDF: (msg: string) => string;
   errorTitle: string;
   errorPDFFormat: string;
+  errorNoValidRows: string;
   couldNotGeocode: (name: string) => string;
 
   processingPage: (page: number, total: number) => string;
@@ -155,6 +157,7 @@ export interface I18nTranslations {
   backToHome: string;
   observationsTitle: string;
   close: string;
+  confirmReset: string;
 
   termsNatureTitle: string;
   termsNatureBody: string;
@@ -280,6 +283,7 @@ const CA: I18nTranslations = {
   filterByLocality: 'Filtrar per localitat...',
   filterByModality: 'Filtrar per modalitat...',
   showOnlyItinerant: 'Mostrar només itinerants',
+  showOnlyObservations: 'Mostrar només amb observacions',
   modality: 'Modalitat',
   ies: 'IES',
   locality: 'Localitat',
@@ -310,6 +314,7 @@ const CA: I18nTranslations = {
   errorLoadingPDF: (msg: string) => `Error en carregar el PDF: ${msg}`,
   errorTitle: 'Error',
   errorPDFFormat: 'El fitxer no sembla un PDF vàlid de vacants d\'educació secundària. Comprova que has seleccionat el fitxer correcte.',
+  errorNoValidRows: 'El PDF no conté dades vàlides de centres educatius. Assegura\'t que has carregat el PDF oficial de vacants d\'educació secundària.',
   couldNotGeocode: (name: string) => `No s'ha pogut geocodificar "${name}". Prova amb un nom de municipi.`,
 
   processingPage: (page: number, total: number) => `Processant pàgina ${page} de ${total}...`,
@@ -349,8 +354,9 @@ const CA: I18nTranslations = {
   privacyTitle: 'Política de Privadesa',
   privacyUpdated: 'Darrera actualització: Octubre 2023',
   backToHome: 'Tornar a l\'inici',
-  observationsTitle: 'Observacions de la plaça itinerant',
+  observationsTitle: 'Observacions de la plaça',
   close: 'Tancar',
+  confirmReset: 'Estàs segur? Es perdran totes les dades carregades.',
 
   termsNatureTitle: 'Naturalesa de l\'Eina',
   termsNatureBody: 'Aquesta aplicació és una eina <strong>sense ànim de lucre</strong>, desenvolupada amb la finalitat de facilitar la visualització de dades de desplaçament per a personal docent.',
@@ -465,6 +471,7 @@ const ES: I18nTranslations = {
   filterByLocality: 'Filtrar por localidad...',
   filterByModality: 'Filtrar por modalidad...',
   showOnlyItinerant: 'Mostrar solo itinerantes',
+  showOnlyObservations: 'Mostrar solo con observaciones',
   modality: 'Modalidad',
   ies: 'IES',
   locality: 'Localidad',
@@ -495,6 +502,7 @@ const ES: I18nTranslations = {
   errorLoadingPDF: (msg: string) => `Error al cargar el PDF: ${msg}`,
   errorTitle: 'Error',
   errorPDFFormat: 'El archivo no parece un PDF válido de vacantes de educación secundaria. Comprueba que has seleccionado el archivo correcto.',
+  errorNoValidRows: 'El PDF no contiene datos válidos de centros educativos. Asegúrate de que has cargado el PDF oficial de vacantes de educación secundaria.',
   couldNotGeocode: (name: string) => `No se ha podido geocodificar "${name}". Prueba con un nombre de municipio.`,
 
   processingPage: (page: number, total: number) => `Procesando página ${page} de ${total}...`,
@@ -534,8 +542,9 @@ const ES: I18nTranslations = {
   privacyTitle: 'Política de Privacidad',
   privacyUpdated: 'Última actualización: Octubre 2023',
   backToHome: 'Volver al inicio',
-  observationsTitle: 'Observaciones de la plaza itinerante',
+  observationsTitle: 'Observaciones de la plaza',
   close: 'Cerrar',
+  confirmReset: '¿Estás seguro? Se perderán todos los datos cargados.',
 
   termsNatureTitle: 'Naturaleza de la Herramienta',
   termsNatureBody: 'Esta aplicación es una herramienta <strong>sin ánimo de lucro</strong>, desarrollada con la finalidad de facilitar la visualización de datos de desplazamiento para personal docente.',

@@ -12,7 +12,7 @@ const CACHE_KEY = 'ies_geo_cache';
 
 @Injectable({ providedIn: 'root' })
 export class GeocodingService {
-  thresholds: EffortThresholds = { baix: 10, moderat: 25, alt: 40 };
+  thresholds: EffortThresholds = { baix: 10, moderat: 45, alt: 75 };
   progress = signal({ current: 0, total: 0, message: '' });
 
   private cache = new Map<string, GeoResult>();

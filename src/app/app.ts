@@ -43,6 +43,7 @@ export class App implements OnDestroy {
   searchText = signal('');
   localityFilter = signal<string>('');
   itinerantFilter = signal<boolean>(false);
+  observationsFilter = signal<boolean>(false);
   localitySearch = signal('');
   showLocalityDropdown = signal(false);
   availableModalities = computed(() => {
@@ -56,7 +57,7 @@ export class App implements OnDestroy {
   modalitySearch = signal('');
   showModalityDropdown = signal(false);
 
-  thresholds = signal<EffortThresholds>({ baix: 10, moderat: 25, alt: 40 });
+  thresholds = signal<EffortThresholds>({ baix: 10, moderat: 45, alt: 75 });
   showConfig = signal(false);
 
   geoProgress = signal({ current: 0, total: 0, message: '' });
@@ -81,10 +82,15 @@ export class App implements OnDestroy {
   geocoding = signal(false);
   calculating = signal(false);
   shownItinerantObservations = signal<string | null>(null);
+  showResetConfirm = signal(false);
+  originPanelHeight = signal('40vh');
+  private resizing = false;
 
   totalCenters = computed(() => this.centres().length);
   totalPositions = computed(() => this.centres().reduce((acc, c) => acc + c.positions.length, 0));
   filteredItinerantCount = computed(() => this.filteredCentres().reduce((acc, c) => acc + this.getItinerantCount(c), 0));
+  filteredObservationsCount = computed(() => this.filteredCentres().reduce((acc, c) => acc + (this.hasObservations(c) ? 1 : 0), 0));
+  hasAnyObservations = computed(() => this.filteredCentres().some(c => this.hasObservations(c)));
 
   private rawRecords: IesRow[] = [];
   map: L.Map | null = null;
@@ -103,10 +109,8 @@ export class App implements OnDestroy {
     this.process = this.pdfParser.process;
 
     effect(() => {
-      const p = this.process();
-      if (p && p.percentage === 100 && this.rawRecords.length > 0) {
-        this.onParseComplete();
-      }
+      // process signal drives progress UI; completion handled in processFile
+      void this.process();
     });
 
     effect(() => {
@@ -319,6 +323,13 @@ export class App implements OnDestroy {
     try {
       this.rawRecords = await this.pdfParser.parsePdf(file);
       this.pdfLoaded.set(true);
+
+      if (this.rawRecords.length > 0) {
+        this.onParseComplete();
+      } else {
+        this.pdfLoaded.set(false);
+        this.error.set(this.i18n.t().errorNoValidRows);
+      }
     } catch (e: any) {
       this.error.set(this.i18n.t().errorProcessingPDF(e.message));
     }
@@ -618,6 +629,10 @@ export class App implements OnDestroy {
       results = results.filter((c) => this.getItinerantCount(c) > 0);
     }
 
+    if (this.observationsFilter()) {
+      results = results.filter((c) => this.hasObservations(c));
+    }
+
     if (this.modalityFilter().size > 0) {
       results = results.filter((c) => c.modalities?.some((m) => this.modalityFilter().has(m)));
     }
@@ -665,11 +680,11 @@ export class App implements OnDestroy {
     return c.positions.filter((p) => p.isItinerant && filtered.has(p.modality ?? '')).length;
   }
 
-  getItinerantObservations(c: IesCenter): string {
+  getObservations(c: IesCenter): string {
     const filtered = this.modalityFilter();
     return c.positions
       .filter((p) => {
-        if (!p.isItinerant) return false;
+        if (!p.observations) return false;
         return filtered.size === 0 || filtered.has(p.modality ?? '');
       })
       .map((p) => {
@@ -680,8 +695,16 @@ export class App implements OnDestroy {
       .join('; ');
   }
 
-  showItinerantObservations(c: IesCenter) {
-    const obs = this.getItinerantObservations(c);
+  hasObservations(c: IesCenter): boolean {
+    const filtered = this.modalityFilter();
+    return c.positions.some((p) => {
+      if (!p.observations) return false;
+      return filtered.size === 0 || filtered.has(p.modality ?? '');
+    });
+  }
+
+  showObservations(c: IesCenter) {
+    const obs = this.getObservations(c);
     if (obs) this.shownItinerantObservations.set(obs);
   }
 
@@ -717,7 +740,7 @@ export class App implements OnDestroy {
         c.distanceKm !== undefined ? c.distanceKm : '',
         c.effortLevel ? this.getLevelLabel(c.effortLevel) : '',
         this.getItinerantCount(c),
-        `"${this.getItinerantObservations(c)}"`,
+        `"${this.getObservations(c)}"`,
       ].join(sep),
     );
     const csv = [header, ...lines].join('\n');
@@ -746,6 +769,11 @@ export class App implements OnDestroy {
     this.circles = [];
   }
 
+  confirmReset() {
+    this.showResetConfirm.set(false);
+    location.reload();
+  }
+
   scrollToUpload() {
     const el = document.querySelector('#drop-zone');
     el?.scrollIntoView({ behavior: 'smooth' });
@@ -768,5 +796,35 @@ export class App implements OnDestroy {
     this.headerShadow.set(target.scrollTop > 20);
   }
 
+  startResize(event: MouseEvent) {
+    event.preventDefault();
+    this.resizing = true;
+    const startY = event.clientY;
+    const startHeight = parseFloat(this.originPanelHeight());
+    const container = (event.target as HTMLElement).closest('[data-origin-split]') as HTMLElement | null;
+    if (!container) return;
+    const maxH = container.clientHeight - 200;
+
+    const onMove = (e: MouseEvent) => {
+      if (!this.resizing) return;
+      const delta = e.clientY - startY;
+      const newH = Math.max(150, Math.min(maxH, startHeight + delta));
+      this.originPanelHeight.set(newH + 'px');
+    };
+
+    const onUp = () => {
+      this.resizing = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setTimeout(() => this.previewMap?.invalidateSize(), 50);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  }
 
 }

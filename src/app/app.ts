@@ -74,11 +74,7 @@ export class App implements OnDestroy {
   sidebarOpen = signal(true);
   currentView = signal<ViewType>('map');
 
-  origins = signal<Origin[]>([
-    { id: '1', name: 'València' },
-    { id: '2', name: 'Castelló' },
-    { id: '3', name: 'Alacant' },
-  ]);
+  origins = signal<Origin[]>([]);
   activeOrigin = signal<string>('1');
   newOriginName = signal('');
 
@@ -94,6 +90,8 @@ export class App implements OnDestroy {
   private originMarker: L.Marker | null = null;
   private centreMarkers: L.Marker[] = [];
   private circles: L.Circle[] = [];
+  private previewMap: L.Map | null = null;
+  private previewMarker: L.Marker | null = null;
 
   constructor(
     private pdfParser: PdfParserService,
@@ -126,6 +124,21 @@ export class App implements OnDestroy {
       }
     });
 
+    this.initDefaultOrigins();
+  }
+
+  private initDefaultOrigins() {
+    const defaults = [
+      { id: '1', name: 'València' },
+      { id: '2', name: 'Castelló' },
+      { id: '3', name: 'Alacant' },
+    ];
+    const origins: Origin[] = [];
+    for (const d of defaults) {
+      const coords = this.centresDb.getLocalityCoordinates(d.name);
+      origins.push(coords ? { ...d, coordinates: coords } : d);
+    }
+    this.origins.set(origins);
   }
 
   ngOnDestroy() {
@@ -176,6 +189,34 @@ export class App implements OnDestroy {
       L.circle([lat, lng], { radius: t.moderat * 1000, color: '#eab308', weight: 1, fillOpacity: 0.02, dashArray: '5, 5' }).addTo(this.map),
       L.circle([lat, lng], { radius: t.alt * 1000, color: '#f97316', weight: 1, fillOpacity: 0.01, dashArray: '5, 5' }).addTo(this.map),
     );
+  }
+
+  private initPreviewMap() {
+    const el = document.getElementById('previewMap');
+    if (!el || this.previewMap) return;
+    this.previewMap = L.map(el, {
+      zoomControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+    }).setView([39.4699, -0.3763], 7);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OSM contributors &copy; CARTO',
+    }).addTo(this.previewMap);
+  }
+
+  private updatePreviewMap(origin: Origin | undefined) {
+    if (this.previewMarker) {
+      this.previewMap?.removeLayer(this.previewMarker);
+      this.previewMarker = null;
+    }
+    if (!origin?.coordinates) return;
+    this.initPreviewMap();
+    if (!this.previewMap) return;
+    const { lat, lng } = origin.coordinates;
+    this.previewMarker = L.marker([lat, lng]).addTo(this.previewMap);
+    this.previewMap.setView([lat, lng], 10);
   }
 
   private updateMapMarkers() {
@@ -385,8 +426,17 @@ export class App implements OnDestroy {
     const t = this.i18n.t();
     this.geoProgress.set({ current: 0, total: 0, message: t.geocodingOrigin });
 
-    const geoOrigin = await this.geo.geocode(name);
-    if (!geoOrigin) {
+    const dbCoords = this.centresDb.getLocalityCoordinates(name);
+    let coords = dbCoords;
+
+    if (!coords) {
+      const geoOrigin = await this.geo.geocode(name);
+      if (geoOrigin) {
+        coords = { lat: geoOrigin.lat, lng: geoOrigin.lng };
+      }
+    }
+
+    if (!coords) {
       this.error.set(t.couldNotGeocode(name));
       this.geocoding.set(false);
       this.calculating.set(false);
@@ -397,11 +447,12 @@ export class App implements OnDestroy {
     const newOrigin: Origin = {
       id,
       name,
-      coordinates: { lat: geoOrigin.lat, lng: geoOrigin.lng },
+      coordinates: coords,
     };
 
     this.origins.update((o) => [...o, newOrigin]);
     this.activeOrigin.set(id);
+    this.updatePreviewMap(newOrigin);
 
     if (this.step() !== 'origin') {
       await this.calculateDistancesForOrigin(newOrigin);
@@ -418,16 +469,22 @@ export class App implements OnDestroy {
     if (!origin) return;
 
     if (!origin.coordinates) {
-      const t = this.i18n.t();
-      this.geocoding.set(true);
-      this.geoProgress.set({ current: 0, total: 0, message: t.geocodingOrigin });
-      const geo = await this.geo.geocode(origin.name);
-      if (geo) {
-        origin.coordinates = { lat: geo.lat, lng: geo.lng };
+      const dbCoords = this.centresDb.getLocalityCoordinates(origin.name);
+      if (dbCoords) {
+        origin.coordinates = dbCoords;
         this.origins.set([...this.origins()]);
+      } else {
+        const t = this.i18n.t();
+        this.geocoding.set(true);
+        this.geoProgress.set({ current: 0, total: 0, message: t.geocodingOrigin });
+        const geo = await this.geo.geocode(origin.name);
+        if (geo) {
+          origin.coordinates = { lat: geo.lat, lng: geo.lng };
+          this.origins.set([...this.origins()]);
+        }
+        this.geocoding.set(false);
+        this.geoProgress.set({ current: 0, total: 0, message: '' });
       }
-      this.geocoding.set(false);
-      this.geoProgress.set({ current: 0, total: 0, message: '' });
     }
 
     if (origin.coordinates) {
@@ -435,6 +492,7 @@ export class App implements OnDestroy {
         await this.calculateDistancesForOrigin(origin);
       }
       this.updateMap();
+      this.updatePreviewMap(origin);
     }
   }
 

@@ -11,120 +11,136 @@
     <header class="bg-surface sticky top-0 z-50 border-b border-outline-variant transition-shadow"
             [class.shadow-md]="headerShadow()">
       <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-16">
-        <div class="flex items-center gap-sm">
-          <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
-          <span class="text-headline-md font-headline-md font-extrabold text-primary">{{ t().appTitle }}</span>
+        <div class="flex items-center gap-xl">
+          <div class="flex items-center gap-sm">
+            <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
+            <span class="text-headline-md font-headline-md font-bold text-primary">{{ t().appTitle }}</span>
+          </div>
+          <nav class="hidden md:flex items-center gap-lg">
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#com-funciona">{{ t().howItWorks }}</a>
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#funcionalitats">{{ t().features }}</a>
+          </nav>
         </div>
-        <nav class="hidden md:flex items-center gap-lg">
-          <a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="#">{{ t().help }}</a>
-          <button class="bg-primary text-on-primary px-md py-xs rounded hover:opacity-90 transition-all font-label-md" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
+        <nav class="flex items-center gap-md">
+          <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
           <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help">help</span>
         </nav>
       </div>
     </header>
 
-    <!-- Hero -->
-    <section class="relative overflow-hidden px-gutter">
-      <div class="max-w-container-max mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-xl items-center py-md md:py-12">
-        <div class="space-y-md">
-          <h1 class="text-display-lg font-display-lg text-primary tracking-tight">{{ t().heroTitle }}</h1>
-          <p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl">{{ t().heroDescription }}</p>
-          <div class="pt-md">
-            <button class="bg-primary text-on-primary px-xl py-md rounded-lg text-body-md font-bold shadow-sm hover:translate-y-[-2px] transition-transform active:scale-95 flex items-center gap-sm"
-                    (click)="scrollToUpload()">
-              {{ t().ctaStart }}
-              <span class="material-symbols-outlined">arrow_forward</span>
-            </button>
+    <!-- Hero / Upload Section -->
+    <section class="bg-surface py-xl border-b border-outline-variant">
+      <div class="max-w-container-max mx-auto px-gutter flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div class="max-w-2xl w-full space-y-xl">
+          <div class="space-y-md">
+            <h1 class="text-display-lg font-display-lg text-primary">{{ t().heroTitle }}</h1>
+            <p class="text-body-lg font-body-lg text-on-surface-variant">{{ t().heroDescription }}</p>
           </div>
-        </div>
-        <div class="relative hidden lg:block">
-          <div class="aspect-video bg-white rounded-xl shadow-xl border border-outline-variant p-base overflow-hidden">
-            <div class="w-full h-full bg-surface-container-low rounded-lg relative flex items-center justify-center">
-              <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVNlqx8VBOyB8NOYtN5pdJXa-C_B23aOu77XnVKwRPfcB5LhWxlN-vxOz8GYtINXZuHnP_l3Jnwp1KrxNLJyhjIoF6CyTvA0nCFRmyTVCN1vv8aSkHEn80HrvVOZR_KOSlLBVWmCOo3X6a26AaFrAT3bZvoXOjWeLLk8SkCmmdXezSyBTyeqmerv3JLSFAh7-Ji1TL37ujzovrmDE5XisfggH9V_rOqN_I079JLFjg1fYWD6ZSrPsV" />
-              <div class="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent"></div>
+          <div class="space-y-lg">
+            <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant bg-white p-12 rounded-xl transition-all hover:border-primary hover:shadow-lg flex flex-col items-center justify-center gap-md"
+                 id="drop-zone"
+                 (dragover)="onDragOver($event)"
+                 (dragleave)="onDragLeave($event)"
+                 (drop)="onDrop($event)"
+                 [class.border-primary]="dragging()"
+                 [class.bg-primary/5]="dragging()"
+                 (click)="landingPdfInput.click()">
+              <input accept=".pdf" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
+              <div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                <span class="material-symbols-outlined text-4xl">cloud_upload</span>
+              </div>
+              <div class="space-y-xs">
+                <p class="text-body-lg font-bold text-on-surface">{{ t().dropPrompt }}</p>
+                <p class="font-label-md text-label-md text-on-surface-variant">{{ t().dropHint }}</p>
+              </div>
+            </div>
+            <div class="flex flex-col items-center gap-md">
+              <p class="font-label-md text-label-md text-outline uppercase tracking-widest text-[10px]">{{ t().orTrySample }}</p>
+              <button class="flex items-center gap-sm px-lg py-md border border-outline-variant rounded hover:bg-surface-container-low transition-colors text-body-md font-medium text-primary"
+                      (click)="loadSamplePdf()">
+                <span class="material-symbols-outlined">description</span>
+                {{ t().loadSample }}
+              </button>
             </div>
           </div>
-          <div class="absolute -top-12 -right-12 w-64 h-64 bg-secondary-container/20 rounded-full blur-3xl -z-10"></div>
-          <div class="absolute -bottom-8 -left-8 w-48 h-48 bg-primary-container/10 rounded-full blur-2xl -z-10"></div>
         </div>
       </div>
     </section>
 
-    <!-- Feature Showcase -->
-    <section class="px-gutter bg-surface py-lg">
-      <div class="max-w-3xl mx-auto text-center space-y-xl">
-        <div class="space-y-sm">
-          <h2 class="text-headline-lg font-headline-lg text-primary">{{ t().uploadTitle }}</h2>
-          <p class="text-body-md font-body-md text-on-surface-variant">{{ t().uploadDesc }}</p>
+    <!-- How it Works Section -->
+    <section class="py-xl bg-white" id="com-funciona">
+      <div class="max-w-container-max mx-auto px-gutter">
+        <div class="text-center mb-xl">
+          <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().howItWorksTitle }}</h2>
+          <p class="text-body-md text-body-md text-on-surface-variant mt-sm">{{ t().howItWorksDesc }}</p>
         </div>
-        <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant bg-white p-12 rounded-xl transition-all hover:border-primary hover:shadow-md flex flex-col items-center justify-center gap-md"
-             id="drop-zone"
-             (dragover)="onDragOver($event)"
-             (dragleave)="onDragLeave($event)"
-             (drop)="onDrop($event)"
-             [class.border-primary]="dragging()"
-             [class.bg-primary/5]="dragging()"
-             (click)="landingPdfInput.click()">
-          <input accept=".pdf" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
-          <div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline transition-colors"
-               [class.text-primary]="dragging()"
-               [class.bg-primary/10]="dragging()">
-            <span class="material-symbols-outlined text-4xl">cloud_upload</span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-xl">
+          <div class="flex flex-col items-center text-center space-y-md p-lg">
+            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">1</div>
+            <span class="material-symbols-outlined text-4xl text-primary">upload_file</span>
+            <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step1Title }}</h3>
+            <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step1Desc }}</p>
           </div>
-          <div class="space-y-xs">
-            <p class="text-body-lg font-bold text-on-surface">{{ t().dropPrompt }}</p>
-            <p class="text-label-md font-label-md text-on-surface-variant">{{ t().dropHint }}</p>
+          <div class="flex flex-col items-center text-center space-y-md p-lg">
+            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">2</div>
+            <span class="material-symbols-outlined text-4xl text-primary">settings_account_box</span>
+            <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step2Title }}</h3>
+            <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step2Desc }}</p>
           </div>
-        </div>
-        <div class="flex flex-col items-center gap-md">
-          <p class="text-label-md font-label-md text-outline uppercase tracking-widest">{{ t().orTrySample }}</p>
-          <button class="flex items-center gap-sm px-lg py-sm border border-outline-variant rounded hover:bg-surface-container-low transition-colors text-body-md font-medium text-primary"
-                  (click)="loadSamplePdf()">
-            <span class="material-symbols-outlined">description</span>
-            {{ t().loadSample }}
-          </button>
+          <div class="flex flex-col items-center text-center space-y-md p-lg">
+            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">3</div>
+            <span class="material-symbols-outlined text-4xl text-primary">map</span>
+            <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step3Title }}</h3>
+            <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step3Desc }}</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Features Grid -->
-    <section class="bg-white border-y border-outline-variant py-md">
-      <div class="max-w-container-max mx-auto px-gutter grid grid-cols-1 md:grid-cols-3 gap-xl">
-        <div class="flex flex-col gap-sm p-md rounded-xl hover:bg-surface-container-low transition-colors group">
-          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-            <span class="material-symbols-outlined">auto_awesome</span>
-          </div>
-          <h3 class="text-headline-md font-headline-md text-primary">{{ t().feature1Title }}</h3>
-          <p class="text-body-md font-body-md text-on-surface-variant">{{ t().feature1Desc }}</p>
+    <!-- Features Section -->
+    <section class="py-xl bg-surface-container-low" id="funcionalitats">
+      <div class="max-w-container-max mx-auto px-gutter">
+        <div class="text-center mb-xl">
+          <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().featuresTitle }}</h2>
         </div>
-        <div class="flex flex-col gap-sm p-md rounded-xl hover:bg-surface-container-low transition-colors group">
-          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-            <span class="material-symbols-outlined">calculate</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-lg">
+          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+            <span class="material-symbols-outlined text-primary mb-md">auto_awesome</span>
+            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature1Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature1Desc }}</p>
           </div>
-          <h3 class="text-headline-md font-headline-md text-primary">{{ t().feature2Title }}</h3>
-          <p class="text-body-md font-body-md text-on-surface-variant">{{ t().feature2Desc }}</p>
-        </div>
-        <div class="flex flex-col gap-sm p-md rounded-xl hover:bg-surface-container-low transition-colors group">
-          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-            <span class="material-symbols-outlined">map</span>
+          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+            <span class="material-symbols-outlined text-primary mb-md">route</span>
+            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature2Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature2Desc }}</p>
           </div>
-          <h3 class="text-headline-md font-headline-md text-primary">{{ t().feature3Title }}</h3>
-          <p class="text-body-md font-body-md text-on-surface-variant">{{ t().feature3Desc }}</p>
+          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+            <span class="material-symbols-outlined text-primary mb-md">speed</span>
+            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature3Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature3Desc }}</p>
+          </div>
+          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
+            <span class="material-symbols-outlined text-primary mb-md">download</span>
+            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature4Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature4Desc }}</p>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-inverse-surface text-inverse-on-surface py-lg">
-      <div class="max-w-container-max mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-md">
-        <div class="flex items-center gap-sm opacity-80">
-          <img alt="Logo" class="w-6 h-6 grayscale brightness-200" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
-          <span class="text-label-md font-label-md">{{ t().footerCopyright }}</span>
-        </div>
-        <div class="flex gap-lg">
-          <a class="text-label-md font-label-md hover:text-primary-fixed transition-colors" href="#">{{ t().help }}</a>
-          <a class="text-label-md font-label-md hover:text-primary-fixed transition-colors" href="#">{{ t().footerPrivacy }}</a>
-          <a class="text-label-md font-label-md hover:text-primary-fixed transition-colors" href="#">{{ t().footerTerms }}</a>
+    <footer class="bg-surface-container border-t border-outline-variant py-xl">
+      <div class="max-w-container-max mx-auto px-gutter">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-lg">
+          <div class="flex items-center gap-sm">
+            <img alt="Logo" class="w-6 h-6 object-contain opacity-70" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
+            <span class="font-label-md text-label-md font-bold text-on-surface-variant">{{ t().footerCopyright }}</span>
+          </div>
+          <div class="flex gap-xl">
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">{{ t().footerPrivacy }}</a>
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">{{ t().help }}</a>
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">{{ t().footerTerms }}</a>
+          </div>
         </div>
       </div>
     </footer>
@@ -151,71 +167,17 @@
       <div class="flex items-center gap-md">
         <span class="font-headline-md text-headline-md font-bold text-primary">{{ t().appTitle }}</span>
       </div>
-      <nav class="hidden md:flex items-center gap-lg">
-        <a class="font-label-md text-label-md transition-colors cursor-pointer"
-           [class.text-primary]="step() === 'modalities'"
-           [class.border-b-2]="step() === 'modalities'"
-           [class.border-primary]="step() === 'modalities'"
-           [class.pb-1]="step() === 'modalities'"
-           [class.text-on-surface-variant]="step() !== 'modalities'"
-           [class.hover:text-primary]="step() !== 'modalities'">{{ t().stepModalities }}</a>
-        <a class="font-label-md text-label-md transition-colors cursor-pointer"
-           [class.text-primary]="step() === 'origin'"
-           [class.border-b-2]="step() === 'origin'"
-           [class.border-primary]="step() === 'origin'"
-           [class.pb-1]="step() === 'origin'"
-           [class.text-on-surface-variant]="step() !== 'origin'"
-           [class.hover:text-primary]="step() !== 'origin'">{{ t().stepOrigin }}</a>
-        <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md cursor-pointer">{{ t().stepDestinations }}</a>
-        <a class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md cursor-pointer">{{ t().stepSummary }}</a>
-      </nav>
       <div class="flex items-center gap-md">
-        <button class="material-symbols-outlined text-primary cursor-pointer active:opacity-80">help</button>
-        <button class="material-symbols-outlined text-primary cursor-pointer active:opacity-80" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
+        <span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80" [title]="t().help">help</span>
+        <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
       </div>
     </div>
   </header>
 
-  <!-- SideNavBar -->
-  <aside class="hidden lg:flex flex-col py-lg gap-sm h-full w-80 fixed left-0 top-0 bg-surface-container-low shadow-sm pt-24 z-40">
-    <div class="px-md mb-lg">
-      <h2 class="font-headline-md text-headline-md text-primary px-4">{{ t().configTitle }}</h2>
-      <p class="font-label-md text-label-md text-on-surface-variant px-4">{{ t().configSubtitle }}</p>
-    </div>
-    <div class="flex flex-col">
-      <div class="flex items-center gap-md px-4 py-3 mx-2 rounded-full transition-all duration-200 ease-in-out cursor-pointer"
-           [class.bg-secondary-container]="step() === 'modalities'"
-           [class.text-on-secondary-container]="step() === 'modalities'"
-           [class.font-bold]="step() === 'modalities'"
-           [class.text-on-surface-variant]="step() !== 'modalities'"
-           [class.hover:bg-surface-container-high]="step() !== 'modalities'">
-        <span class="material-symbols-outlined" [class.!font-bold]="step() === 'modalities'" style="font-variation-settings: 'FILL' 1;">school</span>
-        <span class="font-label-md text-label-md">{{ t().stepModalities }}</span>
-      </div>
-      <div class="flex items-center gap-md px-4 py-3 mx-2 rounded-full transition-all duration-200 ease-in-out cursor-pointer"
-           [class.bg-secondary-container]="step() === 'origin'"
-           [class.text-on-secondary-container]="step() === 'origin'"
-           [class.font-bold]="step() === 'origin'"
-           [class.text-on-surface-variant]="step() !== 'origin'"
-           [class.hover:bg-surface-container-high]="step() !== 'origin'">
-        <span class="material-symbols-outlined" [class.!font-bold]="step() === 'origin'" style="font-variation-settings: 'FILL' 1;">location_on</span>
-        <span class="font-label-md text-label-md">{{ t().stepOrigin }}</span>
-      </div>
-      <div class="flex items-center gap-md px-4 py-3 mx-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 ease-in-out cursor-pointer">
-        <span class="material-symbols-outlined">map</span>
-        <span class="font-label-md text-label-md">{{ t().stepDestinations }}</span>
-      </div>
-      <div class="flex items-center gap-md px-4 py-3 mx-2 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all duration-200 ease-in-out cursor-pointer">
-        <span class="material-symbols-outlined">analytics</span>
-        <span class="font-label-md text-label-md">{{ t().stepSummary }}</span>
-      </div>
-    </div>
-  </aside>
-
   <!-- Main Content Canvas -->
-  <main class="flex-1 flex flex-col items-center pt-24 pb-12 px-gutter lg:ml-80 overflow-y-auto">
+  <main class="flex-1 flex flex-col items-center pt-24 pb-12 px-gutter overflow-y-auto">
     <!-- Progress Stepper -->
-    <div class="w-full max-w-3xl mb-xl mt-lg">
+    <div class="w-full max-w-3xl mb-xl mt-xl">
       <div class="flex items-center justify-between relative">
         <div class="absolute top-1/2 left-0 w-full h-0.5 bg-surface-container-high -translate-y-1/2 z-0"></div>
         <div class="relative z-10 flex flex-col items-center">
@@ -240,10 +202,6 @@
         </div>
         <div class="relative z-10 flex flex-col items-center">
           <div class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center">3</div>
-          <span class="mt-2 font-label-md text-label-md text-on-surface-variant">{{ t().stepDestinations }}</span>
-        </div>
-        <div class="relative z-10 flex flex-col items-center">
-          <div class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center">4</div>
           <span class="mt-2 font-label-md text-label-md text-on-surface-variant">{{ t().stepSummary }}</span>
         </div>
       </div>
@@ -392,6 +350,26 @@
         </button>
       </div>
     </div>
+
+    <!-- Map Preview -->
+    <div class="mt-lg relative h-64 w-full max-w-2xl rounded-xl overflow-hidden border border-outline-variant shadow-sm mx-auto">
+      <div id="previewMap" class="absolute inset-0 z-0"></div>
+      <div class="absolute bottom-4 left-4 z-20 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md border border-primary/20 flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full" [class.bg-primary]="!!origins().find(o => o.id === activeOrigin())?.coordinates" [class.bg-outline]="!origins().find(o => o.id === activeOrigin())?.coordinates"></span>
+        <span class="text-xs font-bold" [class.text-primary]="!!origins().find(o => o.id === activeOrigin())?.coordinates" [class.text-on-surface-variant]="!origins().find(o => o.id === activeOrigin())?.coordinates">
+          @let active = origins().find(o => o.id === activeOrigin());
+          @if (active?.coordinates) {
+            {{ active!.name }}
+          } @else {
+            Selecciona un origen
+          }
+        </span>
+      </div>
+      <div class="absolute top-4 right-4 z-20 flex flex-col bg-white border border-outline-variant rounded shadow-sm">
+        <button class="p-2 border-b border-outline-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined">add</span></button>
+        <button class="p-2 hover:bg-surface-container transition-colors"><span class="material-symbols-outlined">remove</span></button>
+      </div>
+    </div>
     }
 
     <!-- Atmospheric Backdrop Decoration -->
@@ -414,10 +392,6 @@
          [class.text-on-surface-variant]="step() !== 'origin'">
       <span class="material-symbols-outlined" [class.!font-bold]="step() === 'origin'" style="font-variation-settings: 'FILL' 1;">location_on</span>
       <span class="text-[10px] font-label-md">{{ t().stepOrigin }}</span>
-    </div>
-    <div class="flex flex-col items-center text-on-surface-variant">
-      <span class="material-symbols-outlined">map</span>
-      <span class="text-[10px] font-label-md">{{ t().stepDestinations }}</span>
     </div>
     <div class="flex flex-col items-center text-on-surface-variant">
       <span class="material-symbols-outlined">analytics</span>

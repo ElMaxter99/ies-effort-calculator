@@ -17,12 +17,25 @@ export interface I18nTranslations {
   heroTitle: string;
   heroDescription: string;
   ctaStart: string;
+  howItWorks: string;
+  features: string;
+  howItWorksTitle: string;
+  howItWorksDesc: string;
+  step1Title: string;
+  step1Desc: string;
+  step2Title: string;
+  step2Desc: string;
+  step3Title: string;
+  step3Desc: string;
+  featuresTitle: string;
   feature1Title: string;
   feature1Desc: string;
   feature2Title: string;
   feature2Desc: string;
   feature3Title: string;
   feature3Desc: string;
+  feature4Title: string;
+  feature4Desc: string;
   uploadTitle: string;
   uploadDesc: string;
   dropPrompt: string;
@@ -148,17 +161,30 @@ const CA: I18nTranslations = {
   heroTitle: 'Gestiona les teues vacants amb intel·ligència',
   heroDescription: 'Puja el PDF oficial de vacants, calcula distàncies des dels teus punts d\'interès i visualitza l\'esforç de desplaçament en un mapa interactiu.',
   ctaStart: 'Començar ara',
-  feature1Title: 'Extracció Automàtica',
-  feature1Desc: 'Parsit intelligent de noms de centres, ubicacions i places vacants directament des dels documents oficials de la Generalitat.',
-  feature2Title: 'Càlcul Geodèsic',
-  feature2Desc: 'Utilitzem la fórmula de Haversine per determinar la distància exacta des de múltiples punts d\'origen personalitzats.',
-  feature3Title: 'Mapa Interactiu',
-  feature3Desc: 'Visualització estratègica de l\'esforç de desplaçament amb codis de color: Baix, Moderat, Alt i Molt Alt.',
+  howItWorks: 'Com funciona',
+  features: 'Funcionalitats',
+  howItWorksTitle: 'Com funciona',
+  howItWorksDesc: 'Tres passos senzills per optimitzar la teua tria',
+  step1Title: 'Puja el PDF',
+  step1Desc: 'Puja el llistat oficial de vacants publicat per l\'administració.',
+  step2Title: 'Configura el perfil',
+  step2Desc: 'Selecciona les teues especialitats i la teua població de residència.',
+  step3Title: 'Visualitza l\'esforç',
+  step3Desc: 'Analitza les vacants en un mapa interactiu amb colors segons la distància.',
+  featuresTitle: 'Funcionalitats principals',
+  feature1Title: 'Extracció automàtica',
+  feature1Desc: 'Llegeix automàticament codis de centre i especialitats dels PDF oficials.',
+  feature2Title: 'Càlcul de distàncies',
+  feature2Desc: 'Càlcul en temps real del temps de desplaçament des de casa teua.',
+  feature3Title: 'Nivells d\'esforç',
+  feature3Desc: 'Classificació visual: Baix, Moderat, Alt i Molt Alt per a una tria ràpida.',
+  feature4Title: 'Exportació a CSV',
+  feature4Desc: 'Exporta les dades processades per treballar amb fulls de càlcul.',
   uploadTitle: 'Prepara la teua ruta',
   uploadDesc: 'Posa a prova el sistema amb el teu propi fitxer de vacants en format PDF.',
   dropPrompt: 'Arrossega el PDF aquí o fes clic per seleccionar el fitxer',
   dropHint: 'Només fitxers PDF vàlids (Màx. 10MB)',
-  footerCopyright: '© 2024 Calculador d\'Esforç de Desplaçament IES',
+  footerCopyright: '© 2026 Calculador d\'Esforç de Desplaçament IES',
   footerPrivacy: 'Privacitat',
   footerTerms: 'Termes d\'ús',
   processingPDF: 'Processant PDF...',
@@ -227,7 +253,7 @@ const CA: I18nTranslations = {
   zoomIn: 'Ampliar',
   zoomOut: 'Reduir',
   help: 'Ajuda',
-  langToggle: 'Castellano',
+  langToggle: 'CA',
   collapseSidebar: 'Contraure barra lateral',
   expandSidebar: 'Expandir barra lateral',
 
@@ -276,17 +302,30 @@ const ES: I18nTranslations = {
   heroTitle: 'Gestiona tus vacantes con inteligencia',
   heroDescription: 'Sube el PDF oficial de vacantes, calcula distancias desde tus puntos de interés y visualiza el esfuerzo de desplazamiento en un mapa interactivo.',
   ctaStart: 'Empezar ahora',
-  feature1Title: 'Extracción Automática',
-  feature1Desc: 'Parseo inteligente de nombres de centros, ubicaciones y plazas vacantes directamente desde los documentos oficiales de la Generalitat.',
-  feature2Title: 'Cálculo Geodésico',
-  feature2Desc: 'Utilizamos la fórmula de Haversine para determinar la distancia exacta desde múltiples puntos de origen personalizados.',
-  feature3Title: 'Mapa Interactivo',
-  feature3Desc: 'Visualización estratégica del esfuerzo de desplazamiento con códigos de color: Bajo, Moderado, Alto y Muy Alto.',
+  howItWorks: 'Cómo funciona',
+  features: 'Funcionalidades',
+  howItWorksTitle: 'Cómo funciona',
+  howItWorksDesc: 'Tres pasos sencillos para optimizar tu elección',
+  step1Title: 'Sube el PDF',
+  step1Desc: 'Sube el listado oficial de vacantes publicado por la administración.',
+  step2Title: 'Configura el perfil',
+  step2Desc: 'Selecciona tus especialidades y tu población de residencia.',
+  step3Title: 'Visualiza el esfuerzo',
+  step3Desc: 'Analiza las vacantes en un mapa interactivo con colores según la distancia.',
+  featuresTitle: 'Funcionalidades principales',
+  feature1Title: 'Extracción automática',
+  feature1Desc: 'Lee automáticamente códigos de centro y especialidades de los PDFs oficiales.',
+  feature2Title: 'Cálculo de distancias',
+  feature2Desc: 'Cálculo en tiempo real del tiempo de desplazamiento desde tu casa.',
+  feature3Title: 'Niveles de esfuerzo',
+  feature3Desc: 'Clasificación visual: Bajo, Moderado, Alto y Muy Alto para una elección rápida.',
+  feature4Title: 'Exportación a CSV',
+  feature4Desc: 'Exporta los datos procesados para trabajar con hojas de cálculo.',
   uploadTitle: 'Prepara tu ruta',
   uploadDesc: 'Pon a prueba el sistema con tu propio archivo de vacantes en formato PDF.',
   dropPrompt: 'Arrastra el PDF aquí o haz clic para seleccionar el archivo',
   dropHint: 'Sólo archivos PDF válidos (Máx. 10MB)',
-  footerCopyright: '© 2024 Calculador de Esfuerzo de Desplazamiento IES',
+  footerCopyright: '© 2026 Calculador de Esfuerzo de Desplazamiento IES',
   footerPrivacy: 'Privacidad',
   footerTerms: 'Términos de uso',
   processingPDF: 'Procesando PDF...',
@@ -355,7 +394,7 @@ const ES: I18nTranslations = {
   zoomIn: 'Ampliar',
   zoomOut: 'Reducir',
   help: 'Ayuda',
-  langToggle: 'Valencià',
+  langToggle: 'ES',
   collapseSidebar: 'Contraer barra lateral',
   expandSidebar: 'Expandir barra lateral',
 

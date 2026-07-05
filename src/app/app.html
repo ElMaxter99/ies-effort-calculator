@@ -549,8 +549,8 @@
       @if (pdfLoaded()) {
         <div class="mb-xl p-2 bg-green-100 text-green-800 rounded-lg text-xs font-medium">
           {{ t().positionsInCentres(totalPositions(), totalCenters()) }}
-          @if (totalItinerants() > 0) {
-            <span class="ml-1">{{ t().itinerantCount(totalItinerants()) }}</span>
+          @if (filteredItinerantCount() > 0) {
+            <span class="ml-1">{{ t().itinerantCount(filteredItinerantCount()) }}</span>
           }
         </div>
       }
@@ -718,12 +718,12 @@
           }
 
           <!-- ITIN filter toggle -->
-          @if (totalItinerants() > 0) {
+          @if (filteredItinerantCount() > 0) {
             <div class="flex items-center gap-2">
               <label class="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer">
                 <input type="checkbox" [checked]="itinerantFilter()" (change)="itinerantFilter.set($any($event.target).checked); applyFilter()"
                        class="rounded border-outline-variant text-primary focus:ring-primary" />
-                {{ t().showOnlyItinerant }} ({{ totalItinerants() }})
+                {{ t().showOnlyItinerant }} ({{ filteredItinerantCount() }})
               </label>
             </div>
           }
@@ -810,7 +810,7 @@
                     {{ t().effort }}
                     @if (sortBy() === 'effort') { <span class="text-xs">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }
                   </th>
-                  @if (totalItinerants() > 0) {
+                  @if (filteredItinerantCount() > 0) {
                     <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant text-center cursor-pointer select-none hover:text-primary transition-colors"
                         (click)="setSort('itinerant')">
                       {{ t().itin }}
@@ -845,12 +845,13 @@
                         <span class="text-outline text-sm">—</span>
                       }
                     </td>
-                    @if (totalItinerants() > 0) {
+                  @if (filteredItinerantCount() > 0) {
                       <td class="px-4 py-4 text-center">
-                        @if ((c.totalItinerants ?? 0) > 0) {
+                        @let itinCount = getItinerantCount(c);
+                        @if (itinCount > 0) {
                           <span class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold"
-                                [title]="t().itinerantPositions(c.totalItinerants ?? 0)">
-                            {{ c.totalItinerants }}
+                                [title]="getItinerantTooltip(c)">
+                            {{ itinCount }}
                           </span>
                         } @else {
                           <span class="text-outline text-xs">—</span>

@@ -83,7 +83,7 @@ export class App implements OnDestroy {
 
   totalCenters = computed(() => this.centres().length);
   totalPositions = computed(() => this.centres().reduce((acc, c) => acc + c.positions.length, 0));
-  totalItinerants = computed(() => this.centres().reduce((acc, c) => acc + (c.totalItinerants ?? 0), 0));
+  filteredItinerantCount = computed(() => this.filteredCentres().reduce((acc, c) => acc + this.getItinerantCount(c), 0));
 
   private rawRecords: IesRow[] = [];
   map: L.Map | null = null;
@@ -614,7 +614,7 @@ export class App implements OnDestroy {
     }
 
     if (this.itinerantFilter()) {
-      results = results.filter((c) => (c.totalItinerants ?? 0) > 0);
+      results = results.filter((c) => this.getItinerantCount(c) > 0);
     }
 
     if (this.modalityFilter().size > 0) {
@@ -638,7 +638,7 @@ export class App implements OnDestroy {
         break;
       }
       case 'itinerant':
-        results.sort((a, b) => dir * ((a.totalItinerants ?? 0) - (b.totalItinerants ?? 0)));
+        results.sort((a, b) => dir * (this.getItinerantCount(a) - this.getItinerantCount(b)));
         break;
     }
 
@@ -658,6 +658,28 @@ export class App implements OnDestroy {
     return this.geo.levelDescription(level || '');
   }
 
+  getItinerantCount(c: IesCenter): number {
+    const filtered = this.modalityFilter();
+    if (filtered.size === 0) return c.totalItinerants ?? 0;
+    return c.positions.filter((p) => p.isItinerant && filtered.has(p.modality ?? '')).length;
+  }
+
+  getItinerantTooltip(c: IesCenter): string {
+    const filtered = this.modalityFilter();
+    const items = c.positions.filter((p) => {
+      if (!p.isItinerant) return false;
+      return filtered.size === 0 || filtered.has(p.modality ?? '');
+    });
+    return items
+      .map((p) => {
+        let s = p.modality || '';
+        if (p.itinerantCentre) s += ` → ${p.itinerantCentre}`;
+        if (p.hours) s += ` (${p.hours}h)`;
+        return s;
+      })
+      .join('\n');
+  }
+
   focusCentre(c: IesCenter) {
     if (!this.map || !c.coordinates) return;
     this.map.setView([c.coordinates.lat, c.coordinates.lng], this.map.getZoom());
@@ -673,7 +695,7 @@ export class App implements OnDestroy {
         `"${c.locality}"`,
         c.distanceKm !== undefined ? c.distanceKm : '',
         c.effortLevel ? this.getLevelLabel(c.effortLevel) : '',
-        c.totalItinerants ?? '',
+        this.getItinerantCount(c),
       ].join(sep),
     );
     const csv = [header, ...lines].join('\n');

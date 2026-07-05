@@ -46,6 +46,11 @@ export class GeocodingService {
     }
   }
 
+  private nominatimBase(): string {
+    const host = typeof window !== 'undefined' ? window.location.hostname : '';
+    return host.includes('vercel.app') ? '/api/nominatim' : 'https://nominatim.openstreetmap.org';
+  }
+
   async geocode(place: string): Promise<GeoResult | null> {
     const key = place.toLowerCase().trim();
     if (this.cache.has(key)) return this.cache.get(key)!;
@@ -54,7 +59,8 @@ export class GeocodingService {
       await this.rateLimit();
 
       const query = encodeURIComponent(`${place}, Comunitat Valenciana, Spain`);
-      const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&accept-language=ca`;
+      const base = this.nominatimBase();
+      const url = `${base}/search?q=${query}&format=json&limit=1&accept-language=ca`;
 
       try {
         const res = await fetch(url, {

@@ -1,4 +1,4 @@
-import { Component, effect, signal, computed, ViewChild, ElementRef, afterNextRender, OnDestroy } from '@angular/core';
+import { Component, effect, signal, computed, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds } from './types';
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
@@ -37,6 +37,7 @@ export class App implements OnDestroy {
   error = signal('');
   levelFilter = signal<string>('');
   sortBy = signal<string>('distance');
+  sortDir = signal<'asc' | 'desc'>('asc');
   searchText = signal('');
   localityFilter = signal<string>('');
   itinerantFilter = signal<boolean>(false);
@@ -115,19 +116,28 @@ export class App implements OnDestroy {
       document.documentElement.lang = this.i18n.lang();
     });
 
-    afterNextRender(() => {
-      this.initMap();
+    effect(() => {
+      if (this.step() === 'main') {
+        setTimeout(() => this.updateMap(), 50);
+      }
     });
+
   }
 
   ngOnDestroy() {
     this.map?.remove();
   }
 
-  private initMap() {
-    if (!this.mapContainer?.nativeElement || this.map) return;
+  private ensureMap() {
+    if (this.map) return;
+    if (!this.mapContainer?.nativeElement) return;
+    this.initMap();
+  }
 
-    this.map = L.map(this.mapContainer.nativeElement, { zoomControl: false }).setView([39.4699, -0.3763], 13);
+  private initMap() {
+    const el = this.mapContainer!.nativeElement;
+
+    this.map = L.map(el, { zoomControl: false }).setView([39.4699, -0.3763], 13);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
@@ -140,6 +150,7 @@ export class App implements OnDestroy {
   }
 
   private updateMap() {
+    this.ensureMap();
     if (!this.map) return;
     this.updateMapMarkers();
     this.updateMapCircles();
@@ -332,9 +343,10 @@ export class App implements OnDestroy {
         c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
 
+      this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: t.calculatingProgress(i + 1, filteredCentres.length) });
+
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);
-        this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: t.calculatingProgress(i + 1, filteredCentres.length) });
       }
     }
 
@@ -393,10 +405,27 @@ export class App implements OnDestroy {
   async selectOrigin(id: string) {
     this.activeOrigin.set(id);
     const origin = this.origins().find((o) => o.id === id);
-    if (origin?.coordinates) {
-      await this.calculateDistancesForOrigin(origin);
+    if (!origin) return;
+
+    if (!origin.coordinates) {
+      const t = this.i18n.t();
+      this.geocoding.set(true);
+      this.geoProgress.set({ current: 0, total: 0, message: t.geocodingOrigin });
+      const geo = await this.geo.geocode(origin.name);
+      if (geo) {
+        origin.coordinates = { lat: geo.lat, lng: geo.lng };
+        this.origins.set([...this.origins()]);
+      }
+      this.geocoding.set(false);
+      this.geoProgress.set({ current: 0, total: 0, message: '' });
     }
-    this.updateMap();
+
+    if (origin.coordinates) {
+      if (this.step() === 'main') {
+        await this.calculateDistancesForOrigin(origin);
+      }
+      this.updateMap();
+    }
   }
 
   removeOrigin(id: string) {
@@ -443,9 +472,10 @@ export class App implements OnDestroy {
         c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
 
+      this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: t2.calculatingProgress(i + 1, currentCentres.length) });
+
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);
-        this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: t2.calculatingProgress(i + 1, currentCentres.length) });
       }
     }
 
@@ -486,6 +516,16 @@ export class App implements OnDestroy {
     }
   }
 
+  setSort(column: string) {
+    if (this.sortBy() === column) {
+      this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortBy.set(column);
+      this.sortDir.set('asc');
+    }
+    this.applyFilter();
+  }
+
   isModalitySelected(m: string): boolean {
     return this.modalityFilter().has(m);
   }
@@ -516,10 +556,25 @@ export class App implements OnDestroy {
       results = results.filter((c) => c.modalities?.some((m) => this.modalityFilter().has(m)));
     }
 
-    if (this.sortBy() === 'distance') {
-      results.sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
-    } else {
-      results.sort((a, b) => a.name.localeCompare(b.name));
+    const dir = this.sortDir() === 'asc' ? 1 : -1;
+    switch (this.sortBy()) {
+      case 'distance':
+        results.sort((a, b) => dir * ((a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity)));
+        break;
+      case 'name':
+        results.sort((a, b) => dir * a.name.localeCompare(b.name));
+        break;
+      case 'locality':
+        results.sort((a, b) => dir * a.locality.localeCompare(b.locality));
+        break;
+      case 'effort': {
+        const order: Record<string, number> = { baix: 0, moderat: 1, alt: 2, 'molt alt': 3 };
+        results.sort((a, b) => dir * ((order[a.effortLevel ?? ''] ?? -1) - (order[b.effortLevel ?? ''] ?? -1)));
+        break;
+      }
+      case 'itinerant':
+        results.sort((a, b) => dir * ((a.totalItinerants ?? 0) - (b.totalItinerants ?? 0)));
+        break;
     }
 
     this.filteredCentres.set(results);

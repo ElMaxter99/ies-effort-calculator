@@ -1,12 +1,12 @@
 <div class="h-screen flex flex-col overflow-hidden bg-background text-on-background font-body-md">
-  @if (step() === 'landing') {
-  <!-- Landing page -->
-  <div class="absolute top-4 right-4 z-10">
-    <button class="text-xs px-3 py-1 rounded-lg border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all"
+  <div class="fixed top-4 right-4 z-[9999]">
+    <button class="text-xs px-3 py-1 rounded-lg border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all bg-surface/80 backdrop-blur-sm"
             (click)="i18n.toggleLang()">
       {{ t().langToggle }}
     </button>
   </div>
+  @if (step() === 'landing') {
+  <!-- Landing page -->
   <div class="flex-1 flex items-center justify-center p-8" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
     <div class="max-w-lg w-full text-center">
       <div class="mb-8">
@@ -235,10 +235,6 @@
         </label>
         <button class="text-on-surface-variant hover:text-primary transition-colors" (click)="loadSamplePdf()" [title]="t().useSamplePDF">
           <span class="material-symbols-outlined">description</span>
-        </button>
-        <button class="text-xs px-3 py-1 rounded-lg border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all"
-                (click)="i18n.toggleLang()">
-          {{ t().langToggle }}
         </button>
       </div>
     </div>
@@ -587,12 +583,32 @@
             <table class="w-full text-left border-collapse">
               <thead class="sticky top-0 bg-surface-container-low border-b border-outline-variant z-20">
                 <tr>
-                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">{{ t().ies }}</th>
-                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">{{ t().locality }}</th>
-                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">{{ t().distance }}</th>
-                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">{{ t().effort }}</th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant cursor-pointer select-none hover:text-primary transition-colors"
+                      (click)="setSort('name')">
+                    {{ t().ies }}
+                    @if (sortBy() === 'name') { <span class="text-xs">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }
+                  </th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant cursor-pointer select-none hover:text-primary transition-colors"
+                      (click)="setSort('locality')">
+                    {{ t().locality }}
+                    @if (sortBy() === 'locality') { <span class="text-xs">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }
+                  </th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant cursor-pointer select-none hover:text-primary transition-colors"
+                      (click)="setSort('distance')">
+                    {{ t().distance }}
+                    @if (sortBy() === 'distance') { <span class="text-xs">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }
+                  </th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant cursor-pointer select-none hover:text-primary transition-colors"
+                      (click)="setSort('effort')">
+                    {{ t().effort }}
+                    @if (sortBy() === 'effort') { <span class="text-xs">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }
+                  </th>
                   @if (totalItinerants() > 0) {
-                    <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant text-center">{{ t().itin }}</th>
+                    <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant text-center cursor-pointer select-none hover:text-primary transition-colors"
+                        (click)="setSort('itinerant')">
+                      {{ t().itin }}
+                      @if (sortBy() === 'itinerant') { <span class="text-xs">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }
+                    </th>
                   }
                 </tr>
               </thead>
@@ -652,12 +668,6 @@
         <div class="p-md bg-surface border-t border-outline-variant flex justify-between items-center shrink-0">
           <span class="text-xs text-on-surface-variant">{{ t().totalCentres(filteredCentres().length) }}</span>
           <div class="flex gap-2">
-            <select class="text-xs border border-outline-variant rounded px-2 py-1 bg-surface"
-                    [value]="sortBy()"
-                    (change)="sortBy.set($any($event.target).value); applyFilter()">
-              <option value="distance">{{ t().distance }}</option>
-              <option value="nom">{{ t().name }}</option>
-            </select>
             <button class="flex items-center gap-2 text-primary font-bold text-label-md hover:underline">
               <span class="material-symbols-outlined text-[18px]">download</span>
               {{ t().exportCSV }}

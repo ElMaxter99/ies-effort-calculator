@@ -146,6 +146,11 @@ export interface I18nTranslations {
   pdfFormatHint: (filename: string) => string;
   selectAll: string;
   deselectAll: string;
+  termsTitle: string;
+  termsUpdated: string;
+  privacyTitle: string;
+  privacyUpdated: string;
+  backToHome: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -303,6 +308,11 @@ const CA: I18nTranslations = {
   pdfFormatHint: (filename: string) => `El PDF ha de tindre el format oficial de vacants d'educació secundària (ex: ${filename}).`,
   selectAll: 'Seleccionar totes',
   deselectAll: 'Desseleccionar totes',
+  termsTitle: 'Termes i Condicions d\'Ús',
+  termsUpdated: 'Darrera actualització: Maig 2024',
+  privacyTitle: 'Política de Privadesa',
+  privacyUpdated: 'Darrera actualització: Octubre 2023',
+  backToHome: 'Tornar a l\'inici',
 };
 
 const ES: I18nTranslations = {
@@ -449,4 +459,9 @@ const ES: I18nTranslations = {
   pdfFormatHint: (filename: string) => `El PDF debe tener el formato oficial de vacantes de educación secundaria (ej: ${filename}).`,
   selectAll: 'Seleccionar todas',
   deselectAll: 'Deseleccionar todas',
+  termsTitle: 'Términos y Condiciones de Uso',
+  termsUpdated: 'Última actualización: Mayo 2024',
+  privacyTitle: 'Política de Privacidad',
+  privacyUpdated: 'Última actualización: Octubre 2023',
+  backToHome: 'Volver al inicio',
 };

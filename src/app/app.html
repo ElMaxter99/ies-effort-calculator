@@ -138,9 +138,9 @@
             <span class="font-label-md text-label-md font-bold text-on-surface-variant">{{ t().footerCopyright }}</span>
           </div>
           <div class="flex gap-xl">
-            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">{{ t().footerPrivacy }}</a>
+            <button class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" (click)="showPrivacy()">{{ t().footerPrivacy }}</button>
             <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">{{ t().help }}</a>
-            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">{{ t().footerTerms }}</a>
+            <button class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" (click)="showTerms()">{{ t().footerTerms }}</button>
           </div>
         </div>
       </div>
@@ -821,7 +821,7 @@
               </thead>
               <tbody class="divide-y divide-outline-variant">
                 @for (c of filteredCentres(); track c.code) {
-                  <tr class="hover:bg-surface-container transition-colors cursor-pointer group">
+                  <tr class="hover:bg-surface-container transition-colors cursor-pointer group" (click)="focusCentre(c)">
                     <td class="px-4 py-4 text-sm font-semibold text-primary">{{ c.name }}</td>
                     <td class="px-4 py-4 text-sm text-on-surface-variant">{{ c.locality }}</td>
                     <td class="px-4 py-4 text-sm text-on-surface">
@@ -907,6 +907,186 @@
             </span>
           </div>
         </section>
+    </main>
+  </div>
+  } @else if (step() === 'terms') {
+  <div class="flex-1 overflow-y-auto bg-surface">
+    <header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
+      <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-16">
+        <div class="flex items-center gap-md">
+          <button class="flex items-center gap-1 text-primary hover:opacity-80 transition-all font-label-md" (click)="backToStep('landing')">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            {{ t().backToHome }}
+          </button>
+        </div>
+        <span class="font-headline-sm text-headline-sm font-bold text-primary">{{ t().appTitle }}</span>
+      </div>
+    </header>
+    <main class="max-w-4xl mx-auto px-gutter py-xl">
+      <section class="mb-xl text-center">
+        <span class="inline-flex items-center justify-center p-md bg-secondary-container text-on-secondary-container rounded-full mb-md">
+          <span class="material-symbols-outlined text-[32px]">gavel</span>
+        </span>
+        <h1 class="text-headline-lg font-headline-lg text-primary mb-sm">{{ t().termsTitle }}</h1>
+        <p class="text-on-surface-variant font-body-lg">{{ t().termsUpdated }}</p>
+      </section>
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-xl md:p-32 space-y-xl">
+        <article class="space-y-md">
+          <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
+            <span class="material-symbols-outlined">info</span>
+            Naturalesa de l'Eina
+          </h2>
+          <div class="space-y-sm text-on-surface-variant">
+            <p>Aquesta aplicació és una eina <strong>sense ànim de lucre</strong>, desenvolupada amb la finalitat de facilitar la visualització de dades de desplaçament per a personal docent.</p>
+            <div class="bg-surface-container-low border-l-4 border-primary p-md rounded-r-lg italic">
+              <strong>Avís d'Independència:</strong> Aquest programari és totalment independent i no té cap vinculació oficial amb la <strong>Generalitat Valenciana</strong> ni amb la Conselleria d'Educació.
+            </div>
+          </div>
+        </article>
+        <article class="space-y-md border-t border-outline-variant pt-xl">
+          <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
+            <span class="material-symbols-outlined">lock</span>
+            Privadesa i Gestió de Dades
+          </h2>
+          <div class="grid md:grid-cols-2 gap-md">
+            <div class="p-md rounded-lg border border-outline-variant bg-surface">
+              <div class="flex items-center gap-sm text-secondary mb-xs">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <span class="font-bold">Sense emmagatzematge</span>
+              </div>
+              <p class="text-label-md">No guardem dades ni fitxers als nostres servidors. Tota la informació es processa exclusivament al vostre navegador.</p>
+            </div>
+            <div class="p-md rounded-lg border border-outline-variant bg-surface">
+              <div class="flex items-center gap-sm text-secondary mb-xs">
+                <span class="material-symbols-outlined">memory</span>
+                <span class="font-bold">Processament local</span>
+              </div>
+              <p class="text-label-md">L'anàlisi dels documents es realitza de forma temporal. Un cop tancada la sessió, les dades s'eliminen automàticament.</p>
+            </div>
+          </div>
+        </article>
+        <article class="space-y-md border-t border-outline-variant pt-xl">
+          <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
+            <span class="material-symbols-outlined">warning</span>
+            Fiabilitat de les Dades
+          </h2>
+          <div class="space-y-md text-on-surface-variant">
+            <p>L'algoritme extreu informació de fitxers PDF oficials. Tot i els esforços per garantir la precisió, l'usuari accepta que:</p>
+            <ul class="list-none space-y-sm pl-md">
+              <li class="flex items-start gap-sm">
+                <span class="material-symbols-outlined text-error text-[20px] mt-1">error_outline</span>
+                <span>Poden ocórrer errors tècnics en el parsejat (lectura) de les dades del PDF original.</span>
+              </li>
+              <li class="flex items-start gap-sm">
+                <span class="material-symbols-outlined text-error text-[20px] mt-1">distance</span>
+                <span>Els càlculs de distància i temps són estimacions basades en serveis cartogràfics externs i poden no reflectir la realitat exacta.</span>
+              </li>
+            </ul>
+          </div>
+        </article>
+        <article class="space-y-md border-t border-outline-variant pt-xl">
+          <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
+            <span class="material-symbols-outlined">assignment_turned_in</span>
+            Responsabilitat de l'Usuari
+          </h2>
+          <div class="bg-error-container text-on-error-container p-md rounded-lg">
+            <p class="font-bold mb-xs">Obligació de verificació:</p>
+            <p class="text-label-md">L'usuari és l'únic responsable de verificar la llista oficial de vacants i adjudicacions publicada pels canals institucionals. Aquesta eina no té caràcter vinculant ni jurídic.</p>
+          </div>
+        </article>
+      </div>
+      <footer class="mt-xl flex flex-col md:flex-row items-center justify-between gap-md">
+        <p class="text-on-surface-variant text-label-md italic">{{ t().termsUpdated }}</p>
+        <button class="bg-primary text-on-primary px-xl py-sm rounded-lg hover:opacity-90 transition-all font-label-md shadow-md" (click)="backToStep('landing')">
+          {{ t().backToHome }}
+        </button>
+      </footer>
+    </main>
+  </div>
+  } @else if (step() === 'privacy') {
+  <div class="flex-1 overflow-y-auto bg-surface">
+    <header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
+      <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-16">
+        <div class="flex items-center gap-md">
+          <button class="flex items-center gap-1 text-primary hover:opacity-80 transition-all font-label-md" (click)="backToStep('landing')">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            {{ t().backToHome }}
+          </button>
+        </div>
+        <span class="font-headline-sm text-headline-sm font-bold text-primary">{{ t().appTitle }}</span>
+      </div>
+    </header>
+    <main class="max-w-4xl mx-auto px-gutter py-xl">
+      <section class="mb-xl text-center md:text-left">
+        <span class="inline-flex items-center justify-center p-md bg-secondary-container text-on-secondary-container rounded-full mb-md">
+          <span class="material-symbols-outlined text-[32px]">shield_lock</span>
+        </span>
+        <h1 class="text-headline-lg font-headline-lg text-primary mb-sm">{{ t().privacyTitle }}</h1>
+        <p class="text-body-lg text-on-surface-variant">{{ t().privacyUpdated }}</p>
+      </section>
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+        <section class="md:col-span-12 bg-surface-container-lowest p-xl rounded-xl shadow-sm border border-outline-variant">
+          <div class="flex items-start gap-4">
+            <div class="p-2 bg-primary-fixed text-on-primary-fixed rounded-lg">
+              <span class="material-symbols-outlined">gpp_good</span>
+            </div>
+            <div>
+              <h2 class="text-headline-md font-headline-md text-primary mb-md">Compromís de Transparència</h2>
+              <p class="text-body-md text-on-surface leading-relaxed">Aquesta eina ha estat dissenyada per a l'administració pública amb un objectiu clar: oferir un servei eficient sense comprometre la seguretat de la informació personal dels treballadors i ciutadans. Tota la lògica de processament es realitza sota un entorn de màxima protecció.</p>
+            </div>
+          </div>
+        </section>
+        <section class="md:col-span-7 bg-white p-lg rounded-xl shadow-sm border-l-4 border-primary">
+          <span class="material-symbols-outlined text-primary text-[40px] mb-md">browser_updated</span>
+          <h3 class="text-headline-md font-headline-md text-primary mb-sm">Processament Local en Navegador</h3>
+          <p class="text-body-md text-on-surface-variant mb-md">El fitxer PDF que pugis es processa directament a la memòria del teu navegador.</p>
+          <div class="bg-surface-container-low p-md rounded-lg border border-outline-variant">
+            <ul class="space-y-3">
+              <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-error text-[20px]">cloud_off</span>
+                <span class="text-label-md">Mai s'envia a cap servidor extern.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-[20px]">delete_forever</span>
+                <span class="text-label-md">Les dades s'esborren en tancar la pestanya.</span>
+              </li>
+            </ul>
+          </div>
+        </section>
+        <section class="md:col-span-5 bg-surface-container-highest p-lg rounded-xl flex flex-col justify-between">
+          <h3 class="text-headline-sm font-headline-md text-on-surface mb-sm">Sense Rastreig</h3>
+          <p class="text-body-md text-on-surface-variant">No utilitzem galetes (cookies) per a fins publicitaris ni eines de seguiment personalitzat.</p>
+          <div class="mt-xl flex justify-center">
+            <div class="w-24 h-24 rounded-full bg-white flex items-center justify-center border-4 border-dashed border-outline-variant">
+              <span class="material-symbols-outlined text-outline text-[48px]">cookie_off</span>
+            </div>
+          </div>
+        </section>
+        <section class="md:col-span-12 bg-surface-container-low p-xl rounded-xl border border-outline-variant">
+          <h3 class="text-headline-md font-headline-md text-primary mb-md">Origen de les Dades</h3>
+          <p class="text-body-md text-on-surface mb-lg max-w-3xl">La informació que es visualitza a les taules i mapes d'aquesta aplicació prové <strong>exclusivament</strong> de l'extracció automatitzada del document PDF proporcionat per l'usuari. L'aplicació no creua aquestes dades amb bases de dades externes de caràcter personal.</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+            <div class="bg-white p-md rounded-lg shadow-sm border border-outline-variant/30 text-center">
+              <span class="material-symbols-outlined text-primary mb-2">upload_file</span>
+              <p class="text-label-md font-label-md">1. Càrrega de PDF</p>
+            </div>
+            <div class="bg-white p-md rounded-lg shadow-sm border border-outline-variant/30 text-center">
+              <span class="material-symbols-outlined text-primary mb-2">find_in_page</span>
+              <p class="text-label-md font-label-md">2. Extracció Local</p>
+            </div>
+            <div class="bg-white p-md rounded-lg shadow-sm border border-outline-variant/30 text-center">
+              <span class="material-symbols-outlined text-primary mb-2">bar_chart</span>
+              <p class="text-label-md font-label-md">3. Visualització Efímera</p>
+            </div>
+          </div>
+        </section>
+      </div>
+      <footer class="mt-xl pt-lg border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-md">
+        <p class="text-label-md text-on-surface-variant">{{ t().privacyUpdated }} | {{ t().appTitle }}</p>
+        <button class="bg-primary text-on-primary px-xl py-sm rounded-lg hover:opacity-90 transition-all font-label-md shadow-md" (click)="backToStep('landing')">
+          {{ t().backToHome }}
+        </button>
+      </footer>
     </main>
   </div>
   }

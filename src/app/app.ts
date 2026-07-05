@@ -29,7 +29,7 @@ export class App implements OnDestroy {
     setTimeout(() => this.showModalityDropdown.set(false), 200);
   }
 
-  step = signal<'landing' | 'modalities' | 'origin' | 'main'>('landing');
+  step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy'>('landing');
   pdfLoaded = signal(false);
   dragging = signal(false);
   headerShadow = signal(false);
@@ -658,6 +658,11 @@ export class App implements OnDestroy {
     return this.geo.levelDescription(level || '');
   }
 
+  focusCentre(c: IesCenter) {
+    if (!this.map || !c.coordinates) return;
+    this.map.setView([c.coordinates.lat, c.coordinates.lng], this.map.getZoom());
+  }
+
   exportCsv() {
     const rows = this.filteredCentres();
     const sep = ',';
@@ -692,6 +697,18 @@ export class App implements OnDestroy {
   scrollToUpload() {
     const el = document.querySelector('#drop-zone');
     el?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  showTerms() {
+    this.step.set('terms');
+  }
+
+  showPrivacy() {
+    this.step.set('privacy');
+  }
+
+  backToStep(step: 'landing' | 'modalities' | 'origin' | 'main') {
+    this.step.set(step);
   }
 
   onLandingScroll(event: Event) {

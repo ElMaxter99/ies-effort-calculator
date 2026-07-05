@@ -35,9 +35,16 @@ export interface I18nTranslations {
   selectModalitiesDesc: string;
   searchModality: string;
   noResults: string;
+  stepModalities: string;
+  stepOrigin: string;
+  stepDestinations: string;
+  stepSummary: string;
+  configTitle: string;
+  configSubtitle: string;
 
   back: string;
   continue: string;
+  cancel: string;
 
   addOrigin: string;
   addOriginDesc: string;
@@ -167,9 +174,16 @@ const CA: I18nTranslations = {
   selectModalitiesDesc: 'Tria les modalitats que t\'interessen per a filtrar les places disponibles.',
   searchModality: 'Buscar modalitat...',
   noResults: 'Sense resultats',
+  stepModalities: 'Especialitats',
+  stepOrigin: 'Origen',
+  stepDestinations: 'Destinacions',
+  stepSummary: 'Resum',
+  configTitle: 'Configuració',
+  configSubtitle: 'Calculador de Desplaçament',
 
   back: 'Tornar',
-  continue: 'Continuar',
+  continue: 'Següent',
+  cancel: 'Cancel·lar',
 
   addOrigin: 'Afig el teu origen',
   addOriginDesc: 'Introdueix la teua ubicació per a calcular distàncies i nivells d\'esforç cap als centres seleccionats.',
@@ -288,9 +302,16 @@ const ES: I18nTranslations = {
   selectModalitiesDesc: 'Elige las modalidades que te interesen para filtrar las plazas disponibles.',
   searchModality: 'Buscar modalidad...',
   noResults: 'Sin resultados',
+  stepModalities: 'Especialidades',
+  stepOrigin: 'Origen',
+  stepDestinations: 'Destinos',
+  stepSummary: 'Resumen',
+  configTitle: 'Configuración',
+  configSubtitle: 'Calculador de Desplazamiento',
 
   back: 'Volver',
-  continue: 'Continuar',
+  continue: 'Siguiente',
+  cancel: 'Cancelar',
 
   addOrigin: 'Añade tu origen',
   addOriginDesc: 'Introduce tu ubicación para calcular distancias y niveles de esfuerzo hacia los centros seleccionados.',

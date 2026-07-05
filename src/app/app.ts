@@ -2,6 +2,7 @@ import { Component, effect, signal, computed, ViewChild, ElementRef, OnDestroy }
 import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds } from './types';
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
+import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import L from 'leaflet';
 
@@ -97,6 +98,7 @@ export class App implements OnDestroy {
   constructor(
     private pdfParser: PdfParserService,
     public geo: GeocodingService,
+    public centresDb: CentresDatabaseService,
     public i18n: I18nService
   ) {
     this.process = this.pdfParser.process;
@@ -321,30 +323,27 @@ export class App implements OnDestroy {
     this.step.set('main');
 
     const filteredCentres = this.filteredCentres();
-    const centreKeys = [...new Set(filteredCentres.map((c) => `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase()))];
-    if (centreKeys.length === 0) return;
+    if (filteredCentres.length === 0) return;
 
     this.geocoding.set(true);
     this.calculating.set(true);
     const t = this.i18n.t();
 
-    this.geoProgress.set({ current: 0, total: centreKeys.length, message: t.geocodingLocalities });
-
-    const results = await this.geo.geocodeBatch(centreKeys);
-
     this.geoProgress.set({ current: 0, total: filteredCentres.length, message: t.calculatingForCentres(filteredCentres.length) });
 
     for (let i = 0; i < filteredCentres.length; i++) {
       const c = filteredCentres[i];
-      const key = `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase();
-      const fallbackKey = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
-      let geoCentre = results.get(key);
-      if (!geoCentre) geoCentre = this.geo.getCached(fallbackKey);
 
-      if (geoCentre) {
-        c.coordinates = { lat: geoCentre.lat, lng: geoCentre.lng };
+      let coords = this.centresDb.getCoordinates(c.code);
+      if (!coords) {
+        const locality = c.locality.replace(/ - .*$/, '').trim();
+        coords = this.centresDb.getLocalityCoordinates(locality);
+      }
+
+      if (coords) {
+        c.coordinates = coords;
         c.distanceKm = parseFloat(
-          this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, geoCentre.lat, geoCentre.lng).toFixed(1),
+          this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, coords.lat, coords.lng).toFixed(1),
         );
         c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
@@ -452,35 +451,26 @@ export class App implements OnDestroy {
     if (!origin.coordinates) return;
 
     const currentCentres = this.step() === 'main' ? this.filteredCentres() : this.centres();
-    const centreKeys = [...new Set(currentCentres.map((c) => `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase()))];
-
-    if (centreKeys.length === 0) return;
-
-    // Only geocode centres without coordinates yet
-    const pending = centreKeys.filter((k) => {
-      const c = currentCentres.find((x) => `${x.name}, ${x.locality.replace(/ - .*$/, '').trim()}`.toLowerCase() === k);
-      return !c?.coordinates;
-    });
+    if (currentCentres.length === 0) return;
 
     const t2 = this.i18n.t();
-    if (pending.length > 0) {
-      this.geoProgress.set({ current: 0, total: pending.length, message: t2.geocodingNew(pending.length) });
-      await this.geo.geocodeBatch(pending);
-    }
-
     this.geoProgress.set({ current: 0, total: currentCentres.length, message: t2.calculatingForCentres(currentCentres.length) });
 
     for (let i = 0; i < currentCentres.length; i++) {
       const c = currentCentres[i];
-      const key = `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase();
-      const fallbackKey = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
-      let geoCentre = this.geo.getCached(key);
-      if (!geoCentre) geoCentre = this.geo.getCached(fallbackKey);
 
-      if (geoCentre) {
-        c.coordinates = { lat: geoCentre.lat, lng: geoCentre.lng };
+      if (!c.coordinates) {
+        let coords = this.centresDb.getCoordinates(c.code);
+        if (!coords) {
+          const locality = c.locality.replace(/ - .*$/, '').trim();
+          coords = this.centresDb.getLocalityCoordinates(locality);
+        }
+        if (coords) c.coordinates = coords;
+      }
+
+      if (c.coordinates) {
         c.distanceKm = parseFloat(
-          this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, geoCentre.lat, geoCentre.lng).toFixed(1),
+          this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, c.coordinates.lat, c.coordinates.lng).toFixed(1),
         );
         c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
@@ -507,27 +497,20 @@ export class App implements OnDestroy {
 
     if (this.step() === 'main') {
       const visibleCentres = this.filteredCentres();
-      const pendingKeys = [...new Set(
-        visibleCentres
-          .filter((c) => !c.coordinates)
-          .map((c) => `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase())
-      )];
-      if (pendingKeys.length > 0) {
-        const results = await this.geo.geocodeBatch(pendingKeys);
-        for (const c of this.centres()) {
-          if (c.coordinates) continue;
-          const key = `${c.name}, ${c.locality.replace(/ - .*$/, '').trim()}`.toLowerCase();
-          const fallbackKey = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
-          let geo = results.get(key);
-          if (!geo) geo = this.geo.getCached(fallbackKey);
-          if (geo) {
-            c.coordinates = { lat: geo.lat, lng: geo.lng };
-          }
+      const pending = visibleCentres.filter((c) => !c.coordinates);
+      if (pending.length === 0) return;
+
+      for (const c of pending) {
+        let coords = this.centresDb.getCoordinates(c.code);
+        if (!coords) {
+          const locality = c.locality.replace(/ - .*$/, '').trim();
+          coords = this.centresDb.getLocalityCoordinates(locality);
         }
-        this.centres.set([...this.centres()]);
-        this.applyFilter();
-        this.updateMap();
+        if (coords) c.coordinates = coords;
       }
+      this.centres.set([...this.centres()]);
+      this.applyFilter();
+      this.updateMap();
     }
   }
 

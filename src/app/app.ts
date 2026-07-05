@@ -1,5 +1,5 @@
 import { Component, effect, signal, computed, ViewChild, ElementRef, afterNextRender, OnDestroy } from '@angular/core';
-import { IesRow, IesCenter, ProcesInfo, Origen, EffortThresholds } from './types';
+import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds } from './types';
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
 import L from 'leaflet';
@@ -15,73 +15,73 @@ export class App implements OnDestroy {
   @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLElement>;
   @ViewChild('inputLocalitat') inputLocalitatRef?: ElementRef<HTMLInputElement>;
 
-  focussarInputLocalitat() {
+  focusLocalityInput() {
     setTimeout(() => this.inputLocalitatRef?.nativeElement?.focus(), 50);
   }
 
-  tancarDropdownLocalitat() {
-    setTimeout(() => this.mostrarDropdownLocalitats.set(false), 200);
+  closeLocalityDropdown() {
+    setTimeout(() => this.showLocalityDropdown.set(false), 200);
   }
 
-  tancarDropdownModalitats() {
-    setTimeout(() => this.mostrarDropdownModalitats.set(false), 200);
+  closeModalityDropdown() {
+    setTimeout(() => this.showModalityDropdown.set(false), 200);
   }
 
-  step = signal<'landing' | 'modalitats' | 'origen' | 'main'>('landing');
-  pdfCarregat = signal(false);
+  step = signal<'landing' | 'modalities' | 'origin' | 'main'>('landing');
+  pdfLoaded = signal(false);
   dragging = signal(false);
-  proces = signal<ProcesInfo | null>(null);
+  process = signal<ProcessInfo | null>(null);
   centres = signal<IesCenter[]>([]);
-  centresFiltrats = signal<IesCenter[]>([]);
+  filteredCentres = signal<IesCenter[]>([]);
   error = signal('');
-  filtreNivell = signal<string>('');
-  ordenarPer = signal<string>('distancia');
-  cercaText = signal('');
-  filtreLocalitat = signal<string>('');
-  filtreItinerants = signal<boolean>(false);
-  cercaLocalitat = signal('');
-  mostrarDropdownLocalitats = signal(false);
-  modalitatsDisponibles = computed(() => {
+  levelFilter = signal<string>('');
+  sortBy = signal<string>('distance');
+  searchText = signal('');
+  localityFilter = signal<string>('');
+  itinerantFilter = signal<boolean>(false);
+  localitySearch = signal('');
+  showLocalityDropdown = signal(false);
+  availableModalities = computed(() => {
     const set = new Set<string>();
     for (const c of this.centres()) {
-      for (const m of c.modalitats ?? []) set.add(m);
+      for (const m of c.modalities ?? []) set.add(m);
     }
     return [...set].sort((a, b) => a.localeCompare(b));
   });
-  filtreModalitats = signal<Set<string>>(new Set());
-  cercaModalitat = signal('');
-  mostrarDropdownModalitats = signal(false);
+  modalityFilter = signal<Set<string>>(new Set());
+  modalitySearch = signal('');
+  showModalityDropdown = signal(false);
 
   thresholds = signal<EffortThresholds>({ baix: 5, moderat: 15, alt: 30 });
-  mostrarConfig = signal(false);
+  showConfig = signal(false);
 
-  geoProgress = signal({ actual: 0, total: 0, missatge: '' });
+  geoProgress = signal({ current: 0, total: 0, message: '' });
 
-  localitats = computed(() => {
+  localities = computed(() => {
     const set = new Set<string>();
     for (const c of this.centres()) {
-      if (c.localitat) set.add(c.localitat);
+      if (c.locality) set.add(c.locality);
     }
     return [...set].sort((a, b) => a.localeCompare(b));
   });
 
-  viewActual = signal<ViewType>('map');
+  currentView = signal<ViewType>('map');
 
-  origins = signal<Origen[]>([
-    { id: '1', nom: 'Casa (València)' },
-    { id: '2', nom: 'Estació Nord' },
+  origins = signal<Origin[]>([
+    { id: '1', name: 'Casa (València)' },
+    { id: '2', name: 'Estació Nord' },
   ]);
-  originActiu = signal<string>('1');
-  nouOriginNom = signal('');
+  activeOrigin = signal<string>('1');
+  newOriginName = signal('');
 
-  geocodificant = signal(false);
-  calculant = signal(false);
+  geocoding = signal(false);
+  calculating = signal(false);
 
-  totalCentres = computed(() => this.centres().length);
-  totalPlaces = computed(() => this.centres().reduce((acc, c) => acc + c.places.length, 0));
+  totalCenters = computed(() => this.centres().length);
+  totalPositions = computed(() => this.centres().reduce((acc, c) => acc + c.positions.length, 0));
   totalItinerants = computed(() => this.centres().reduce((acc, c) => acc + (c.totalItinerants ?? 0), 0));
 
-  private registresBruts: IesRow[] = [];
+  private rawRecords: IesRow[] = [];
   map: L.Map | null = null;
   private originMarker: L.Marker | null = null;
   private centreMarkers: L.Marker[] = [];
@@ -91,18 +91,18 @@ export class App implements OnDestroy {
     private pdfParser: PdfParserService,
     public geo: GeocodingService
   ) {
-    this.proces = this.pdfParser.proces;
+    this.process = this.pdfParser.process;
 
     effect(() => {
-      const p = this.proces();
-      if (p && p.percentatge === 100 && this.registresBruts.length > 0) {
-        this.onParseComplet();
+      const p = this.process();
+      if (p && p.percentage === 100 && this.rawRecords.length > 0) {
+        this.onParseComplete();
       }
     });
 
     effect(() => {
       this.geo.thresholds = this.thresholds();
-      this.aplicarFiltre();
+      this.applyFilter();
       this.updateMapCircles();
     });
 
@@ -141,10 +141,10 @@ export class App implements OnDestroy {
     this.circles.forEach((c) => this.map?.removeLayer(c));
     this.circles = [];
 
-    const origin = this.origins().find((o) => o.id === this.originActiu());
-    if (!origin?.coordenades) return;
+    const origin = this.origins().find((o) => o.id === this.activeOrigin());
+    if (!origin?.coordinates) return;
 
-    const { lat, lng } = origin.coordenades;
+    const { lat, lng } = origin.coordinates;
     const t = this.thresholds();
 
     this.circles.push(
@@ -161,10 +161,10 @@ export class App implements OnDestroy {
     this.centreMarkers.forEach((m) => this.map?.removeLayer(m));
     this.centreMarkers = [];
 
-    const origin = this.origins().find((o) => o.id === this.originActiu());
+    const origin = this.origins().find((o) => o.id === this.activeOrigin());
 
-    if (origin?.coordenades) {
-      const { lat, lng } = origin.coordenades;
+    if (origin?.coordinates) {
+      const { lat, lng } = origin.coordinates;
 
       const originIcon = L.divIcon({
         className: 'custom-div-icon',
@@ -176,9 +176,9 @@ export class App implements OnDestroy {
       this.originMarker = L.marker([lat, lng], { icon: originIcon }).addTo(this.map);
     }
 
-    for (const c of this.centresFiltrats()) {
-      if (!c.coordenades) continue;
-      const color = this.geo.colorNivell(c.nivellEsforc || '');
+    for (const c of this.filteredCentres()) {
+      if (!c.coordinates) continue;
+      const color = this.geo.levelColor(c.effortLevel || '');
 
       const centerIcon = L.divIcon({
         className: 'custom-div-icon',
@@ -190,17 +190,17 @@ export class App implements OnDestroy {
         iconAnchor: [6, 18],
       });
 
-      const marker = L.marker([c.coordenades.lat, c.coordenades.lng], { icon: centerIcon }).addTo(this.map);
+      const marker = L.marker([c.coordinates.lat, c.coordinates.lng], { icon: centerIcon }).addTo(this.map);
       marker.bindPopup(
-        `<strong>${c.nom}</strong><br>${c.localitat}<br>${c.distanciaKm ? c.distanciaKm + ' km' : '—'}<br>${c.nivellEsforc ? this.geo.etiquetaNivell(c.nivellEsforc) : ''}`,
+        `<strong>${c.name}</strong><br>${c.locality}<br>${c.distanceKm ? c.distanceKm + ' km' : '—'}<br>${c.effortLevel ? this.geo.levelLabel(c.effortLevel) : ''}`,
       );
       this.centreMarkers.push(marker);
     }
 
     const allCoords: [number, number][] = [];
-    if (origin?.coordenades) allCoords.push([origin.coordenades.lat, origin.coordenades.lng]);
-    for (const c of this.centresFiltrats()) {
-      if (c.coordenades) allCoords.push([c.coordenades.lat, c.coordenades.lng]);
+    if (origin?.coordinates) allCoords.push([origin.coordinates.lat, origin.coordinates.lng]);
+    for (const c of this.filteredCentres()) {
+      if (c.coordinates) allCoords.push([c.coordinates.lat, c.coordinates.lng]);
     }
     if (allCoords.length > 0) {
       this.map.fitBounds(allCoords, { padding: [50, 50] });
@@ -226,341 +226,319 @@ export class App implements OnDestroy {
 
     const file = event.dataTransfer?.files?.[0];
     if (file && file.name.toLowerCase().endsWith('.pdf')) {
-      this.processarFitxer(file);
+      this.processFile(file);
     } else {
-      this.error.set('Arrossega un fitxer PDF vàlid');
+      this.error.set('Drop a valid PDF file');
     }
   }
 
   async onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
-    await this.processarFitxer(input.files[0]);
+    await this.processFile(input.files[0]);
     input.value = '';
   }
 
-  private async processarFitxer(file: File) {
+  private async processFile(file: File) {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      this.error.set('Selecciona un fitxer PDF vàlid');
+      this.error.set('Select a valid PDF file');
       return;
     }
 
     this.error.set('');
-    this.pdfCarregat.set(false);
+    this.pdfLoaded.set(false);
     this.centres.set([]);
-    this.centresFiltrats.set([]);
+    this.filteredCentres.set([]);
 
     try {
-      this.registresBruts = await this.pdfParser.parsearPdf(file);
-      this.pdfCarregat.set(true);
+      this.rawRecords = await this.pdfParser.parsePdf(file);
+      this.pdfLoaded.set(true);
     } catch (e: any) {
-      this.error.set('Error al processar el PDF: ' + e.message);
+      this.error.set('Error processing PDF: ' + e.message);
     }
   }
 
-  private onParseComplet() {
-    const agrupats = this.pdfParser.agruparPerCentre(this.registresBruts);
+  private onParseComplete() {
+    const grouped = this.pdfParser.groupByCentre(this.rawRecords);
     const centresArr: IesCenter[] = [];
 
-    for (const [, c] of agrupats) {
-      const modalitats = [...new Set(c.places.map((p) => p.modalitat).filter(Boolean))] as string[];
+    for (const [, c] of grouped) {
+      const modalities = [...new Set(c.positions.map((p) => p.modality).filter(Boolean))] as string[];
       centresArr.push({
-        codiCentre: c.codiCentre,
-        nom: c.nom,
-        localitat: c.localitat,
-        places: c.places,
+        code: c.code,
+        name: c.name,
+        locality: c.locality,
+        positions: c.positions,
         totalItinerants: c.totalItinerants,
-        modalitats,
+        modalities,
       });
     }
 
     this.centres.set(centresArr);
-    this.centresFiltrats.set(centresArr);
-    this.filtreModalitats.set(new Set(this.modalitatsDisponibles()));
-    this.step.set('modalitats');
+    this.filteredCentres.set(centresArr);
+    this.modalityFilter.set(new Set(this.availableModalities()));
+    this.step.set('modalities');
   }
 
-  continuarAmbModalitats() {
-    if (this.filtreModalitats().size === 0) {
-      this.error.set('Selecciona almenys una modalitat');
+  continueWithModalities() {
+    if (this.modalityFilter().size === 0) {
+      this.error.set('Select at least one modality');
       return;
     }
     this.error.set('');
-    this.step.set('origen');
+    this.step.set('origin');
   }
 
-  async continuarAmbOrigen() {
-    const origin = this.origins().find((o) => o.id === this.originActiu());
-    if (!origin?.coordenades) {
-      this.error.set('Afig un origen de comparació');
+  async continueWithOrigin() {
+    const origin = this.origins().find((o) => o.id === this.activeOrigin());
+    if (!origin?.coordinates) {
+      this.error.set('Add a comparison origin');
       return;
     }
     this.error.set('');
     this.step.set('main');
 
-    const centresFiltrats = this.centresFiltrats();
-    const localitatsUniques = [...new Set(centresFiltrats.map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase()))];
-    if (localitatsUniques.length === 0) return;
+    const filteredCentres = this.filteredCentres();
+    const uniqueLocalities = [...new Set(filteredCentres.map((c) => c.locality.replace(/ - .*$/, '').trim().toLowerCase()))];
+    if (uniqueLocalities.length === 0) return;
 
-    this.geocodificant.set(true);
-    this.calculant.set(true);
+    this.geocoding.set(true);
+    this.calculating.set(true);
 
-    const results = await this.geo.geocodificaBatch(localitatsUniques);
+    const results = await this.geo.geocodeBatch(uniqueLocalities);
 
-    this.geoProgress.set({ actual: 0, total: centresFiltrats.length, missatge: `Calculant distàncies per a ${centresFiltrats.length} centres...` });
+    this.geoProgress.set({ current: 0, total: filteredCentres.length, message: `Calculating distances for ${filteredCentres.length} centres...` });
 
-    for (let i = 0; i < centresFiltrats.length; i++) {
-      const c = centresFiltrats[i];
-      const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
-      const geoCentre = results.get(clau);
+    for (let i = 0; i < filteredCentres.length; i++) {
+      const c = filteredCentres[i];
+      const key = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
+      const geoCentre = results.get(key);
 
       if (geoCentre) {
-        c.coordenades = { lat: geoCentre.lat, lng: geoCentre.lng };
-        c.distanciaKm = parseFloat(
-          this.geo.distanciaHaversine(origin.coordenades.lat, origin.coordenades.lng, geoCentre.lat, geoCentre.lng).toFixed(1),
+        c.coordinates = { lat: geoCentre.lat, lng: geoCentre.lng };
+        c.distanceKm = parseFloat(
+          this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, geoCentre.lat, geoCentre.lng).toFixed(1),
         );
-        c.nivellEsforc = this.geo.nivellEsforc(c.distanciaKm);
+        c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
 
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);
-        this.geoProgress.set({ actual: i + 1, total: centresFiltrats.length, missatge: `Calculant distàncies... ${i + 1}/${centresFiltrats.length}` });
+        this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: `Calculating distances... ${i + 1}/${filteredCentres.length}` });
       }
     }
 
     this.centres.set([...this.centres()]);
-    this.aplicarFiltre();
+    this.applyFilter();
     this.updateMap();
 
-    this.geocodificant.set(false);
-    this.calculant.set(false);
-    this.geoProgress.set({ actual: 0, total: 0, missatge: '' });
+    this.geocoding.set(false);
+    this.calculating.set(false);
+    this.geoProgress.set({ current: 0, total: 0, message: '' });
   }
 
-  private async localitzarCentres() {
-    const localitats = [...new Set(this.centres().map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase()))];
-    if (localitats.length === 0) return;
-
-    this.geoProgress.set({ actual: 0, total: localitats.length, missatge: `Localitzant ${localitats.length} centres...` });
-
-    const results = await this.geo.geocodificaBatch(localitats);
-
-    const centresActuals = this.centres();
-    for (const c of centresActuals) {
-      const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
-      const geo = results.get(clau);
-      if (geo) {
-        c.coordenades = { lat: geo.lat, lng: geo.lng };
-      }
-    }
-
-    this.centres.set([...centresActuals]);
-    this.updateMap();
-    this.geoProgress.set({ actual: 0, total: 0, missatge: '' });
-  }
-
-  canviarVista(vista: ViewType) {
-    this.viewActual.set(vista);
+  changeView(view: ViewType) {
+    this.currentView.set(view);
     setTimeout(() => this.map?.invalidateSize(), 50);
   }
 
-  async afegirOrigen() {
-    const nom = this.nouOriginNom().trim();
-    if (!nom) return;
+  async addOrigin() {
+    const name = this.newOriginName().trim();
+    if (!name) return;
 
-    this.nouOriginNom.set('');
+    this.newOriginName.set('');
     this.error.set('');
-    this.geocodificant.set(true);
-    this.calculant.set(true);
-    this.geoProgress.set({ actual: 0, total: 0, missatge: 'Geocodificant origen...' });
+    this.geocoding.set(true);
+    this.calculating.set(true);
+    this.geoProgress.set({ current: 0, total: 0, message: 'Geocoding origin...' });
 
-    const geoOrigen = await this.geo.geocodifica(nom);
-    if (!geoOrigen) {
-      this.error.set(`No s'ha pogut geocodificar "${nom}". Prova amb un nom de població.`);
-      this.geocodificant.set(false);
-      this.calculant.set(false);
+    const geoOrigin = await this.geo.geocode(name);
+    if (!geoOrigin) {
+      this.error.set(`Could not geocode "${name}". Try with a town name.`);
+      this.geocoding.set(false);
+      this.calculating.set(false);
       return;
     }
 
     const id = Date.now().toString();
-    const nouOrigen: Origen = {
+    const newOrigin: Origin = {
       id,
-      nom,
-      coordenades: { lat: geoOrigen.lat, lng: geoOrigen.lng },
+      name,
+      coordinates: { lat: geoOrigin.lat, lng: geoOrigin.lng },
     };
 
-    this.origins.update((o) => [...o, nouOrigen]);
-    this.originActiu.set(id);
+    this.origins.update((o) => [...o, newOrigin]);
+    this.activeOrigin.set(id);
 
-    if (this.step() !== 'origen') {
-      await this.calcularDistanciesPerOrigen(nouOrigen);
+    if (this.step() !== 'origin') {
+      await this.calculateDistancesForOrigin(newOrigin);
     }
 
-    this.geocodificant.set(false);
-    if (this.step() !== 'origen') this.calculant.set(false);
-    this.geoProgress.set({ actual: 0, total: 0, missatge: '' });
+    this.geocoding.set(false);
+    if (this.step() !== 'origin') this.calculating.set(false);
+    this.geoProgress.set({ current: 0, total: 0, message: '' });
   }
 
-  async seleccionarOrigen(id: string) {
-    this.originActiu.set(id);
+  async selectOrigin(id: string) {
+    this.activeOrigin.set(id);
     const origin = this.origins().find((o) => o.id === id);
-    if (origin?.coordenades) {
-      await this.calcularDistanciesPerOrigen(origin);
+    if (origin?.coordinates) {
+      await this.calculateDistancesForOrigin(origin);
     }
     this.updateMap();
   }
 
-  eliminarOrigen(id: string) {
+  removeOrigin(id: string) {
     this.origins.update((o) => o.filter((x) => x.id !== id));
-    if (this.originActiu() === id) {
-      const restants = this.origins();
-      this.originActiu.set(restants.length > 0 ? restants[restants.length - 1].id : '');
+    if (this.activeOrigin() === id) {
+      const remaining = this.origins();
+      this.activeOrigin.set(remaining.length > 0 ? remaining[remaining.length - 1].id : '');
     }
     this.updateMap();
   }
 
-  async calcularDistanciesPerOrigen(origen: Origen) {
-    if (!origen.coordenades) return;
+  async calculateDistancesForOrigin(origin: Origin) {
+    if (!origin.coordinates) return;
 
-    const centresActuals = this.step() === 'main' ? this.centresFiltrats() : this.centres();
-    const localitatsUniques = [...new Set(centresActuals.map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase()))];
+    const currentCentres = this.step() === 'main' ? this.filteredCentres() : this.centres();
+    const uniqueLocalities = [...new Set(currentCentres.map((c) => c.locality.replace(/ - .*$/, '').trim().toLowerCase()))];
 
-    if (localitatsUniques.length === 0) return;
+    if (uniqueLocalities.length === 0) return;
 
-    // Only geocode localities that don't have coordinates yet
-    const pendents = localitatsUniques.filter((loc) => {
-      const c = centresActuals.find((x) => x.localitat.replace(/ - .*$/, '').trim().toLowerCase() === loc);
-      return !c?.coordenades;
+    // Only geocode localities without coordinates yet
+    const pending = uniqueLocalities.filter((loc) => {
+      const c = currentCentres.find((x) => x.locality.replace(/ - .*$/, '').trim().toLowerCase() === loc);
+      return !c?.coordinates;
     });
 
-    if (pendents.length > 0) {
-      this.geoProgress.set({ actual: 0, total: pendents.length, missatge: `Geocodificant ${pendents.length} localitats noves...` });
-      await this.geo.geocodificaBatch(pendents);
+    if (pending.length > 0) {
+      this.geoProgress.set({ current: 0, total: pending.length, message: `Geocoding ${pending.length} new localities...` });
+      await this.geo.geocodeBatch(pending);
     }
 
-    this.geoProgress.set({ actual: 0, total: centresActuals.length, missatge: `Calculant distàncies per a ${centresActuals.length} centres...` });
+    this.geoProgress.set({ current: 0, total: currentCentres.length, message: `Calculating distances for ${currentCentres.length} centres...` });
 
-    for (let i = 0; i < centresActuals.length; i++) {
-      const c = centresActuals[i];
-      const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
-      const geoCentre = this.geo.consultaCache(clau);
+    for (let i = 0; i < currentCentres.length; i++) {
+      const c = currentCentres[i];
+      const key = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
+      const geoCentre = this.geo.getCached(key);
 
       if (geoCentre) {
-        c.coordenades = { lat: geoCentre.lat, lng: geoCentre.lng };
-        c.distanciaKm = parseFloat(
-          this.geo.distanciaHaversine(origen.coordenades.lat, origen.coordenades.lng, geoCentre.lat, geoCentre.lng).toFixed(1),
+        c.coordinates = { lat: geoCentre.lat, lng: geoCentre.lng };
+        c.distanceKm = parseFloat(
+          this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, geoCentre.lat, geoCentre.lng).toFixed(1),
         );
-        c.nivellEsforc = this.geo.nivellEsforc(c.distanciaKm);
+        c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
 
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);
-        this.geoProgress.set({ actual: i + 1, total: centresActuals.length, missatge: `Calculant distàncies... ${i + 1}/${centresActuals.length}` });
+        this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: `Calculating distances... ${i + 1}/${currentCentres.length}` });
       }
     }
 
     this.centres.set([...this.centres()]);
-    this.aplicarFiltre();
+    this.applyFilter();
     this.updateMap();
   }
 
-  async toggleModalitat(m: string) {
-    this.filtreModalitats.update((s) => {
-      const nou = new Set(s);
-      if (nou.has(m)) nou.delete(m); else nou.add(m);
-      return nou;
+  async toggleModality(m: string) {
+    this.modalityFilter.update((s) => {
+      const updated = new Set(s);
+      if (updated.has(m)) updated.delete(m); else updated.add(m);
+      return updated;
     });
-    this.aplicarFiltre();
+    this.applyFilter();
 
     if (this.step() === 'main') {
-      const centresVisibles = this.centresFiltrats();
-      const localitatsSenseGeo = [...new Set(
-        centresVisibles
-          .filter((c) => !c.coordenades)
-          .map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase())
+      const visibleCentres = this.filteredCentres();
+      const localitiesWithoutGeo = [...new Set(
+        visibleCentres
+          .filter((c) => !c.coordinates)
+          .map((c) => c.locality.replace(/ - .*$/, '').trim().toLowerCase())
       )];
-      if (localitatsSenseGeo.length > 0) {
-        const results = await this.geo.geocodificaBatch(localitatsSenseGeo);
+      if (localitiesWithoutGeo.length > 0) {
+        const results = await this.geo.geocodeBatch(localitiesWithoutGeo);
         for (const c of this.centres()) {
-          if (c.coordenades) continue;
-          const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
-          const geo = results.get(clau);
+          if (c.coordinates) continue;
+          const key = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
+          const geo = results.get(key);
           if (geo) {
-            c.coordenades = { lat: geo.lat, lng: geo.lng };
+            c.coordinates = { lat: geo.lat, lng: geo.lng };
           }
         }
         this.centres.set([...this.centres()]);
-        this.aplicarFiltre();
+        this.applyFilter();
         this.updateMap();
       }
     }
   }
 
-  modalitatSeleccionada(m: string): boolean {
-    return this.filtreModalitats().has(m);
+  isModalitySelected(m: string): boolean {
+    return this.modalityFilter().has(m);
   }
 
-  aplicarFiltre() {
-    let resultats = [...this.centres()];
+  applyFilter() {
+    let results = [...this.centres()];
 
-    const cerca = this.cercaText().toLowerCase().trim();
-    if (cerca) {
-      resultats = resultats.filter(
-        (c) => c.nom.toLowerCase().includes(cerca) || c.localitat.toLowerCase().includes(cerca),
+    const search = this.searchText().toLowerCase().trim();
+    if (search) {
+      results = results.filter(
+        (c) => c.name.toLowerCase().includes(search) || c.locality.toLowerCase().includes(search),
       );
     }
 
-    if (this.filtreLocalitat()) {
-      resultats = resultats.filter((c) => c.localitat === this.filtreLocalitat());
+    if (this.localityFilter()) {
+      results = results.filter((c) => c.locality === this.localityFilter());
     }
 
-    if (this.filtreNivell()) {
-      resultats = resultats.filter((c) => c.nivellEsforc === this.filtreNivell());
+    if (this.levelFilter()) {
+      results = results.filter((c) => c.effortLevel === this.levelFilter());
     }
 
-    if (this.filtreItinerants()) {
-      resultats = resultats.filter((c) => (c.totalItinerants ?? 0) > 0);
+    if (this.itinerantFilter()) {
+      results = results.filter((c) => (c.totalItinerants ?? 0) > 0);
     }
 
-    if (this.filtreModalitats().size > 0) {
-      resultats = resultats.filter((c) => c.modalitats?.some((m) => this.filtreModalitats().has(m)));
+    if (this.modalityFilter().size > 0) {
+      results = results.filter((c) => c.modalities?.some((m) => this.modalityFilter().has(m)));
     }
 
-    if (this.ordenarPer() === 'distancia') {
-      resultats.sort((a, b) => (a.distanciaKm ?? Infinity) - (b.distanciaKm ?? Infinity));
+    if (this.sortBy() === 'distance') {
+      results.sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
     } else {
-      resultats.sort((a, b) => a.nom.localeCompare(b.nom));
+      results.sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    this.centresFiltrats.set(resultats);
+    this.filteredCentres.set(results);
     this.updateMap();
   }
 
-  getColorNivell(nivell?: string): string {
-    return this.geo.colorNivell(nivell || '');
+  getLevelColor(level?: string): string {
+    return this.geo.levelColor(level || '');
   }
 
-  getEtiquetaNivell(nivell?: string): string {
-    return this.geo.etiquetaNivell(nivell || '');
+  getLevelLabel(level?: string): string {
+    return this.geo.levelLabel(level || '');
   }
 
-  getDescripcioNivell(nivell?: string): string {
-    return this.geo.descripcioNivell(nivell || '');
+  getLevelDescription(level?: string): string {
+    return this.geo.levelDescription(level || '');
   }
 
-  tornarALanding() {
+  backToLanding() {
     this.step.set('landing');
-    this.pdfCarregat.set(false);
+    this.pdfLoaded.set(false);
     this.centres.set([]);
-    this.centresFiltrats.set([]);
+    this.filteredCentres.set([]);
     this.error.set('');
   }
 
-  carregarPdfExemple() {
+  loadSamplePdf() {
     this.error.set('');
-    this.pdfCarregat.set(false);
+    this.pdfLoaded.set(false);
     this.centres.set([]);
-    this.centresFiltrats.set([]);
+    this.filteredCentres.set([]);
 
     fetch('Vacants_Supr_Despl_Secundaria_2.pdf')
       .then((res) => res.blob())
@@ -575,6 +553,6 @@ export class App implements OnDestroy {
           input.dispatchEvent(new Event('change'));
         }
       })
-      .catch((e) => this.error.set('Error carregant el PDF: ' + e.message));
+      .catch((e) => this.error.set('Error loading PDF: ' + e.message));
   }
 }

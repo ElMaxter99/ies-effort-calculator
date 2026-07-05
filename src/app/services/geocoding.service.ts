@@ -12,7 +12,7 @@ const CACHE_KEY = 'ies_geo_cache';
 @Injectable({ providedIn: 'root' })
 export class GeocodingService {
   thresholds: EffortThresholds = { baix: 5, moderat: 15, alt: 30 };
-  progress = signal({ actual: 0, total: 0, missatge: '' });
+  progress = signal({ current: 0, total: 0, message: '' });
 
   private cache = new Map<string, GeoResult>();
   private lastRequestTime = 0;
@@ -27,8 +27,8 @@ export class GeocodingService {
       const raw = localStorage.getItem(CACHE_KEY);
       if (raw) {
         const data = JSON.parse(raw) as [string, { lat: number; lng: number; displayName: string }][];
-        for (const [clau, val] of data) {
-          this.cache.set(clau, val);
+        for (const [key, val] of data) {
+          this.cache.set(key, val);
         }
       }
     } catch {
@@ -45,14 +45,14 @@ export class GeocodingService {
     }
   }
 
-  async geocodifica(lloc: string): Promise<GeoResult | null> {
-    const clau = lloc.toLowerCase().trim();
-    if (this.cache.has(clau)) return this.cache.get(clau)!;
+  async geocode(place: string): Promise<GeoResult | null> {
+    const key = place.toLowerCase().trim();
+    if (this.cache.has(key)) return this.cache.get(key)!;
 
-    for (let intent = 0; intent < 3; intent++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       await this.rateLimit();
 
-      const query = encodeURIComponent(`${lloc}, Comunitat Valenciana, Spain`);
+      const query = encodeURIComponent(`${place}, Comunitat Valenciana, Spain`);
       const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&accept-language=ca`;
 
       try {
@@ -61,23 +61,23 @@ export class GeocodingService {
         });
 
         if (res.status === 429) {
-          const espera = 2000 * (intent + 1);
-          await new Promise((r) => setTimeout(r, espera));
+          const wait = 2000 * (attempt + 1);
+          await new Promise((r) => setTimeout(r, wait));
           this.lastRequestTime = 0;
           continue;
         }
 
-        const dades = await res.json();
+        const data = await res.json();
 
-        if (dades && dades.length > 0) {
-          const resultat: GeoResult = {
-            lat: parseFloat(dades[0].lat),
-            lng: parseFloat(dades[0].lon),
-            displayName: dades[0].display_name,
+        if (data && data.length > 0) {
+          const result: GeoResult = {
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon),
+            displayName: data[0].display_name,
           };
-          this.cache.set(clau, resultat);
+          this.cache.set(key, result);
           this.saveCache();
-          return resultat;
+          return result;
         }
         return null;
       } catch {
@@ -87,30 +87,30 @@ export class GeocodingService {
     return null;
   }
 
-  async geocodificaBatch(localitats: string[]): Promise<Map<string, GeoResult | null>> {
-    const uniques = [...new Set(localitats.map((l) => l.replace(/ - .*$/, '').trim().toLowerCase()))];
+  async geocodeBatch(places: string[]): Promise<Map<string, GeoResult | null>> {
+    const unique = [...new Set(places.map((p) => p.replace(/ - .*$/, '').trim().toLowerCase()))];
     const results = new Map<string, GeoResult | null>();
-    const pendents: string[] = [];
+    const pending: string[] = [];
 
-    for (const loc of uniques) {
+    for (const loc of unique) {
       const cached = this.cache.get(loc);
       if (cached) {
         results.set(loc, cached);
       } else {
-        pendents.push(loc);
+        pending.push(loc);
       }
     }
 
-    this.progress.set({ actual: 0, total: pendents.length, missatge: `Geocodificant localitats...` });
+    this.progress.set({ current: 0, total: pending.length, message: `Geocoding localities...` });
 
-    for (let i = 0; i < pendents.length; i++) {
-      const loc = pendents[i];
-      const result = await this.geocodifica(loc);
+    for (let i = 0; i < pending.length; i++) {
+      const loc = pending[i];
+      const result = await this.geocode(loc);
       results.set(loc, result);
-      this.progress.set({ actual: i + 1, total: pendents.length, missatge: `Geocodificant ${i + 1} de ${pendents.length} localitats...` });
+      this.progress.set({ current: i + 1, total: pending.length, message: `Geocoding ${i + 1} of ${pending.length} localities...` });
     }
 
-    this.progress.set({ actual: pendents.length, total: pendents.length, missatge: `Geocodificació completada (${pendents.length} localitats)` });
+    this.progress.set({ current: pending.length, total: pending.length, message: `Geocoding complete (${pending.length} localities)` });
     return results;
   }
 
@@ -126,7 +126,16 @@ export class GeocodingService {
     await this.requestLock;
   }
 
-  distanciaHaversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  getCached(key: string): GeoResult | undefined {
+    return this.cache.get(key);
+  }
+
+  clearCache() {
+    this.cache.clear();
+    localStorage.removeItem(CACHE_KEY);
+  }
+
+  haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
     const R = 6371;
     const dLat = this.toRad(lat2 - lat1);
     const dLng = this.toRad(lng2 - lng1);
@@ -136,15 +145,15 @@ export class GeocodingService {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
-  nivellEsforc(distanciaKm: number): string {
-    if (distanciaKm < this.thresholds.baix) return 'baix';
-    if (distanciaKm < this.thresholds.moderat) return 'moderat';
-    if (distanciaKm < this.thresholds.alt) return 'alt';
+  effortLevel(distanceKm: number): string {
+    if (distanceKm < this.thresholds.baix) return 'baix';
+    if (distanceKm < this.thresholds.moderat) return 'moderat';
+    if (distanceKm < this.thresholds.alt) return 'alt';
     return 'molt alt';
   }
 
-  colorNivell(nivell: string): string {
-    switch (nivell) {
+  levelColor(level: string): string {
+    switch (level) {
       case 'baix': return '#4caf50';
       case 'moderat': return '#ff9800';
       case 'alt': return '#f44336';
@@ -153,36 +162,27 @@ export class GeocodingService {
     }
   }
 
-  etiquetaNivell(nivell: string): string {
-    switch (nivell) {
+  levelLabel(level: string): string {
+    switch (level) {
       case 'baix': return 'Baix';
       case 'moderat': return 'Moderat';
       case 'alt': return 'Alt';
       case 'molt alt': return 'Molt Alt';
-      default: return 'Desconegut';
+      default: return 'Unknown';
     }
   }
 
-  descripcioNivell(nivell: string): string {
-    switch (nivell) {
-      case 'baix': return `< ${this.thresholds.baix} km - Desplaçament còmode`;
-      case 'moderat': return `${this.thresholds.baix}-${this.thresholds.moderat} km - Desplaçament raonable`;
-      case 'alt': return `${this.thresholds.moderat}-${this.thresholds.alt} km - Desplaçament llarg`;
-      case 'molt alt': return `> ${this.thresholds.alt} km - Desplaçament molt llarg`;
+  levelDescription(level: string): string {
+    switch (level) {
+      case 'baix': return `< ${this.thresholds.baix} km - Comfortable commute`;
+      case 'moderat': return `${this.thresholds.baix}-${this.thresholds.moderat} km - Reasonable commute`;
+      case 'alt': return `${this.thresholds.moderat}-${this.thresholds.alt} km - Long commute`;
+      case 'molt alt': return `> ${this.thresholds.alt} km - Very long commute`;
       default: return '';
     }
   }
 
-  consultaCache(clau: string): GeoResult | undefined {
-    return this.cache.get(clau);
-  }
-
-  esborraCache() {
-    this.cache.clear();
-    localStorage.removeItem(CACHE_KEY);
-  }
-
-  private toRad(valor: number): number {
-    return (valor * Math.PI) / 180;
+  private toRad(value: number): number {
+    return (value * Math.PI) / 180;
   }
 }

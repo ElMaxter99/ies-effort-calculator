@@ -1,14 +1,14 @@
 export interface IesRow {
-  num: number;
+  number: number;
   centre: string;
-  localitat: string;
-  codiCentre: string;
-  codiLloc: string;
-  observacions: string;
-  itinerant?: boolean;
-  centreItinerant?: string;
-  hores?: string;
-  modalitat?: string;
+  locality: string;
+  code: string;
+  locationCode: string;
+  observations: string;
+  isItinerant?: boolean;
+  itinerantCentre?: string;
+  hours?: string;
+  modality?: string;
 }
 
 export interface EffortThresholds {
@@ -18,28 +18,28 @@ export interface EffortThresholds {
 }
 
 export interface IesCenter {
-  codiCentre: string;
-  nom: string;
-  localitat: string;
-  coordenades?: { lat: number; lng: number };
-  places: IesRow[];
-  distanciaKm?: number;
-  nivellEsforc?: string;
+  code: string;
+  name: string;
+  locality: string;
+  coordinates?: { lat: number; lng: number };
+  positions: IesRow[];
+  distanceKm?: number;
+  effortLevel?: string;
   totalItinerants?: number;
-  modalitats?: string[];
+  modalities?: string[];
 }
 
-export interface ProcesInfo {
-  paginaActual: number;
-  totalPagines: number;
-  percentatge: number;
-  missatge: string;
+export interface ProcessInfo {
+  currentPage: number;
+  totalPages: number;
+  percentage: number;
+  message: string;
 }
 
-export type NivellEsforc = 'baix' | 'moderat' | 'alt' | 'molt alt';
+export type EffortLevel = 'baix' | 'moderat' | 'alt' | 'molt alt';
 
-export interface Origen {
+export interface Origin {
   id: string;
-  nom: string;
-  coordenades?: { lat: number; lng: number };
+  name: string;
+  coordinates?: { lat: number; lng: number };
 }

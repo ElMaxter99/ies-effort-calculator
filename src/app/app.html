@@ -19,15 +19,15 @@
         <div class="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm">{{ error() }}</div>
       }
 
-      @if (proces() && proces()!.totalPagines > 0 && proces()!.percentatge < 100) {
+      @if (process() && process()!.totalPages > 0 && process()!.percentage < 100) {
         <div class="border-2 border-primary/20 rounded-2xl p-12 bg-primary-container/5">
           <div class="flex flex-col items-center gap-4">
             <div class="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p class="text-label-md font-medium text-on-surface">Processant PDF...</p>
+            <p class="text-label-md font-medium text-on-surface">Processing PDF...</p>
             <div class="w-full max-w-xs bg-outline-variant rounded-full h-2">
-              <div class="h-2 rounded-full bg-primary transition-all" [style.width.%]="proces()!.percentatge"></div>
+              <div class="h-2 rounded-full bg-primary transition-all" [style.width.%]="process()!.percentage"></div>
             </div>
-            <p class="text-xs text-on-surface-variant">{{ proces()!.missatge }}</p>
+            <p class="text-xs text-on-surface-variant">{{ process()!.message }}</p>
           </div>
         </div>
       } @else {
@@ -38,48 +38,48 @@
              [class.hover:bg-surface-container-high]="!dragging()"
              (click)="landingPdfInput.click()">
           <span class="material-symbols-outlined text-5xl text-outline mb-4 block">cloud_upload</span>
-          <p class="text-label-md font-medium text-on-surface mb-1">Arrossega el PDF ací o fes clic per a seleccionar-lo</p>
-          <p class="text-xs text-outline">Només fitxers PDF</p>
+          <p class="text-label-md font-medium text-on-surface mb-1">Drop the PDF here or click to select</p>
+          <p class="text-xs text-outline">Valid PDF files only</p>
           <input type="file" #landingPdfInput accept=".pdf" (change)="onFileSelected($event)" class="hidden" />
         </div>
 
         <div class="mt-6">
-          <p class="text-xs text-outline mb-3">o prova amb un fitxer d'exemple</p>
+          <p class="text-xs text-outline mb-3">or try with a sample file</p>
           <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-label-md text-on-surface-variant hover:bg-surface-container transition-colors"
-                  (click)="carregarPdfExemple()">
+                  (click)="loadSamplePdf()">
             <span class="material-symbols-outlined text-[18px]">description</span>
-            Carregar PDF d'exemple
+            Load sample PDF
           </button>
         </div>
 
         <div class="mt-10 flex justify-center gap-8 text-xs text-outline">
           <div class="flex flex-col items-center gap-1">
             <span class="material-symbols-outlined text-xl">map</span>
-            <span>Mapa interactiu</span>
+            <span>Interactive map</span>
           </div>
           <div class="flex flex-col items-center gap-1">
             <span class="material-symbols-outlined text-xl">table_chart</span>
-            <span>Taula de dades</span>
+            <span>Data table</span>
           </div>
           <div class="flex flex-col items-center gap-1">
             <span class="material-symbols-outlined text-xl">straighten</span>
-            <span>Càlcul de distàncies</span>
+            <span>Distance calculation</span>
           </div>
         </div>
       }
     </div>
   </div>
-  } @else if (step() === 'modalitats') {
-  <!-- Modalitat selection step -->
+  } @else if (step() === 'modalities') {
+  <!-- Modality selection step -->
   <div class="flex-1 flex items-center justify-center p-8">
     <div class="max-w-xl w-full">
       <div class="mb-8 text-center">
         <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary flex items-center justify-center">
           <span class="material-symbols-outlined text-[28px] text-on-primary">school</span>
         </div>
-        <h2 class="text-headline-md font-extrabold text-primary mb-2">Selecciona les modalitats</h2>
+        <h2 class="text-headline-md font-extrabold text-primary mb-2">Select modalities</h2>
         <p class="text-body-md text-on-surface-variant">
-          Tria les modalitats que t'interessen per a filtrar les places vacants.
+          Choose the modalities you are interested in to filter the available positions.
         </p>
       </div>
 
@@ -90,33 +90,33 @@
       <div class="mb-6">
         <div class="relative" (click)="$event.stopPropagation()">
           <div class="flex items-center gap-1 border border-outline-variant rounded-lg px-3 py-2 bg-surface-container-lowest cursor-text flex-wrap"
-               (click)="mostrarDropdownModalitats.set(true)">
-            @for (m of filtreModalitats(); track m) {
+               (click)="showModalityDropdown.set(true)">
+            @for (m of modalityFilter(); track m) {
               <span class="text-xs bg-primary-container text-on-primary-container px-2 py-1 rounded-full flex items-center gap-1">
                 {{ m }}
-                <span class="material-symbols-outlined text-xs cursor-pointer" (click)="toggleModalitat(m); $event.stopPropagation()">close</span>
+                <span class="material-symbols-outlined text-xs cursor-pointer" (click)="toggleModality(m); $event.stopPropagation()">close</span>
               </span>
             }
             <input class="flex-1 text-sm outline-none bg-transparent min-w-[120px]"
-                   placeholder="Buscar modalitat..."
-                   [value]="cercaModalitat()"
-                   (input)="cercaModalitat.set($any($event.target).value); mostrarDropdownModalitats.set(true)"
-                   (focus)="mostrarDropdownModalitats.set(true)"
-                   (blur)="tancarDropdownModalitats()" />
+                   placeholder="Search modality..."
+                   [value]="modalitySearch()"
+                   (input)="modalitySearch.set($any($event.target).value); showModalityDropdown.set(true)"
+                   (focus)="showModalityDropdown.set(true)"
+                   (blur)="closeModalityDropdown()" />
             <span class="material-symbols-outlined text-outline">arrow_drop_down</span>
           </div>
 
-          @if (mostrarDropdownModalitats()) {
-            @let modalitatsFiltrades = cercaModalitat().trim()
-              ? modalitatsDisponibles().filter(m => m.toLowerCase().includes(cercaModalitat().toLowerCase()))
-              : modalitatsDisponibles();
-            @if (modalitatsFiltrades.length > 0) {
+          @if (showModalityDropdown()) {
+            @let filteredModalities = modalitySearch().trim()
+              ? availableModalities().filter(m => m.toLowerCase().includes(modalitySearch().toLowerCase()))
+              : availableModalities();
+            @if (filteredModalities.length > 0) {
               <div class="absolute left-0 right-0 mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 max-h-60 overflow-y-auto custom-scrollbar">
-                @for (m of modalitatsFiltrades; track m) {
+                @for (m of filteredModalities; track m) {
                   <div class="flex items-center gap-2 px-3 py-2 text-sm text-on-surface hover:bg-surface-container-high cursor-pointer"
-                       [class.font-bold]="modalitatSeleccionada(m)"
-                       (mousedown)="toggleModalitat(m); $event.preventDefault()">
-                    <input type="checkbox" [checked]="modalitatSeleccionada(m)" class="rounded border-outline-variant text-primary focus:ring-primary"
+                       [class.font-bold]="isModalitySelected(m)"
+                       (mousedown)="toggleModality(m); $event.preventDefault()">
+                    <input type="checkbox" [checked]="isModalitySelected(m)" class="rounded border-outline-variant text-primary focus:ring-primary"
                            (click)="$event.stopPropagation()" />
                     {{ m }}
                   </div>
@@ -124,7 +124,7 @@
               </div>
             } @else {
               <div class="absolute left-0 right-0 mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30">
-                <div class="px-3 py-2 text-sm text-outline">No hi ha resultats</div>
+                <div class="px-3 py-2 text-sm text-outline">No results</div>
               </div>
             }
           }
@@ -133,19 +133,19 @@
 
       <div class="flex items-center justify-between">
         <button class="text-sm text-outline hover:text-primary transition-colors"
-                (click)="tornarALanding()">
+                (click)="backToLanding()">
           <span class="material-symbols-outlined text-base align-middle mr-1">arrow_back</span>
-          Tornar
+          Back
         </button>
         <button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-medium text-sm hover:opacity-90 transition-all flex items-center gap-2"
-                (click)="continuarAmbModalitats()">
-          Continuar
+                (click)="continueWithModalities()">
+          Continue
           <span class="material-symbols-outlined text-base">arrow_forward</span>
         </button>
       </div>
     </div>
   </div>
-  } @else if (step() === 'origen') {
+  } @else if (step() === 'origin') {
   <!-- Origin selection step -->
   <div class="flex-1 flex items-center justify-center p-8">
     <div class="max-w-lg w-full">
@@ -153,10 +153,10 @@
         <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary flex items-center justify-center">
           <span class="material-symbols-outlined text-[28px] text-on-primary">location_on</span>
         </div>
-        <h2 class="text-headline-md font-extrabold text-primary mb-2">Afig el teu origen</h2>
+        <h2 class="text-headline-md font-extrabold text-primary mb-2">Add your origin</h2>
         <p class="text-body-md text-on-surface-variant">
-          Escriu la teua localitat d'origen per a calcular distàncies i nivell d'esforç
-          als centres seleccionats.
+          Enter your home location to calculate distances and effort levels
+          to the selected centres.
         </p>
       </div>
 
@@ -167,34 +167,34 @@
       <div class="space-y-3 mb-6">
         @for (o of origins(); track o.id) {
           <div class="flex items-center justify-between p-3 bg-surface rounded-lg border"
-               [class.border-primary]="o.id === originActiu()"
-               [class.border-outline-variant]="o.id !== originActiu()"
+               [class.border-primary]="o.id === activeOrigin()"
+               [class.border-outline-variant]="o.id !== activeOrigin()"
                [class.cursor-pointer]="true"
-               (click)="seleccionarOrigen(o.id)">
+               (click)="selectOrigin(o.id)">
             <span class="flex items-center gap-2 text-sm">
-              <span class="w-2.5 h-2.5 rounded-full" [class.bg-primary]="o.id === originActiu()" [class.bg-outline]="o.id !== originActiu()"></span>
-              @if (o.coordenades) {
+              <span class="w-2.5 h-2.5 rounded-full" [class.bg-primary]="o.id === activeOrigin()" [class.bg-outline]="o.id !== activeOrigin()"></span>
+              @if (o.coordinates) {
                 <span class="material-symbols-outlined text-sm text-primary">check_circle</span>
               }
-              {{ o.nom }}
+              {{ o.name }}
             </span>
             @if (origins().length > 1) {
               <span class="material-symbols-outlined text-sm text-outline cursor-pointer hover:text-error"
-                    (click)="$event.stopPropagation(); eliminarOrigen(o.id)">close</span>
+                    (click)="$event.stopPropagation(); removeOrigin(o.id)">close</span>
             }
           </div>
         }
 
         <div class="relative">
           <input class="w-full text-sm px-3 py-2.5 border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                 placeholder="Escriu una localitat (ex: Alacant)"
-                 [value]="nouOriginNom()"
-                 (input)="nouOriginNom.set($any($event.target).value)"
-                 (keyup.enter)="afegirOrigen()"
-                 [disabled]="geocodificant()" />
+                 placeholder="Enter a location (e.g. Alacant)"
+                 [value]="newOriginName()"
+                 (input)="newOriginName.set($any($event.target).value)"
+                 (keyup.enter)="addOrigin()"
+                 [disabled]="geocoding()" />
           <button class="absolute right-2 top-1/2 -translate-y-1/2"
-                  (click)="afegirOrigen()" [disabled]="!nouOriginNom().trim() || geocodificant()">
-            @if (geocodificant()) {
+                  (click)="addOrigin()" [disabled]="!newOriginName().trim() || geocoding()">
+            @if (geocoding()) {
               <span class="material-symbols-outlined text-primary animate-spin">sync</span>
             } @else {
               <span class="material-symbols-outlined text-primary">add_circle</span>
@@ -203,24 +203,24 @@
         </div>
       </div>
 
-      @if (geocodificant()) {
-        <div class="text-xs text-on-surface-variant text-center mb-4">{{ geoProgress().missatge }}</div>
+      @if (geocoding()) {
+        <div class="text-xs text-on-surface-variant text-center mb-4">{{ geoProgress().message }}</div>
       }
 
       <div class="flex items-center justify-between">
         <button class="text-sm text-outline hover:text-primary transition-colors"
-                (click)="step.set('modalitats')">
+                (click)="step.set('modalities')">
           <span class="material-symbols-outlined text-base align-middle mr-1">arrow_back</span>
-          Tornar
+          Back
         </button>
         <button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-medium text-sm hover:opacity-90 transition-all flex items-center gap-2"
-                [disabled]="!origins().some(o => o.coordenades) || geocodificant()"
-                [class.opacity-50]="!origins().some(o => o.coordenades) || geocodificant()"
-                (click)="continuarAmbOrigen()">
-          @if (calculant()) {
+                [disabled]="!origins().some(o => o.coordinates) || geocoding()"
+                [class.opacity-50]="!origins().some(o => o.coordinates) || geocoding()"
+                (click)="continueWithOrigin()">
+          @if (calculating()) {
             <span class="material-symbols-outlined text-base animate-spin">sync</span>
           }
-          Calcular
+          Calculate
         </button>
       </div>
     </div>
@@ -233,10 +233,10 @@
       <div class="flex items-center gap-md">
         <label class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer">
           <span class="material-symbols-outlined text-[20px]">upload_file</span>
-          Pujar PDF
+          Upload PDF
           <input type="file" id="pdfInput" accept=".pdf" (change)="onFileSelected($event)" class="hidden" />
         </label>
-        <button class="text-on-surface-variant hover:text-primary transition-colors" (click)="carregarPdfExemple()" title="Usar PDF d'exemple">
+        <button class="text-on-surface-variant hover:text-primary transition-colors" (click)="loadSamplePdf()" title="Use sample PDF">
           <span class="material-symbols-outlined">description</span>
         </button>
         <button class="text-on-surface-variant hover:text-primary transition-colors">
@@ -249,67 +249,67 @@
     <!-- Sidebar -->
     <aside class="w-80 shrink-0 bg-surface-container-low flex flex-col p-md border-r border-outline-variant overflow-y-auto custom-scrollbar">
       <div class="mb-lg">
-        <h2 class="text-headline-sm font-bold text-primary mb-1">Vistes</h2>
-        <p class="text-label-md text-on-surface-variant">Configuració de dades</p>
+        <h2 class="text-headline-sm font-bold text-primary mb-1">Views</h2>
+        <p class="text-label-md text-on-surface-variant">Data configuration</p>
       </div>
 
       <nav class="space-y-1 mb-xl">
-        @let vista = viewActual();
+        @let view = currentView();
         <a class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer"
-           [class.bg-secondary-container]="vista === 'map'"
-           [class.text-on-secondary-container]="vista === 'map'"
-           [class.scale-95]="vista === 'map'"
-           [class.text-on-surface-variant]="vista !== 'map'"
-           [class.hover:bg-surface-container-high]="vista !== 'map'"
-           (click)="canviarVista('map')">
+           [class.bg-secondary-container]="view === 'map'"
+           [class.text-on-secondary-container]="view === 'map'"
+           [class.scale-95]="view === 'map'"
+           [class.text-on-surface-variant]="view !== 'map'"
+           [class.hover:bg-surface-container-high]="view !== 'map'"
+           (click)="changeView('map')">
           <span class="material-symbols-outlined">map</span>
-          <span class="font-label-md">Mapa</span>
+          <span class="font-label-md">Map</span>
         </a>
         <a class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer"
-           [class.bg-secondary-container]="vista === 'table'"
-           [class.text-on-secondary-container]="vista === 'table'"
-           [class.scale-95]="vista === 'table'"
-           [class.text-on-surface-variant]="vista !== 'table'"
-           [class.hover:bg-surface-container-high]="vista !== 'table'"
-           (click)="canviarVista('table')">
+           [class.bg-secondary-container]="view === 'table'"
+           [class.text-on-secondary-container]="view === 'table'"
+           [class.scale-95]="view === 'table'"
+           [class.text-on-surface-variant]="view !== 'table'"
+           [class.hover:bg-surface-container-high]="view !== 'table'"
+           (click)="changeView('table')">
           <span class="material-symbols-outlined">table_chart</span>
-          <span class="font-label-md">Taula</span>
+          <span class="font-label-md">Table</span>
         </a>
         <a class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer"
-           [class.bg-secondary-container]="vista === 'split'"
-           [class.text-on-secondary-container]="vista === 'split'"
-           [class.scale-95]="vista === 'split'"
-           [class.text-on-surface-variant]="vista !== 'split'"
-           [class.hover:bg-surface-container-high]="vista !== 'split'"
-           (click)="canviarVista('split')">
+           [class.bg-secondary-container]="view === 'split'"
+           [class.text-on-secondary-container]="view === 'split'"
+           [class.scale-95]="view === 'split'"
+           [class.text-on-surface-variant]="view !== 'split'"
+           [class.hover:bg-surface-container-high]="view !== 'split'"
+           (click)="changeView('split')">
           <span class="material-symbols-outlined">vertical_split</span>
-          <span class="font-label-md">Visió Dividida</span>
+          <span class="font-label-md">Split View</span>
         </a>
       </nav>
 
       <div class="mb-xl">
         <h3 class="font-bold text-on-surface mb-md flex items-center gap-2">
           <span class="material-symbols-outlined text-[20px]">location_on</span>
-          Orígens de comparació
+          Comparison origins
         </h3>
         <div class="space-y-2 mb-md">
           @for (o of origins(); track o.id) {
             <div class="flex items-center justify-between p-2 bg-surface rounded border border-outline-variant text-label-md"
-                 [class.ring-2]="o.id === originActiu()"
-                 [class.ring-primary]="o.id === originActiu()"
-                 [class.cursor-pointer]="!calculant()"
-                 [class.opacity-60]="calculant() && o.id === origins()[origins().length - 1]?.id"
-                 (click)="!calculant() && seleccionarOrigen(o.id)">
+                 [class.ring-2]="o.id === activeOrigin()"
+                 [class.ring-primary]="o.id === activeOrigin()"
+                 [class.cursor-pointer]="!calculating()"
+                 [class.opacity-60]="calculating() && o.id === origins()[origins().length - 1]?.id"
+                 (click)="!calculating() && selectOrigin(o.id)">
               <span class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full" [class.bg-primary]="o.id === originActiu()" [class.bg-secondary]="o.id !== originActiu()"></span>
-                {{ o.nom }}
+                <span class="w-2 h-2 rounded-full" [class.bg-primary]="o.id === activeOrigin()" [class.bg-secondary]="o.id !== activeOrigin()"></span>
+                {{ o.name }}
               </span>
               <span class="flex items-center gap-1">
-                @if (calculant() && o.id === origins()[origins().length - 1]?.id) {
+                @if (calculating() && o.id === origins()[origins().length - 1]?.id) {
                   <span class="material-symbols-outlined text-sm text-primary animate-spin">sync</span>
                 }
-                @if (origins().length > 1 && !calculant()) {
-                  <span class="material-symbols-outlined text-sm text-outline cursor-pointer hover:text-error" (click)="$event.stopPropagation(); eliminarOrigen(o.id)">close</span>
+                @if (origins().length > 1 && !calculating()) {
+                  <span class="material-symbols-outlined text-sm text-outline cursor-pointer hover:text-error" (click)="$event.stopPropagation(); removeOrigin(o.id)">close</span>
                 }
               </span>
             </div>
@@ -317,13 +317,13 @@
         </div>
         <div class="relative">
           <input class="w-full text-label-md px-3 py-2 border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                 placeholder="Afegir nou origen..."
-                 [value]="nouOriginNom()"
-                 (input)="nouOriginNom.set($any($event.target).value)"
-                 (keyup.enter)="afegirOrigen()"
-                 [disabled]="calculant()" />
-          <button class="absolute right-2 top-1.5" (click)="afegirOrigen()" [disabled]="!nouOriginNom().trim() || calculant()">
-            @if (calculant()) {
+                 placeholder="Add new origin..."
+                 [value]="newOriginName()"
+                 (input)="newOriginName.set($any($event.target).value)"
+                 (keyup.enter)="addOrigin()"
+                 [disabled]="calculating()" />
+          <button class="absolute right-2 top-1.5" (click)="addOrigin()" [disabled]="!newOriginName().trim() || calculating()">
+            @if (calculating()) {
               <span class="material-symbols-outlined text-primary animate-spin">sync</span>
             } @else {
               <span class="material-symbols-outlined text-primary">add_circle</span>
@@ -333,23 +333,23 @@
       </div>
 
       <!-- Progress / status area -->
-      @if (proces() && proces()!.totalPagines > 0) {
+      @if (process() && process()!.totalPages > 0) {
         <div class="mb-xl">
           <div class="w-full bg-outline-variant rounded-full h-2">
-            <div class="h-2 rounded-full bg-primary transition-all" [style.width.%]="proces()!.percentatge"></div>
+            <div class="h-2 rounded-full bg-primary transition-all" [style.width.%]="process()!.percentage"></div>
           </div>
-          <p class="text-xs text-on-surface-variant mt-1">{{ proces()!.missatge }}</p>
+          <p class="text-xs text-on-surface-variant mt-1">{{ process()!.message }}</p>
         </div>
       }
 
-      @if (geocodificant() || calculant()) {
+      @if (geocoding() || calculating()) {
         <div class="mb-xl space-y-1">
           @if (geoProgress().total > 0) {
             <div class="w-full bg-outline-variant rounded-full h-1.5">
-              <div class="h-1.5 rounded-full bg-primary transition-all" [style.width.%]="(geoProgress().actual / geoProgress().total) * 100"></div>
+              <div class="h-1.5 rounded-full bg-primary transition-all" [style.width.%]="(geoProgress().current / geoProgress().total) * 100"></div>
             </div>
           }
-          <p class="text-xs text-on-surface-variant">{{ geoProgress().missatge }}</p>
+          <p class="text-xs text-on-surface-variant">{{ geoProgress().message }}</p>
         </div>
       }
 
@@ -357,11 +357,11 @@
         <div class="mb-xl p-2 bg-error-container text-on-error-container rounded-lg text-xs">{{ error() }}</div>
       }
 
-      @if (pdfCarregat()) {
+      @if (pdfLoaded()) {
         <div class="mb-xl p-2 bg-green-100 text-green-800 rounded-lg text-xs font-medium">
-          {{ totalPlaces() }} registres en {{ totalCentres() }} centres
+          {{ totalPositions() }} positions in {{ totalCenters() }} centres
           @if (totalItinerants() > 0) {
-            <span class="ml-1">({{ totalItinerants() }} itinerants)</span>
+            <span class="ml-1">({{ totalItinerants() }} itinerant)</span>
           }
         </div>
       }
@@ -369,18 +369,18 @@
       <!-- Configurable Legend -->
       <div class="pt-lg border-t border-outline-variant">
         <div class="flex items-center justify-between mb-sm">
-          <h3 class="font-bold text-on-surface text-label-md">Llegenda d'esforç</h3>
-          <button class="text-outline hover:text-primary transition-colors" (click)="mostrarConfig.set(!mostrarConfig())">
-            <span class="material-symbols-outlined text-lg">{{ mostrarConfig() ? 'expand_less' : 'tune' }}</span>
+          <h3 class="font-bold text-on-surface text-label-md">Effort legend</h3>
+          <button class="text-outline hover:text-primary transition-colors" (click)="showConfig.set(!showConfig())">
+            <span class="material-symbols-outlined text-lg">{{ showConfig() ? 'expand_less' : 'tune' }}</span>
           </button>
         </div>
 
-        @if (mostrarConfig()) {
+        @if (showConfig()) {
           @let t = thresholds();
           <div class="mb-md p-2 bg-surface rounded border border-outline-variant space-y-2">
             <div class="flex items-center gap-2">
               <div class="w-3 h-3 rounded-sm bg-green-500 shrink-0"></div>
-              <span class="text-xs text-on-surface-variant">Baix &lt;</span>
+              <span class="text-xs text-on-surface-variant">Low &lt;</span>
               <input class="w-14 text-xs border border-outline-variant rounded px-1 py-0.5 text-center"
                      type="number" min="1" max="100"
                      [value]="t.baix"
@@ -389,7 +389,7 @@
             </div>
             <div class="flex items-center gap-2">
               <div class="w-3 h-3 rounded-sm bg-yellow-500 shrink-0"></div>
-              <span class="text-xs text-on-surface-variant">Moderat &lt;</span>
+              <span class="text-xs text-on-surface-variant">Moderate &lt;</span>
               <input class="w-14 text-xs border border-outline-variant rounded px-1 py-0.5 text-center"
                      type="number" min="1" max="100"
                      [value]="t.moderat"
@@ -398,7 +398,7 @@
             </div>
             <div class="flex items-center gap-2">
               <div class="w-3 h-3 rounded-sm bg-orange-500 shrink-0"></div>
-              <span class="text-xs text-on-surface-variant">Alt &lt;</span>
+              <span class="text-xs text-on-surface-variant">High &lt;</span>
               <input class="w-14 text-xs border border-outline-variant rounded px-1 py-0.5 text-center"
                      type="number" min="1" max="200"
                      [value]="t.alt"
@@ -407,29 +407,29 @@
             </div>
             <div class="flex items-center gap-2">
               <div class="w-3 h-3 rounded-sm bg-red-600 shrink-0"></div>
-              <span class="text-xs text-on-surface-variant">Molt Alt &gt;</span>
+              <span class="text-xs text-on-surface-variant">Very High &gt;</span>
               <span class="text-xs font-medium">{{ t.alt }} km</span>
             </div>
           </div>
         }
 
-        @if (!mostrarConfig()) {
+        @if (!showConfig()) {
           <div class="space-y-3">
             <div class="flex items-center gap-3">
               <div class="w-4 h-4 rounded-sm bg-green-500"></div>
-              <span class="text-xs font-medium text-on-surface-variant">Baix (&lt;{{ thresholds().baix }}km)</span>
+              <span class="text-xs font-medium text-on-surface-variant">Low (&lt;{{ thresholds().baix }}km)</span>
             </div>
             <div class="flex items-center gap-3">
               <div class="w-4 h-4 rounded-sm bg-yellow-500"></div>
-              <span class="text-xs font-medium text-on-surface-variant">Moderat ({{ thresholds().baix }}-{{ thresholds().moderat }}km)</span>
+              <span class="text-xs font-medium text-on-surface-variant">Moderate ({{ thresholds().baix }}-{{ thresholds().moderat }}km)</span>
             </div>
             <div class="flex items-center gap-3">
               <div class="w-4 h-4 rounded-sm bg-orange-500"></div>
-              <span class="text-xs font-medium text-on-surface-variant">Alt ({{ thresholds().moderat }}-{{ thresholds().alt }}km)</span>
+              <span class="text-xs font-medium text-on-surface-variant">High ({{ thresholds().moderat }}-{{ thresholds().alt }}km)</span>
             </div>
             <div class="flex items-center gap-3">
               <div class="w-4 h-4 rounded-sm bg-red-600"></div>
-              <span class="text-xs font-medium text-on-surface-variant">Molt Alt (&gt;{{ thresholds().alt }}km)</span>
+              <span class="text-xs font-medium text-on-surface-variant">Very High (&gt;{{ thresholds().alt }}km)</span>
             </div>
           </div>
         }
@@ -440,85 +440,85 @@
     <main class="flex-1 flex overflow-hidden">
       <!-- Table Section -->
       <section class="flex flex-col bg-white border-r border-outline-variant"
-               [class.w-[40%]]="viewActual() !== 'table'"
-               [class.flex-1]="viewActual() === 'table'">
+               [class.w-[40%]]="currentView() !== 'table'"
+               [class.flex-1]="currentView() === 'table'">
         <div class="p-lg space-y-md border-b border-outline-variant">
           <div class="relative">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
             <input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-label-md focus:ring-1 focus:ring-primary outline-none"
-                   placeholder="Filtrar centres per nom o localitat..."
-                   [value]="cercaText()"
-                   (input)="cercaText.set($any($event.target).value); aplicarFiltre()" />
+                   placeholder="Filter centres by name or locality..."
+                   [value]="searchText()"
+                   (input)="searchText.set($any($event.target).value); applyFilter()" />
           </div>
 
           <!-- Effort level filters -->
           <div class="flex gap-2 flex-wrap">
             <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
-                    [class.bg-surface-container-high]="filtreNivell() === ''"
-                    [class.bg-primary-container]="filtreNivell() !== ''"
-                    [class.text-on-primary]="filtreNivell() !== ''"
-                    (click)="filtreNivell.set(''); aplicarFiltre()">Tots</button>
+                    [class.bg-surface-container-high]="levelFilter() === ''"
+                    [class.bg-primary-container]="levelFilter() !== ''"
+                    [class.text-on-primary]="levelFilter() !== ''"
+                    (click)="levelFilter.set(''); applyFilter()">All</button>
             <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
-                    [class.bg-green-100]="filtreNivell() === 'baix'"
-                    [class.bg-surface-container-high]="filtreNivell() !== 'baix'"
-                    (click)="filtreNivell.set('baix'); aplicarFiltre()">Baix</button>
+                    [class.bg-green-100]="levelFilter() === 'baix'"
+                    [class.bg-surface-container-high]="levelFilter() !== 'baix'"
+                    (click)="levelFilter.set('baix'); applyFilter()">Low</button>
             <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
-                    [class.bg-yellow-100]="filtreNivell() === 'moderat'"
-                    [class.bg-surface-container-high]="filtreNivell() !== 'moderat'"
-                    (click)="filtreNivell.set('moderat'); aplicarFiltre()">Moderat</button>
+                    [class.bg-yellow-100]="levelFilter() === 'moderat'"
+                    [class.bg-surface-container-high]="levelFilter() !== 'moderat'"
+                    (click)="levelFilter.set('moderat'); applyFilter()">Moderate</button>
             <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
-                    [class.bg-orange-100]="filtreNivell() === 'alt'"
-                    [class.bg-surface-container-high]="filtreNivell() !== 'alt'"
-                    (click)="filtreNivell.set('alt'); aplicarFiltre()">Alt</button>
+                    [class.bg-orange-100]="levelFilter() === 'alt'"
+                    [class.bg-surface-container-high]="levelFilter() !== 'alt'"
+                    (click)="levelFilter.set('alt'); applyFilter()">High</button>
             <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
-                    [class.bg-red-100]="filtreNivell() === 'molt alt'"
-                    [class.bg-surface-container-high]="filtreNivell() !== 'molt alt'"
-                    (click)="filtreNivell.set('molt alt'); aplicarFiltre()">Molt Alt</button>
+                    [class.bg-red-100]="levelFilter() === 'molt alt'"
+                    [class.bg-surface-container-high]="levelFilter() !== 'molt alt'"
+                    (click)="levelFilter.set('molt alt'); applyFilter()">Very High</button>
           </div>
 
           <!-- Locality filter: searchable dropdown -->
-          @if (localitats().length > 0) {
+          @if (localities().length > 0) {
             <div class="relative" (click)="$event.stopPropagation()">
               <div class="flex items-center gap-1 border border-outline-variant rounded-lg px-2 py-1 bg-surface-container-lowest cursor-text"
-                   (click)="mostrarDropdownLocalitats.set(true); focussarInputLocalitat()">
-                @if (filtreLocalitat()) {
+                   (click)="showLocalityDropdown.set(true); focusLocalityInput()">
+                @if (localityFilter()) {
                   <span class="text-xs bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded flex items-center gap-1">
-                    {{ filtreLocalitat() }}
-                    <span class="material-symbols-outlined text-xs cursor-pointer" (click)="filtreLocalitat.set(''); aplicarFiltre(); $event.stopPropagation()">close</span>
+                    {{ localityFilter() }}
+                    <span class="material-symbols-outlined text-xs cursor-pointer" (click)="localityFilter.set(''); applyFilter(); $event.stopPropagation()">close</span>
                   </span>
                 }
                 <input #inputLocalitat
                        class="flex-1 text-xs outline-none bg-transparent min-w-[80px]"
-                       placeholder="{{ filtreLocalitat() ? '' : 'Filtrar per localitat...' }}"
-                       [value]="cercaLocalitat()"
-                       (input)="cercaLocalitat.set($any($event.target).value); mostrarDropdownLocalitats.set(true)"
-                       (focus)="mostrarDropdownLocalitats.set(true)"
-                       (blur)="tancarDropdownLocalitat()" />
+                       placeholder="{{ localityFilter() ? '' : 'Filter by locality...' }}"
+                       [value]="localitySearch()"
+                       (input)="localitySearch.set($any($event.target).value); showLocalityDropdown.set(true)"
+                       (focus)="showLocalityDropdown.set(true)"
+                       (blur)="closeLocalityDropdown()" />
                 <span class="material-symbols-outlined text-outline text-sm">arrow_drop_down</span>
               </div>
 
-              @if (mostrarDropdownLocalitats()) {
-                @let localitatsFiltrades = cercaLocalitat().trim()
-                  ? localitats().filter(l => l.toLowerCase().includes(cercaLocalitat().toLowerCase()))
-                  : localitats();
-                @if (localitatsFiltrades.length > 0) {
+              @if (showLocalityDropdown()) {
+                @let filteredLocalities = localitySearch().trim()
+                  ? localities().filter(l => l.toLowerCase().includes(localitySearch().toLowerCase()))
+                  : localities();
+                @if (filteredLocalities.length > 0) {
                   <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto custom-scrollbar">
                     <div class="px-2 py-1.5 text-xs text-outline hover:bg-surface-container-high cursor-pointer"
-                         [class.font-bold]="filtreLocalitat() === ''"
-                         (mousedown)="filtreLocalitat.set(''); cercaLocalitat.set(''); aplicarFiltre(); mostrarDropdownLocalitats.set(false)">
-                      Totes
+                         [class.font-bold]="localityFilter() === ''"
+                         (mousedown)="localityFilter.set(''); localitySearch.set(''); applyFilter(); showLocalityDropdown.set(false)">
+                      All
                     </div>
-                    @for (loc of localitatsFiltrades; track loc) {
+                    @for (loc of filteredLocalities; track loc) {
                       <div class="px-2 py-1.5 text-xs text-on-surface hover:bg-surface-container-high cursor-pointer"
-                           [class.font-bold]="filtreLocalitat() === loc"
-                           (mousedown)="filtreLocalitat.set(loc); cercaLocalitat.set(''); aplicarFiltre(); mostrarDropdownLocalitats.set(false)">
+                           [class.font-bold]="localityFilter() === loc"
+                           (mousedown)="localityFilter.set(loc); localitySearch.set(''); applyFilter(); showLocalityDropdown.set(false)">
                         {{ loc }}
                       </div>
                     }
                   </div>
                 } @else {
                   <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30">
-                    <div class="px-2 py-1.5 text-xs text-outline">No hi ha resultats</div>
+                    <div class="px-2 py-1.5 text-xs text-outline">No results</div>
                   </div>
                 }
               }
@@ -529,46 +529,46 @@
           @if (totalItinerants() > 0) {
             <div class="flex items-center gap-2">
               <label class="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer">
-                <input type="checkbox" [checked]="filtreItinerants()" (change)="filtreItinerants.set($any($event.target).checked); aplicarFiltre()"
+                <input type="checkbox" [checked]="itinerantFilter()" (change)="itinerantFilter.set($any($event.target).checked); applyFilter()"
                        class="rounded border-outline-variant text-primary focus:ring-primary" />
-                Mostrar només itinerants ({{ totalItinerants() }})
+                Show only itinerant ({{ totalItinerants() }})
               </label>
             </div>
           }
 
-          <!-- Modalitat filter (multi-select searchable dropdown) -->
-          @if (modalitatsDisponibles().length > 0) {
+          <!-- Modality filter (multi-select searchable dropdown) -->
+          @if (availableModalities().length > 0) {
             <div class="relative" (click)="$event.stopPropagation()">
-              <label class="text-xs text-on-surface-variant font-medium mb-1 block">Modalitat</label>
+              <label class="text-xs text-on-surface-variant font-medium mb-1 block">Modality</label>
               <div class="flex items-center gap-1 border border-outline-variant rounded-lg px-2 py-1 bg-surface-container-lowest cursor-text flex-wrap"
-                   (click)="mostrarDropdownModalitats.set(true); $event.preventDefault()">
-                @for (m of filtreModalitats(); track m) {
+                   (click)="showModalityDropdown.set(true); $event.preventDefault()">
+                @for (m of modalityFilter(); track m) {
                   <span class="text-xs bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded flex items-center gap-1">
                     {{ m }}
-                    <span class="material-symbols-outlined text-xs cursor-pointer" (click)="toggleModalitat(m); $event.stopPropagation()">close</span>
+                    <span class="material-symbols-outlined text-xs cursor-pointer" (click)="toggleModality(m); $event.stopPropagation()">close</span>
                   </span>
                 }
-                <input #inputModalitat
+                <input #inputModality
                        class="flex-1 text-xs outline-none bg-transparent min-w-[100px]"
-                       placeholder="Filtrar per modalitat..."
-                       [value]="cercaModalitat()"
-                       (input)="cercaModalitat.set($any($event.target).value); mostrarDropdownModalitats.set(true)"
-                       (focus)="mostrarDropdownModalitats.set(true)"
-                       (blur)="tancarDropdownModalitats()" />
+                       placeholder="Filter by modality..."
+                       [value]="modalitySearch()"
+                       (input)="modalitySearch.set($any($event.target).value); showModalityDropdown.set(true)"
+                       (focus)="showModalityDropdown.set(true)"
+                       (blur)="closeModalityDropdown()" />
                 <span class="material-symbols-outlined text-outline text-sm">arrow_drop_down</span>
               </div>
 
-              @if (mostrarDropdownModalitats()) {
-                @let modalitatsFiltrades = cercaModalitat().trim()
-                  ? modalitatsDisponibles().filter(m => m.toLowerCase().includes(cercaModalitat().toLowerCase()))
-                  : modalitatsDisponibles();
-                @if (modalitatsFiltrades.length > 0) {
+              @if (showModalityDropdown()) {
+                @let filteredModalities = modalitySearch().trim()
+                  ? availableModalities().filter(m => m.toLowerCase().includes(modalitySearch().toLowerCase()))
+                  : availableModalities();
+                @if (filteredModalities.length > 0) {
                   <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto custom-scrollbar">
-                    @for (m of modalitatsFiltrades; track m) {
+                    @for (m of filteredModalities; track m) {
                       <div class="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface hover:bg-surface-container-high cursor-pointer"
-                           [class.font-bold]="modalitatSeleccionada(m)"
-                           (mousedown)="toggleModalitat(m); $event.preventDefault()">
-                        <input type="checkbox" [checked]="modalitatSeleccionada(m)" class="rounded border-outline-variant text-primary focus:ring-primary"
+                           [class.font-bold]="isModalitySelected(m)"
+                           (mousedown)="toggleModality(m); $event.preventDefault()">
+                        <input type="checkbox" [checked]="isModalitySelected(m)" class="rounded border-outline-variant text-primary focus:ring-primary"
                                (click)="$event.stopPropagation()" />
                         {{ m }}
                       </div>
@@ -576,7 +576,7 @@
                   </div>
                 } @else {
                   <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30">
-                    <div class="px-2 py-1.5 text-xs text-outline">No hi ha resultats</div>
+                    <div class="px-2 py-1.5 text-xs text-outline">No results</div>
                   </div>
                 }
               }
@@ -585,40 +585,40 @@
         </div>
 
         <div class="flex-1 overflow-y-auto custom-scrollbar">
-          @if (centresFiltrats().length > 0) {
+          @if (filteredCentres().length > 0) {
             <table class="w-full text-left border-collapse">
               <thead class="sticky top-0 bg-surface-container-low border-b border-outline-variant z-20">
                 <tr>
                   <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">IES</th>
-                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Localitat</th>
-                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Distància</th>
-                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Esforç</th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Locality</th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Distance</th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Effort</th>
                   @if (totalItinerants() > 0) {
                     <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant text-center">ITIN</th>
                   }
                 </tr>
               </thead>
               <tbody class="divide-y divide-outline-variant">
-                @for (c of centresFiltrats(); track c.codiCentre) {
+                @for (c of filteredCentres(); track c.code) {
                   <tr class="hover:bg-surface-container transition-colors cursor-pointer group">
-                    <td class="px-4 py-4 text-sm font-semibold text-primary">{{ c.nom }}</td>
-                    <td class="px-4 py-4 text-sm text-on-surface-variant">{{ c.localitat }}</td>
+                    <td class="px-4 py-4 text-sm font-semibold text-primary">{{ c.name }}</td>
+                    <td class="px-4 py-4 text-sm text-on-surface-variant">{{ c.locality }}</td>
                     <td class="px-4 py-4 text-sm text-on-surface">
-                      @if (c.distanciaKm !== undefined) {
-                        {{ c.distanciaKm }} km
+                      @if (c.distanceKm !== undefined) {
+                        {{ c.distanceKm }} km
                       } @else {
                         <span class="text-outline">—</span>
                       }
                     </td>
                     <td class="px-4 py-4">
-                      @if (c.nivellEsforc) {
-                        @let nivell = c.nivellEsforc;
-                        @let colors = nivell === 'baix' ? 'bg-green-100 text-green-800 border-green-200' :
-                                       nivell === 'moderat' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                       nivell === 'alt' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                      @if (c.effortLevel) {
+                        @let level = c.effortLevel;
+                        @let colors = level === 'baix' ? 'bg-green-100 text-green-800 border-green-200' :
+                                       level === 'moderat' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                       level === 'alt' ? 'bg-orange-100 text-orange-800 border-orange-200' :
                                        'bg-red-100 text-red-800 border-red-200';
                         <span class="px-2 py-1 rounded-full text-[10px] font-extrabold uppercase border {{ colors }}">
-                          {{ getEtiquetaNivell(c.nivellEsforc) }}
+                          {{ getLevelLabel(c.effortLevel) }}
                         </span>
                       } @else {
                         <span class="text-outline text-sm">—</span>
@@ -628,7 +628,7 @@
                       <td class="px-4 py-4 text-center">
                         @if ((c.totalItinerants ?? 0) > 0) {
                           <span class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold"
-                                title="{{ c.totalItinerants }} plaça/es itinerant/s">
+                                title="{{ c.totalItinerants }} itinerant position/s">
                             {{ c.totalItinerants }}
                           </span>
                         } @else {
@@ -642,43 +642,43 @@
             </table>
           } @else {
             <div class="flex items-center justify-center h-full text-on-surface-variant text-sm">
-              @if (pdfCarregat()) {
-                Afig un origen al panell lateral per calcular distàncies.
+              @if (pdfLoaded()) {
+                Add an origin in the side panel to calculate distances.
               } @else {
-                Puja un PDF per començar.
+                Upload a PDF to start.
               }
             </div>
           }
         </div>
 
         <div class="p-md bg-surface border-t border-outline-variant flex justify-between items-center shrink-0">
-          <span class="text-xs text-on-surface-variant">Total: {{ centresFiltrats().length }} centres</span>
+          <span class="text-xs text-on-surface-variant">Total: {{ filteredCentres().length }} centres</span>
           <div class="flex gap-2">
             <select class="text-xs border border-outline-variant rounded px-2 py-1 bg-surface"
-                    [value]="ordenarPer()"
-                    (change)="ordenarPer.set($any($event.target).value); aplicarFiltre()">
-              <option value="distancia">Distància</option>
-              <option value="nom">Nom</option>
+                    [value]="sortBy()"
+                    (change)="sortBy.set($any($event.target).value); applyFilter()">
+              <option value="distance">Distance</option>
+              <option value="nom">Name</option>
             </select>
             <button class="flex items-center gap-2 text-primary font-bold text-label-md hover:underline">
               <span class="material-symbols-outlined text-[18px]">download</span>
-              Exportar CSV
+              Export CSV
             </button>
           </div>
         </div>
       </section>
 
       <!-- Map Section -->
-      @if (viewActual() !== 'table') {
+      @if (currentView() !== 'table') {
         <section class="flex-1 relative bg-surface-container-highest overflow-hidden">
           <div id="map" #mapContainer class="h-full w-full z-10"></div>
 
           <div class="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
             <div class="bg-white p-1 rounded-lg shadow-lg border border-outline-variant flex flex-col">
-              <button class="p-2 hover:bg-surface-container transition-colors border-b border-outline-variant" title="Apropar" (click)="map?.zoomIn()">
+              <button class="p-2 hover:bg-surface-container transition-colors border-b border-outline-variant" title="Zoom in" (click)="map?.zoomIn()">
                 <span class="material-symbols-outlined">add</span>
               </button>
-              <button class="p-2 hover:bg-surface-container transition-colors" title="Allunyar" (click)="map?.zoomOut()">
+              <button class="p-2 hover:bg-surface-container transition-colors" title="Zoom out" (click)="map?.zoomOut()">
                 <span class="material-symbols-outlined">remove</span>
               </button>
             </div>
@@ -687,8 +687,8 @@
           <div class="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-primary/20 flex items-center gap-2">
             <span class="w-2.5 h-2.5 bg-primary rounded-full"></span>
             <span class="text-xs font-bold text-primary">
-              @let origin = origins().find(o => o.id === originActiu());
-              Origen: {{ origin?.nom ?? 'Sense seleccionar' }}
+              @let origin = origins().find(o => o.id === activeOrigin());
+              Origin: {{ origin?.name ?? 'Not selected' }}
             </span>
           </div>
         </section>

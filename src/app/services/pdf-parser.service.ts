@@ -1,47 +1,47 @@
 import { Injectable, signal } from '@angular/core';
-import { IesRow, ProcesInfo } from '../types';
+import { IesRow, ProcessInfo } from '../types';
 
 @Injectable({ providedIn: 'root' })
 export class PdfParserService {
-  proces = signal<ProcesInfo>({ paginaActual: 0, totalPagines: 0, percentatge: 0, missatge: '' });
+  process = signal<ProcessInfo>({ currentPage: 0, totalPages: 0, percentage: 0, message: '' });
 
-  async parsearPdf(file: File): Promise<IesRow[]> {
+  async parsePdf(file: File): Promise<IesRow[]> {
     const pdfjsLib = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
     const data = new Uint8Array(await file.arrayBuffer());
     const pdf = await pdfjsLib.getDocument({ data }).promise;
 
-    this.proces.set({ paginaActual: 0, totalPagines: pdf.numPages, percentatge: 0, missatge: 'Iniciant càrrega...' });
+    this.process.set({ currentPage: 0, totalPages: pdf.numPages, percentage: 0, message: 'Starting load...' });
 
-    const totesLesFiles: IesRow[] = [];
+    const allRows: IesRow[] = [];
 
     for (let i = 1; i <= pdf.numPages; i++) {
-      this.proces.set({
-        paginaActual: i,
-        totalPagines: pdf.numPages,
-        percentatge: Math.round((i / pdf.numPages) * 100),
-        missatge: `Processant pàgina ${i} de ${pdf.numPages}...`
+      this.process.set({
+        currentPage: i,
+        totalPages: pdf.numPages,
+        percentage: Math.round((i / pdf.numPages) * 100),
+        message: `Processing page ${i} of ${pdf.numPages}...`,
       });
 
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
 
-      const modalitat = this.detectarModalitat(content.items);
-      const filesPagina = this.agruparPerFila(content.items, modalitat);
-      totesLesFiles.push(...filesPagina);
+      const modality = this.detectModality(content.items);
+      const pageRows = this.groupByRow(content.items, modality);
+      allRows.push(...pageRows);
     }
 
-    this.proces.set({
-      paginaActual: pdf.numPages,
-      totalPagines: pdf.numPages,
-      percentatge: 100,
-      missatge: `Complet! ${totesLesFiles.length} registres processats.`
+    this.process.set({
+      currentPage: pdf.numPages,
+      totalPages: pdf.numPages,
+      percentage: 100,
+      message: `Complete! ${allRows.length} rows processed.`,
     });
 
-    return totesLesFiles;
+    return allRows;
   }
 
-  private detectarModalitat(items: any[]): string {
+  private detectModality(items: any[]): string {
     for (const item of items) {
       const txt = item.str.trim();
       if (txt.length > 10 && /^[\dA-Za-z]+\s*-\s*.+\s*\/\s*.+/.test(txt)) {
@@ -51,97 +51,97 @@ export class PdfParserService {
     return '';
   }
 
-  private agruparPerFila(items: any[], modalitat: string): IesRow[] {
+  private groupByRow(items: any[], modality: string): IesRow[] {
     const TOL = 3;
-    const grups = new Map<number, any[]>();
+    const groups = new Map<number, any[]>();
 
     for (const item of items) {
       if (!item.str || !item.str.trim()) continue;
       const y = Math.round(item.transform[5] / TOL) * TOL;
-      if (!grups.has(y)) grups.set(y, []);
-      grups.get(y)!.push(item);
+      if (!groups.has(y)) groups.set(y, []);
+      groups.get(y)!.push(item);
     }
 
-    const files: IesRow[] = [];
-    const yOrdenades = [...grups.keys()].sort((a, b) => b - a);
+    const rows: IesRow[] = [];
+    const ySorted = [...groups.keys()].sort((a, b) => b - a);
 
-    for (const y of yOrdenades) {
-      const ítems = grups.get(y)!;
+    for (const y of ySorted) {
+      const items = groups.get(y)!;
 
       let num = 0;
       let centre = '';
-      let localitat = '';
-      let codiCentre = '';
-      let codiLloc = '';
-      let observacions = '';
+      let locality = '';
+      let code = '';
+      let locationCode = '';
+      let observations = '';
 
-      let itinerant = false;
+      let isItinerant = false;
 
-      for (const item of ítems) {
+      for (const item of items) {
         const x = Math.round(item.transform[4]);
         const text = item.str;
 
         if (x >= 485 && /^\d{8}$/.test(text)) {
-          codiCentre = text;
+          code = text;
         } else if (x >= 485 && text.length >= 6 && /^\d{6,8}$/.test(text)) {
-          codiCentre = text;
+          code = text;
         } else if (x >= 70 && x <= 89 && /^\d{6,8}$/.test(text)) {
-          codiLloc = text;
+          locationCode = text;
         } else if (x >= 27 && x <= 45 && /^\d+$/.test(text)) {
           num = parseInt(text, 10);
         } else if (x >= 95 && x <= 120 && text.length > 2) {
-          localitat = text;
+          locality = text;
         } else if (x >= 230 && x <= 260 && text.length > 2) {
           centre = text;
         } else if (x >= 550) {
-          observacions = (observacions ? observacions + ' ' : '') + text;
+          observations = (observations ? observations + ' ' : '') + text;
         }
 
         if (/ITIN|itinerant/i.test(text)) {
-          itinerant = true;
+          isItinerant = true;
         }
       }
 
-      if ((centre || localitat) && !centre.startsWith('CENTRE') && !localitat.startsWith('LOCALITAT') && num > 0) {
-        const observacionsNeta = observacions.replace(/[üº]/g, '').trim();
-        let centreItinerant: string | undefined;
-        let hores: string | undefined;
+      if ((centre || locality) && !centre.startsWith('CENTRE') && !locality.startsWith('LOCALITAT') && num > 0) {
+        const cleanObservations = observations.replace(/[üº]/g, '').trim();
+        let itinerantCentre: string | undefined;
+        let hours: string | undefined;
 
-        if (itinerant) {
-          const obsNeta = observacionsNeta;
-          const matchHores = obsNeta.match(/(\d+[,.]?\d*)/);
-          if (matchHores) hores = matchHores[1];
+        if (isItinerant) {
+          const obsClean = cleanObservations;
+          const matchHours = obsClean.match(/(\d+[,.]?\d*)/);
+          if (matchHours) hours = matchHours[1];
 
-          const parts = obsNeta.replace(/-\s*\d+[,.]?\d*/, '').trim();
+          const parts = obsClean.replace(/-\s*\d+[,.]?\d*/, '').trim();
           if (parts && /IES|CENTRE|COL\.?|CEIP/i.test(parts)) {
-            centreItinerant = parts.replace(/[üº]/g, '').trim();
+            itinerantCentre = parts.replace(/[üº]/g, '').trim();
           }
         }
 
-        files.push({ num, centre, localitat, codiCentre, codiLloc, observacions: observacionsNeta, itinerant, centreItinerant, hores, modalitat });
+        rows.push({ number: num, centre, locality, code, locationCode, observations: cleanObservations, isItinerant, itinerantCentre, hours, modality });
       }
     }
 
-    files.sort((a, b) => a.num - b.num);
-    return files;
+    rows.sort((a, b) => a.number - b.number);
+    return rows;
   }
 
-  agruparPerCentre(registres: IesRow[]): Map<string, { nom: string; localitat: string; codiCentre: string; places: IesRow[]; totalItinerants: number }> {
-    const centres = new Map<string, { nom: string; localitat: string; codiCentre: string; places: IesRow[]; totalItinerants: number }>();
+  groupByCentre(records: IesRow[]): Map<string, { name: string; locality: string; code: string; positions: IesRow[]; totalItinerants: number }> {
+    const centres = new Map<string, { name: string; locality: string; code: string; positions: IesRow[]; totalItinerants: number }>();
 
-    for (const r of registres) {
-      if (!r.centre && !r.codiCentre) continue;
+    for (const r of records) {
+      if (!r.centre && !r.code) continue;
 
-      const clau = r.codiCentre || r.centre;
-      if (!centres.has(clau)) {
-        centres.set(clau, { nom: r.centre, localitat: r.localitat, codiCentre: r.codiCentre, places: [], totalItinerants: 0 });
+      const key = r.code || r.centre;
+      if (!centres.has(key)) {
+        centres.set(key, { name: r.centre, locality: r.locality, code: r.code, positions: [], totalItinerants: 0 });
       }
 
-      const existent = centres.get(clau)!;
-      if (!existent.nom && r.centre) existent.nom = r.centre;
-      if (!existent.localitat && r.localitat) existent.localitat = r.localitat;
-      if (r.itinerant) existent.totalItinerants++;
-      existent.places.push(r);
+      const existing = centres.get(key)!;
+      if (!existing.name && r.centre) existing.name = r.centre;
+      if (!existing.locality && r.locality) existing.locality = r.locality;
+      if (r.isItinerant) existing.totalItinerants++;
+      existing.positions.push(r);
     }
 
     return centres;

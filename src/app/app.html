@@ -6,9 +6,10 @@
     </button>
   </div>
   @if (step() === 'landing') {
-  <div class="flex-1 overflow-y-auto">
+  <div class="flex-1 overflow-y-auto" (scroll)="onLandingScroll($event)">
     <!-- Header -->
-    <header class="bg-surface sticky top-0 z-50 border-b border-outline-variant">
+    <header class="bg-surface sticky top-0 z-50 border-b border-outline-variant transition-shadow"
+            [class.shadow-md]="headerShadow()">
       <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-16">
         <div class="flex items-center gap-sm">
           <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />

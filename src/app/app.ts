@@ -31,6 +31,7 @@ export class App implements OnDestroy {
   step = signal<'landing' | 'modalities' | 'origin' | 'main'>('landing');
   pdfLoaded = signal(false);
   dragging = signal(false);
+  headerShadow = signal(false);
   process = signal<ProcessInfo | null>(null);
   centres = signal<IesCenter[]>([]);
   filteredCentres = signal<IesCenter[]>([]);
@@ -618,6 +619,11 @@ export class App implements OnDestroy {
   scrollToUpload() {
     const el = document.querySelector('#drop-zone');
     el?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  onLandingScroll(event: Event) {
+    const target = event.target as HTMLElement;
+    this.headerShadow.set(target.scrollTop > 20);
   }
 
   loadSamplePdf() {

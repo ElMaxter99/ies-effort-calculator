@@ -324,9 +324,11 @@ export class App implements OnDestroy {
 
     this.geocoding.set(true);
     this.calculating.set(true);
+    const t = this.i18n.t();
+
+    this.geoProgress.set({ current: 0, total: centreKeys.length, message: t.geocodingLocalities });
 
     const results = await this.geo.geocodeBatch(centreKeys);
-    const t = this.i18n.t();
 
     this.geoProgress.set({ current: 0, total: filteredCentres.length, message: t.calculatingForCentres(filteredCentres.length) });
 
@@ -345,7 +347,7 @@ export class App implements OnDestroy {
         c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
 
-      this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: t.calculatingProgress(i + 1, filteredCentres.length) });
+      this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: t.calculatingProgress(i + 1, filteredCentres.length, c.name) });
 
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);
@@ -476,7 +478,7 @@ export class App implements OnDestroy {
         c.effortLevel = this.geo.effortLevel(c.distanceKm);
       }
 
-      this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: t2.calculatingProgress(i + 1, currentCentres.length) });
+      this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: t2.calculatingProgress(i + 1, currentCentres.length, c.name) });
 
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);

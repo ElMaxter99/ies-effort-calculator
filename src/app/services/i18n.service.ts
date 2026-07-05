@@ -82,7 +82,7 @@ export interface I18nTranslations {
   geocodingProgress: (current: number, total: number) => string;
   geocodingComplete: (total: number) => string;
   calculatingForCentres: (n: number) => string;
-  calculatingProgress: (i: number, n: number) => string;
+  calculatingProgress: (i: number, n: number, name: string) => string;
   geocodingNew: (n: number) => string;
 
   positionsInCentres: (positions: number, centres: number) => string;
@@ -195,7 +195,7 @@ const CA: I18nTranslations = {
   geocodingProgress: (current: number, total: number) => `Geocodificant ${current} de ${total} centres...`,
   geocodingComplete: (total: number) => `Geocodificació completa (${total} centres)`,
   calculatingForCentres: (n: number) => `Calculant distàncies per a ${n} centres...`,
-  calculatingProgress: (i: number, n: number) => `Calculant distàncies... ${i}/${n}`,
+  calculatingProgress: (i: number, n: number, name: string) => `Calculant distància: ${name} (${i}/${n})`,
   geocodingNew: (n: number) => `Geocodificant ${n} nous centres...`,
 
   positionsInCentres: (positions: number, centres: number) => `${positions} places en ${centres} centres`,
@@ -297,7 +297,7 @@ const ES: I18nTranslations = {
   geocodingProgress: (current: number, total: number) => `Geocodificando ${current} de ${total} centros...`,
   geocodingComplete: (total: number) => `Geocodificación completa (${total} centros)`,
   calculatingForCentres: (n: number) => `Calculando distancias para ${n} centros...`,
-  calculatingProgress: (i: number, n: number) => `Calculando distancias... ${i}/${n}`,
+  calculatingProgress: (i: number, n: number, name: string) => `Calculando distancia: ${name} (${i}/${n})`,
   geocodingNew: (n: number) => `Geocodificando ${n} nuevos centros...`,
 
   positionsInCentres: (positions: number, centres: number) => `${positions} plazas en ${centres} centros`,

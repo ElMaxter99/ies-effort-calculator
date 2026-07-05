@@ -56,7 +56,7 @@ export class App implements OnDestroy {
   modalitySearch = signal('');
   showModalityDropdown = signal(false);
 
-  thresholds = signal<EffortThresholds>({ baix: 5, moderat: 15, alt: 30 });
+  thresholds = signal<EffortThresholds>({ baix: 10, moderat: 25, alt: 40 });
   showConfig = signal(false);
 
   geoProgress = signal({ current: 0, total: 0, message: '' });
@@ -306,7 +306,7 @@ export class App implements OnDestroy {
 
   private async processFile(file: File) {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      this.error.set(this.i18n.t().selectValidPDF);
+      this.error.set(this.i18n.t().errorPDFFormat);
       return;
     }
 
@@ -572,6 +572,15 @@ export class App implements OnDestroy {
     }
   }
 
+  toggleAllModalities(select: boolean) {
+    if (select) {
+      this.modalityFilter.set(new Set(this.availableModalities()));
+    } else {
+      this.modalityFilter.set(new Set());
+    }
+    this.applyFilter();
+  }
+
   setSort(column: string) {
     if (this.sortBy() === column) {
       this.sortDir.update(d => d === 'asc' ? 'desc' : 'asc');
@@ -649,6 +658,29 @@ export class App implements OnDestroy {
     return this.geo.levelDescription(level || '');
   }
 
+  exportCsv() {
+    const rows = this.filteredCentres();
+    const sep = ',';
+    const header = ['Centre', 'Localitat', 'Distància (km)', 'Esforç', 'Itinerants'].join(sep);
+    const lines = rows.map((c) =>
+      [
+        `"${c.name}"`,
+        `"${c.locality}"`,
+        c.distanceKm !== undefined ? c.distanceKm : '',
+        c.effortLevel ? this.getLevelLabel(c.effortLevel) : '',
+        c.totalItinerants ?? '',
+      ].join(sep),
+    );
+    const csv = [header, ...lines].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ies_esforc_desplacament.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   backToLanding() {
     this.step.set('landing');
     this.pdfLoaded.set(false);
@@ -667,25 +699,5 @@ export class App implements OnDestroy {
     this.headerShadow.set(target.scrollTop > 20);
   }
 
-  loadSamplePdf() {
-    this.error.set('');
-    this.pdfLoaded.set(false);
-    this.centres.set([]);
-    this.filteredCentres.set([]);
 
-    fetch('Vacants_Supr_Despl_Secundaria_2.pdf')
-      .then((res) => res.blob())
-      .then((blob) => {
-        const file = new File([blob], 'Vacants_Supr_Despl_Secundaria_2.pdf', { type: 'application/pdf' });
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        const input = document.getElementById('pdfInput') as HTMLInputElement;
-        if (input) {
-          const list = dt.files;
-          Object.defineProperty(input, 'files', { value: list, writable: false });
-          input.dispatchEvent(new Event('change'));
-        }
-      })
-      .catch((e) => this.error.set(this.i18n.t().errorLoadingPDF(e.message)));
-  }
 }

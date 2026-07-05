@@ -54,13 +54,14 @@
                 <p class="font-label-md text-label-md text-on-surface-variant">{{ t().dropHint }}</p>
               </div>
             </div>
-            <div class="flex flex-col items-center gap-md">
-              <p class="font-label-md text-label-md text-outline uppercase tracking-widest text-[10px]">{{ t().orTrySample }}</p>
-              <button class="flex items-center gap-sm px-lg py-md border border-outline-variant rounded hover:bg-surface-container-low transition-colors text-body-md font-medium text-primary"
-                      (click)="loadSamplePdf()">
-                <span class="material-symbols-outlined">description</span>
-                {{ t().loadSample }}
-              </button>
+
+            <div class="flex flex-col items-center gap-sm mt-md text-center">
+              <div class="bg-amber-50 border border-amber-200 text-amber-800 text-body-sm px-lg py-md rounded-lg max-w-lg">
+                {{ t().regionDisclaimer }}
+              </div>
+              <p class="text-body-sm text-on-surface-variant max-w-lg">
+                {{ t().pdfFormatHint('Vacants_Supr_Despl_Secundaria_2.pdf') }}
+              </p>
             </div>
           </div>
         </div>
@@ -209,7 +210,7 @@
 
     @if (step() === 'modalities') {
     <!-- Modalities Card -->
-    <div class="w-full max-w-2xl bg-white rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.1)] p-lg border border-surface-variant overflow-hidden">
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.1)] p-lg border border-surface-variant">
       <div class="text-center mb-lg">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-container text-on-primary-container mb-md">
           <span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">school</span>
@@ -252,6 +253,17 @@
           <div class="mt-md bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg overflow-hidden">
             <div class="max-h-[320px] overflow-y-auto custom-scrollbar">
               @if (filteredModalities.length > 0) {
+                <div class="flex items-center gap-md px-md py-3 transition-colors cursor-pointer border-b border-outline-variant/30 bg-surface-container-lowest hover:bg-surface-container"
+                     (mousedown)="toggleAllModalities(modalityFilter().size !== availableModalities().length); $event.preventDefault()">
+                  <input type="checkbox"
+                         [checked]="modalityFilter().size === availableModalities().length"
+                         [indeterminate]="modalityFilter().size > 0 && modalityFilter().size < availableModalities().length"
+                         class="w-5 h-5 rounded border-outline text-primary focus:ring-primary"
+                         (click)="$event.stopPropagation()" />
+                  <span class="font-body-md text-sm font-medium text-on-surface-variant">
+                    {{ modalityFilter().size === availableModalities().length ? t().deselectAll : t().selectAll }}
+                  </span>
+                </div>
                 @for (m of filteredModalities; track m) {
                   <div class="flex items-center gap-md px-md py-4 transition-colors cursor-pointer border-b border-outline-variant/30 last:border-b-0"
                        [class.bg-primary/5]="isModalitySelected(m)"
@@ -285,7 +297,7 @@
     </div>
     } @else {
     <!-- Origin Card -->
-    <div class="w-full max-w-2xl bg-white rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.1)] p-lg border border-surface-variant overflow-hidden">
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.1)] p-lg border border-surface-variant">
       <div class="text-center mb-lg">
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-container text-on-primary-container mb-md">
           <span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">location_on</span>
@@ -409,9 +421,6 @@
           {{ t().uploadPDF }}
           <input type="file" id="pdfInput" accept=".pdf" (change)="onFileSelected($event)" class="hidden" />
         </label>
-        <button class="text-on-surface-variant hover:text-primary transition-colors" (click)="loadSamplePdf()" [title]="t().useSamplePDF">
-          <span class="material-symbols-outlined">description</span>
-        </button>
       </div>
     </div>
   </header>
@@ -747,6 +756,15 @@
                   : availableModalities();
                 @if (filteredModalities.length > 0) {
                   <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto custom-scrollbar">
+                    <div class="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface-variant hover:bg-surface-container-high cursor-pointer border-b border-outline-variant/30"
+                         (mousedown)="toggleAllModalities(modalityFilter().size !== availableModalities().length); $event.preventDefault()">
+                      <input type="checkbox"
+                             [checked]="modalityFilter().size === availableModalities().length"
+                             [indeterminate]="modalityFilter().size > 0 && modalityFilter().size < availableModalities().length"
+                             class="rounded border-outline-variant text-primary focus:ring-primary"
+                             (click)="$event.stopPropagation()" />
+                      <span class="font-medium">{{ modalityFilter().size === availableModalities().length ? t().deselectAll : t().selectAll }}</span>
+                    </div>
                     @for (m of filteredModalities; track m) {
                       <div class="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface hover:bg-surface-container-high cursor-pointer"
                            [class.font-bold]="isModalitySelected(m)"
@@ -857,7 +875,7 @@
         <div class="p-md bg-surface border-t border-outline-variant flex justify-between items-center shrink-0">
           <span class="text-xs text-on-surface-variant">{{ t().totalCentres(filteredCentres().length) }}</span>
           <div class="flex gap-2">
-            <button class="flex items-center gap-2 text-primary font-bold text-label-md hover:underline">
+            <button class="flex items-center gap-2 text-primary font-bold text-label-md hover:underline" (click)="exportCsv()">
               <span class="material-symbols-outlined text-[18px]">download</span>
               {{ t().exportCSV }}
             </button>

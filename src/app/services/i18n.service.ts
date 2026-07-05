@@ -111,6 +111,7 @@ export interface I18nTranslations {
   selectValidPDF: string;
   errorProcessingPDF: (msg: string) => string;
   errorLoadingPDF: (msg: string) => string;
+  errorPDFFormat: string;
   couldNotGeocode: (name: string) => string;
 
   processingPage: (page: number, total: number) => string;
@@ -141,6 +142,10 @@ export interface I18nTranslations {
 
   pdfProcessingMessage: (page: number, total: number) => string;
   filterLocalitiesPlaceholder: string;
+  regionDisclaimer: string;
+  pdfFormatHint: (filename: string) => string;
+  selectAll: string;
+  deselectAll: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -155,7 +160,7 @@ export class I18nService {
 }
 
 const CA: I18nTranslations = {
-  appTitle: 'Calculador d\'Esforç de Desplaçament IES',
+  appTitle: 'DesplaçIES',
   landingDescription: 'Puja el fitxer PDF de vacants per a visualitzar en un mapa interactiu la ubicació dels centres educatius i calcular la distància i l\'esforç de desplaçament des dels teus orígens.',
 
   heroTitle: 'Gestiona les teues vacants amb intel·ligència',
@@ -184,7 +189,7 @@ const CA: I18nTranslations = {
   uploadDesc: 'Posa a prova el sistema amb el teu propi fitxer de vacants en format PDF.',
   dropPrompt: 'Arrossega el PDF aquí o fes clic per seleccionar el fitxer',
   dropHint: 'Només fitxers PDF vàlids (Màx. 10MB)',
-  footerCopyright: '© 2026 Calculador d\'Esforç de Desplaçament IES',
+  footerCopyright: '© 2026 DesplaçIES',
   footerPrivacy: 'Privacitat',
   footerTerms: 'Termes d\'ús',
   processingPDF: 'Processant PDF...',
@@ -261,8 +266,9 @@ const CA: I18nTranslations = {
   addComparisonOrigin: 'Afig un origen de comparació',
   dropValidPDF: 'Deixa anar un fitxer PDF vàlid',
   selectValidPDF: 'Selecciona un fitxer PDF vàlid',
-  errorProcessingPDF: (msg: string) => `Error en processar el PDF: ${msg}`,
+  errorProcessingPDF: (msg: string) => `Error en processar el PDF: ${msg}. Assegura't que has carregat el PDF oficial de vacants d'educació secundària.`,
   errorLoadingPDF: (msg: string) => `Error en carregar el PDF: ${msg}`,
+  errorPDFFormat: 'El fitxer no sembla un PDF vàlid de vacants d\'educació secundària. Comprova que has seleccionat el fitxer correcte.',
   couldNotGeocode: (name: string) => `No s'ha pogut geocodificar "${name}". Prova amb un nom de municipi.`,
 
   processingPage: (page: number, total: number) => `Processant pàgina ${page} de ${total}...`,
@@ -293,10 +299,14 @@ const CA: I18nTranslations = {
 
   pdfProcessingMessage: (page: number, total: number) => `Processant pàgina ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
+  regionDisclaimer: 'De moment, l\'aplicació només funciona per a centres de la Comunitat Valenciana.',
+  pdfFormatHint: (filename: string) => `El PDF ha de tindre el format oficial de vacants d'educació secundària (ex: ${filename}).`,
+  selectAll: 'Seleccionar totes',
+  deselectAll: 'Desseleccionar totes',
 };
 
 const ES: I18nTranslations = {
-  appTitle: 'Calculador de Esfuerzo de Desplazamiento IES',
+  appTitle: 'DesplazIES',
   landingDescription: 'Sube el archivo PDF de vacantes para visualizar en un mapa interactivo la ubicación de los centros educativos y calcular la distancia y el esfuerzo de desplazamiento desde tus orígenes.',
 
   heroTitle: 'Gestiona tus vacantes con inteligencia',
@@ -325,7 +335,7 @@ const ES: I18nTranslations = {
   uploadDesc: 'Pon a prueba el sistema con tu propio archivo de vacantes en formato PDF.',
   dropPrompt: 'Arrastra el PDF aquí o haz clic para seleccionar el archivo',
   dropHint: 'Sólo archivos PDF válidos (Máx. 10MB)',
-  footerCopyright: '© 2026 Calculador de Esfuerzo de Desplazamiento IES',
+  footerCopyright: '© 2026 DesplazIES',
   footerPrivacy: 'Privacidad',
   footerTerms: 'Términos de uso',
   processingPDF: 'Procesando PDF...',
@@ -402,8 +412,9 @@ const ES: I18nTranslations = {
   addComparisonOrigin: 'Añade un origen de comparación',
   dropValidPDF: 'Suelta un archivo PDF válido',
   selectValidPDF: 'Selecciona un archivo PDF válido',
-  errorProcessingPDF: (msg: string) => `Error al procesar el PDF: ${msg}`,
+  errorProcessingPDF: (msg: string) => `Error al procesar el PDF: ${msg}. Asegúrate de que has cargado el PDF oficial de vacantes de educación secundaria.`,
   errorLoadingPDF: (msg: string) => `Error al cargar el PDF: ${msg}`,
+  errorPDFFormat: 'El archivo no parece un PDF válido de vacantes de educación secundaria. Comprueba que has seleccionado el archivo correcto.',
   couldNotGeocode: (name: string) => `No se ha podido geocodificar "${name}". Prueba con un nombre de municipio.`,
 
   processingPage: (page: number, total: number) => `Procesando página ${page} de ${total}...`,
@@ -434,4 +445,8 @@ const ES: I18nTranslations = {
 
   pdfProcessingMessage: (page: number, total: number) => `Procesando página ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
+  regionDisclaimer: 'Por ahora, la aplicación solo funciona para centros de la Comunitat Valenciana.',
+  pdfFormatHint: (filename: string) => `El PDF debe tener el formato oficial de vacantes de educación secundaria (ej: ${filename}).`,
+  selectAll: 'Seleccionar todas',
+  deselectAll: 'Deseleccionar todas',
 };

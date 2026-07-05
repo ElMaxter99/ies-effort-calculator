@@ -101,7 +101,7 @@ export class PdfParserService {
           observations = (observations ? observations + ' ' : '') + text;
         }
 
-        if (/ITIN|itinerant/i.test(text)) {
+        if (/ITIN|itinerant|ü|º/u.test(text)) {
           isItinerant = true;
         }
       }

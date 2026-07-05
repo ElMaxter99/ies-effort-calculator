@@ -80,6 +80,7 @@ export class App implements OnDestroy {
 
   geocoding = signal(false);
   calculating = signal(false);
+  shownItinerantObservations = signal<string | null>(null);
 
   totalCenters = computed(() => this.centres().length);
   totalPositions = computed(() => this.centres().reduce((acc, c) => acc + c.positions.length, 0));
@@ -664,6 +665,26 @@ export class App implements OnDestroy {
     return c.positions.filter((p) => p.isItinerant && filtered.has(p.modality ?? '')).length;
   }
 
+  getItinerantObservations(c: IesCenter): string {
+    const filtered = this.modalityFilter();
+    return c.positions
+      .filter((p) => {
+        if (!p.isItinerant) return false;
+        return filtered.size === 0 || filtered.has(p.modality ?? '');
+      })
+      .map((p) => {
+        let s = p.observations || '';
+        if (p.modality) s = `[${p.modality}] ${s}`;
+        return s;
+      })
+      .join('; ');
+  }
+
+  showItinerantObservations(c: IesCenter) {
+    const obs = this.getItinerantObservations(c);
+    if (obs) this.shownItinerantObservations.set(obs);
+  }
+
   getItinerantTooltip(c: IesCenter): string {
     const filtered = this.modalityFilter();
     const items = c.positions.filter((p) => {
@@ -688,7 +709,7 @@ export class App implements OnDestroy {
   exportCsv() {
     const rows = this.filteredCentres();
     const sep = ',';
-    const header = ['Centre', 'Localitat', 'Distància (km)', 'Esforç', 'Itinerants'].join(sep);
+    const header = ['Centre', 'Localitat', 'Distància (km)', 'Esforç', 'Itinerants', 'Observacions'].join(sep);
     const lines = rows.map((c) =>
       [
         `"${c.name}"`,
@@ -696,6 +717,7 @@ export class App implements OnDestroy {
         c.distanceKm !== undefined ? c.distanceKm : '',
         c.effortLevel ? this.getLevelLabel(c.effortLevel) : '',
         this.getItinerantCount(c),
+        `"${this.getItinerantObservations(c)}"`,
       ].join(sep),
     );
     const csv = [header, ...lines].join('\n');
@@ -714,6 +736,14 @@ export class App implements OnDestroy {
     this.centres.set([]);
     this.filteredCentres.set([]);
     this.error.set('');
+    this.rawRecords = [];
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+    this.originMarker = null;
+    this.centreMarkers = [];
+    this.circles = [];
   }
 
   scrollToUpload() {

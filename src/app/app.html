@@ -16,10 +16,7 @@
             <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
             <span class="text-headline-md font-headline-md font-bold text-primary">{{ t().appTitle }}</span>
           </div>
-          <nav class="hidden md:flex items-center gap-lg">
-            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#com-funciona">{{ t().howItWorks }}</a>
-            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#funcionalitats">{{ t().features }}</a>
-          </nav>
+          
         </div>
         <nav class="flex items-center gap-md">
           <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
@@ -77,19 +74,16 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-xl">
           <div class="flex flex-col items-center text-center space-y-md p-lg">
-            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">1</div>
             <span class="material-symbols-outlined text-4xl text-primary">upload_file</span>
             <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step1Title }}</h3>
             <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step1Desc }}</p>
           </div>
           <div class="flex flex-col items-center text-center space-y-md p-lg">
-            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">2</div>
             <span class="material-symbols-outlined text-4xl text-primary">settings_account_box</span>
             <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step2Title }}</h3>
             <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step2Desc }}</p>
           </div>
           <div class="flex flex-col items-center text-center space-y-md p-lg">
-            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">3</div>
             <span class="material-symbols-outlined text-4xl text-primary">map</span>
             <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step3Title }}</h3>
             <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step3Desc }}</p>
@@ -219,10 +213,6 @@
         <p class="font-body-md text-body-md text-on-surface-variant">{{ t().selectModalitiesDesc }}</p>
       </div>
 
-      @if (error()) {
-        <div class="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm">{{ error() }}</div>
-      }
-
       <div class="relative">
         <div class="border-2 border-primary rounded-lg p-sm bg-white focus-within:ring-2 focus-within:ring-secondary/20 transition-shadow"
              (click)="showModalityDropdown.set(true)">
@@ -305,10 +295,6 @@
         <h1 class="font-headline-lg text-headline-lg text-primary mb-sm">{{ t().addOrigin }}</h1>
         <p class="font-body-md text-body-md text-on-surface-variant">{{ t().addOriginDesc }}</p>
       </div>
-
-      @if (error()) {
-        <div class="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm">{{ error() }}</div>
-      }
 
       <div class="w-full space-y-sm mb-xl">
         <div class="space-y-sm">
@@ -416,11 +402,11 @@
     <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
       <span class="text-headline-md font-extrabold text-primary">{{ t().appTitle }}</span>
       <div class="flex items-center gap-md">
-        <label class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer">
-          <span class="material-symbols-outlined text-[20px]">upload_file</span>
-          {{ t().uploadPDF }}
-          <input type="file" id="pdfInput" accept=".pdf" (change)="onFileSelected($event)" class="hidden" />
-        </label>
+        <button class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer"
+                (click)="backToLanding()">
+          <span class="material-symbols-outlined text-[20px]">refresh</span>
+          {{ t().resetProcess }}
+        </button>
       </div>
     </div>
   </header>
@@ -540,10 +526,6 @@
           }
           <p class="text-xs text-on-surface-variant">{{ geoProgress().message }}</p>
         </div>
-      }
-
-      @if (error()) {
-        <div class="mb-xl p-2 bg-error-container text-on-error-container rounded-lg text-xs">{{ error() }}</div>
       }
 
       @if (pdfLoaded()) {
@@ -849,10 +831,11 @@
                       <td class="px-4 py-4 text-center">
                         @let itinCount = getItinerantCount(c);
                         @if (itinCount > 0) {
-                          <span class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold"
-                                [title]="getItinerantTooltip(c)">
+                          <button class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold hover:bg-purple-200 transition-colors cursor-pointer"
+                                  [title]="getItinerantTooltip(c)"
+                                  (click)="showItinerantObservations(c)">
                             {{ itinCount }}
-                          </span>
+                          </button>
                         } @else {
                           <span class="text-outline text-xs">—</span>
                         }
@@ -935,52 +918,51 @@
         <article class="space-y-md">
           <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
             <span class="material-symbols-outlined">info</span>
-            Naturalesa de l'Eina
+            {{ t().termsNatureTitle }}
           </h2>
           <div class="space-y-sm text-on-surface-variant">
-            <p>Aquesta aplicació és una eina <strong>sense ànim de lucre</strong>, desenvolupada amb la finalitat de facilitar la visualització de dades de desplaçament per a personal docent.</p>
-            <div class="bg-surface-container-low border-l-4 border-primary p-md rounded-r-lg italic">
-              <strong>Avís d'Independència:</strong> Aquest programari és totalment independent i no té cap vinculació oficial amb la <strong>Generalitat Valenciana</strong> ni amb la Conselleria d'Educació.
+            <p [innerHTML]="t().termsNatureBody"></p>
+            <div class="bg-surface-container-low border-l-4 border-primary p-md rounded-r-lg italic" [innerHTML]="t().termsNatureNotice">
             </div>
           </div>
         </article>
         <article class="space-y-md border-t border-outline-variant pt-xl">
           <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
             <span class="material-symbols-outlined">lock</span>
-            Privadesa i Gestió de Dades
+            {{ t().termsPrivacyTitle }}
           </h2>
           <div class="grid md:grid-cols-2 gap-md">
             <div class="p-md rounded-lg border border-outline-variant bg-surface">
               <div class="flex items-center gap-sm text-secondary mb-xs">
                 <span class="material-symbols-outlined">cloud_off</span>
-                <span class="font-bold">Sense emmagatzematge</span>
+                <span class="font-bold">{{ t().termsPrivacyCard1Title }}</span>
               </div>
-              <p class="text-label-md">No guardem dades ni fitxers als nostres servidors. Tota la informació es processa exclusivament al vostre navegador.</p>
+              <p class="text-label-md">{{ t().termsPrivacyCard1Desc }}</p>
             </div>
             <div class="p-md rounded-lg border border-outline-variant bg-surface">
               <div class="flex items-center gap-sm text-secondary mb-xs">
                 <span class="material-symbols-outlined">memory</span>
-                <span class="font-bold">Processament local</span>
+                <span class="font-bold">{{ t().termsPrivacyCard2Title }}</span>
               </div>
-              <p class="text-label-md">L'anàlisi dels documents es realitza de forma temporal. Un cop tancada la sessió, les dades s'eliminen automàticament.</p>
+              <p class="text-label-md">{{ t().termsPrivacyCard2Desc }}</p>
             </div>
           </div>
         </article>
         <article class="space-y-md border-t border-outline-variant pt-xl">
           <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
             <span class="material-symbols-outlined">warning</span>
-            Fiabilitat de les Dades
+            {{ t().termsReliabilityTitle }}
           </h2>
           <div class="space-y-md text-on-surface-variant">
-            <p>L'algoritme extreu informació de fitxers PDF oficials. Tot i els esforços per garantir la precisió, l'usuari accepta que:</p>
+            <p>{{ t().termsReliabilityIntro }}</p>
             <ul class="list-none space-y-sm pl-md">
               <li class="flex items-start gap-sm">
                 <span class="material-symbols-outlined text-error text-[20px] mt-1">error_outline</span>
-                <span>Poden ocórrer errors tècnics en el parsejat (lectura) de les dades del PDF original.</span>
+                <span>{{ t().termsReliabilityLi1 }}</span>
               </li>
               <li class="flex items-start gap-sm">
                 <span class="material-symbols-outlined text-error text-[20px] mt-1">distance</span>
-                <span>Els càlculs de distància i temps són estimacions basades en serveis cartogràfics externs i poden no reflectir la realitat exacta.</span>
+                <span>{{ t().termsReliabilityLi2 }}</span>
               </li>
             </ul>
           </div>
@@ -988,11 +970,11 @@
         <article class="space-y-md border-t border-outline-variant pt-xl">
           <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
             <span class="material-symbols-outlined">assignment_turned_in</span>
-            Responsabilitat de l'Usuari
+            {{ t().termsResponsibilityTitle }}
           </h2>
           <div class="bg-error-container text-on-error-container p-md rounded-lg">
-            <p class="font-bold mb-xs">Obligació de verificació:</p>
-            <p class="text-label-md">L'usuari és l'únic responsable de verificar la llista oficial de vacants i adjudicacions publicada pels canals institucionals. Aquesta eina no té caràcter vinculant ni jurídic.</p>
+            <p class="font-bold mb-xs">{{ t().termsResponsibilityLabel }}</p>
+            <p class="text-label-md">{{ t().termsResponsibilityDesc }}</p>
           </div>
         </article>
       </div>
@@ -1032,31 +1014,31 @@
               <span class="material-symbols-outlined">gpp_good</span>
             </div>
             <div>
-              <h2 class="text-headline-md font-headline-md text-primary mb-md">Compromís de Transparència</h2>
-              <p class="text-body-md text-on-surface leading-relaxed">Aquesta eina ha estat dissenyada per a l'administració pública amb un objectiu clar: oferir un servei eficient sense comprometre la seguretat de la informació personal dels treballadors i ciutadans. Tota la lògica de processament es realitza sota un entorn de màxima protecció.</p>
+              <h2 class="text-headline-md font-headline-md text-primary mb-md">{{ t().privacyTransparencyTitle }}</h2>
+              <p class="text-body-md text-on-surface leading-relaxed" [innerHTML]="t().privacyTransparencyBody"></p>
             </div>
           </div>
         </section>
         <section class="md:col-span-7 bg-white p-lg rounded-xl shadow-sm border-l-4 border-primary">
           <span class="material-symbols-outlined text-primary text-[40px] mb-md">browser_updated</span>
-          <h3 class="text-headline-md font-headline-md text-primary mb-sm">Processament Local en Navegador</h3>
-          <p class="text-body-md text-on-surface-variant mb-md">El fitxer PDF que pugis es processa directament a la memòria del teu navegador.</p>
+          <h3 class="text-headline-md font-headline-md text-primary mb-sm">{{ t().privacyLocalTitle }}</h3>
+          <p class="text-body-md text-on-surface-variant mb-md">{{ t().privacyLocalBody }}</p>
           <div class="bg-surface-container-low p-md rounded-lg border border-outline-variant">
             <ul class="space-y-3">
               <li class="flex items-start gap-2">
                 <span class="material-symbols-outlined text-error text-[20px]">cloud_off</span>
-                <span class="text-label-md">Mai s'envia a cap servidor extern.</span>
+                <span class="text-label-md">{{ t().privacyLocalLi1 }}</span>
               </li>
               <li class="flex items-start gap-2">
                 <span class="material-symbols-outlined text-secondary text-[20px]">delete_forever</span>
-                <span class="text-label-md">Les dades s'esborren en tancar la pestanya.</span>
+                <span class="text-label-md">{{ t().privacyLocalLi2 }}</span>
               </li>
             </ul>
           </div>
         </section>
         <section class="md:col-span-5 bg-surface-container-highest p-lg rounded-xl flex flex-col justify-between">
-          <h3 class="text-headline-sm font-headline-md text-on-surface mb-sm">Sense Rastreig</h3>
-          <p class="text-body-md text-on-surface-variant">No utilitzem galetes (cookies) per a fins publicitaris ni eines de seguiment personalitzat.</p>
+          <h3 class="text-headline-sm font-headline-md text-on-surface mb-sm">{{ t().privacyTrackingTitle }}</h3>
+          <p class="text-body-md text-on-surface-variant">{{ t().privacyTrackingBody }}</p>
           <div class="mt-xl flex justify-center">
             <div class="w-24 h-24 rounded-full bg-white flex items-center justify-center border-4 border-dashed border-outline-variant">
               <span class="material-symbols-outlined text-outline text-[48px]">cookie_off</span>
@@ -1064,20 +1046,20 @@
           </div>
         </section>
         <section class="md:col-span-12 bg-surface-container-low p-xl rounded-xl border border-outline-variant">
-          <h3 class="text-headline-md font-headline-md text-primary mb-md">Origen de les Dades</h3>
-          <p class="text-body-md text-on-surface mb-lg max-w-3xl">La informació que es visualitza a les taules i mapes d'aquesta aplicació prové <strong>exclusivament</strong> de l'extracció automatitzada del document PDF proporcionat per l'usuari. L'aplicació no creua aquestes dades amb bases de dades externes de caràcter personal.</p>
+          <h3 class="text-headline-md font-headline-md text-primary mb-md">{{ t().privacyDataOriginTitle }}</h3>
+          <p class="text-body-md text-on-surface mb-lg max-w-3xl" [innerHTML]="t().privacyDataOriginBody"></p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
             <div class="bg-white p-md rounded-lg shadow-sm border border-outline-variant/30 text-center">
               <span class="material-symbols-outlined text-primary mb-2">upload_file</span>
-              <p class="text-label-md font-label-md">1. Càrrega de PDF</p>
+              <p class="text-label-md font-label-md">{{ t().privacyStep1 }}</p>
             </div>
             <div class="bg-white p-md rounded-lg shadow-sm border border-outline-variant/30 text-center">
               <span class="material-symbols-outlined text-primary mb-2">find_in_page</span>
-              <p class="text-label-md font-label-md">2. Extracció Local</p>
+              <p class="text-label-md font-label-md">{{ t().privacyStep2 }}</p>
             </div>
             <div class="bg-white p-md rounded-lg shadow-sm border border-outline-variant/30 text-center">
               <span class="material-symbols-outlined text-primary mb-2">bar_chart</span>
-              <p class="text-label-md font-label-md">3. Visualització Efímera</p>
+              <p class="text-label-md font-label-md">{{ t().privacyStep3 }}</p>
             </div>
           </div>
         </section>
@@ -1090,5 +1072,52 @@
       </footer>
     </main>
   </div>
+  }
+
+  @if (shownItinerantObservations(); as obs) {
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+         (click)="shownItinerantObservations.set(null)">
+      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-lg w-full mx-gutter overflow-hidden"
+           (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between px-lg py-md border-b border-outline-variant">
+          <span class="font-bold text-on-surface">{{ t().observationsTitle }}</span>
+          <button class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
+                  (click)="shownItinerantObservations.set(null)">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+        <div class="p-lg max-h-64 overflow-y-auto whitespace-pre-wrap text-sm text-on-surface leading-relaxed">
+          {{ obs }}
+        </div>
+        <div class="flex justify-end px-lg py-md border-t border-outline-variant">
+          <button class="bg-primary text-on-primary px-lg py-sm rounded-lg hover:opacity-90 transition-all font-label-md text-sm"
+                  (click)="shownItinerantObservations.set(null)">
+            {{ t().close }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+         (click)="error.set('')">
+      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-md w-full mx-gutter overflow-hidden"
+           (click)="$event.stopPropagation()">
+        <div class="flex items-center gap-sm px-lg py-md border-b border-outline-variant bg-error-container">
+          <span class="material-symbols-outlined text-error text-[20px]">error</span>
+          <span class="font-bold text-on-error-container">{{ t().errorTitle }}</span>
+        </div>
+        <div class="p-lg text-sm text-on-surface leading-relaxed">
+          {{ error() }}
+        </div>
+        <div class="flex justify-end px-lg py-md border-t border-outline-variant">
+          <button class="bg-primary text-on-primary px-lg py-sm rounded-lg hover:opacity-90 transition-all font-label-md text-sm"
+                  (click)="error.set('')">
+            {{ t().close }}
+          </button>
+        </div>
+      </div>
+    </div>
   }
 </div>

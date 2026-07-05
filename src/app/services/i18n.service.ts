@@ -65,6 +65,7 @@ export interface I18nTranslations {
   calculate: string;
 
   uploadPDF: string;
+  resetProcess: string;
   views: string;
   dataConfig: string;
   map: string;
@@ -111,6 +112,7 @@ export interface I18nTranslations {
   selectValidPDF: string;
   errorProcessingPDF: (msg: string) => string;
   errorLoadingPDF: (msg: string) => string;
+  errorTitle: string;
   errorPDFFormat: string;
   couldNotGeocode: (name: string) => string;
 
@@ -151,6 +153,38 @@ export interface I18nTranslations {
   privacyTitle: string;
   privacyUpdated: string;
   backToHome: string;
+  observationsTitle: string;
+  close: string;
+
+  termsNatureTitle: string;
+  termsNatureBody: string;
+  termsNatureNotice: string;
+  termsPrivacyTitle: string;
+  termsPrivacyCard1Title: string;
+  termsPrivacyCard1Desc: string;
+  termsPrivacyCard2Title: string;
+  termsPrivacyCard2Desc: string;
+  termsReliabilityTitle: string;
+  termsReliabilityIntro: string;
+  termsReliabilityLi1: string;
+  termsReliabilityLi2: string;
+  termsResponsibilityTitle: string;
+  termsResponsibilityLabel: string;
+  termsResponsibilityDesc: string;
+
+  privacyTransparencyTitle: string;
+  privacyTransparencyBody: string;
+  privacyLocalTitle: string;
+  privacyLocalBody: string;
+  privacyLocalLi1: string;
+  privacyLocalLi2: string;
+  privacyTrackingTitle: string;
+  privacyTrackingBody: string;
+  privacyDataOriginTitle: string;
+  privacyDataOriginBody: string;
+  privacyStep1: string;
+  privacyStep2: string;
+  privacyStep3: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -165,7 +199,7 @@ export class I18nService {
 }
 
 const CA: I18nTranslations = {
-  appTitle: 'DesplaçIES',
+  appTitle: 'Distància IES',
   landingDescription: 'Puja el fitxer PDF de vacants per a visualitzar en un mapa interactiu la ubicació dels centres educatius i calcular la distància i l\'esforç de desplaçament des dels teus orígens.',
 
   heroTitle: 'Gestiona les teues vacants amb intel·ligència',
@@ -194,7 +228,7 @@ const CA: I18nTranslations = {
   uploadDesc: 'Posa a prova el sistema amb el teu propi fitxer de vacants en format PDF.',
   dropPrompt: 'Arrossega el PDF aquí o fes clic per seleccionar el fitxer',
   dropHint: 'Només fitxers PDF vàlids (Màx. 10MB)',
-  footerCopyright: '© 2026 DesplaçIES',
+  footerCopyright: '© 2026 Distància IES',
   footerPrivacy: 'Privacitat',
   footerTerms: 'Termes d\'ús',
   processingPDF: 'Processant PDF...',
@@ -227,6 +261,7 @@ const CA: I18nTranslations = {
   calculate: 'Calcular',
 
   uploadPDF: 'Pujar PDF',
+  resetProcess: 'Reiniciar procés',
   views: 'Vistes',
   dataConfig: 'Configuració de dades',
   map: 'Mapa',
@@ -273,6 +308,7 @@ const CA: I18nTranslations = {
   selectValidPDF: 'Selecciona un fitxer PDF vàlid',
   errorProcessingPDF: (msg: string) => `Error en processar el PDF: ${msg}. Assegura't que has carregat el PDF oficial de vacants d'educació secundària.`,
   errorLoadingPDF: (msg: string) => `Error en carregar el PDF: ${msg}`,
+  errorTitle: 'Error',
   errorPDFFormat: 'El fitxer no sembla un PDF vàlid de vacants d\'educació secundària. Comprova que has seleccionat el fitxer correcte.',
   couldNotGeocode: (name: string) => `No s'ha pogut geocodificar "${name}". Prova amb un nom de municipi.`,
 
@@ -313,10 +349,42 @@ const CA: I18nTranslations = {
   privacyTitle: 'Política de Privadesa',
   privacyUpdated: 'Darrera actualització: Octubre 2023',
   backToHome: 'Tornar a l\'inici',
+  observationsTitle: 'Observacions de la plaça itinerant',
+  close: 'Tancar',
+
+  termsNatureTitle: 'Naturalesa de l\'Eina',
+  termsNatureBody: 'Aquesta aplicació és una eina <strong>sense ànim de lucre</strong>, desenvolupada amb la finalitat de facilitar la visualització de dades de desplaçament per a personal docent.',
+  termsNatureNotice: '<strong>Avís d\'Independència:</strong> Aquest programari és totalment independent i no té cap vinculació oficial amb la <strong>Generalitat Valenciana</strong> ni amb la Conselleria d\'Educació.',
+  termsPrivacyTitle: 'Privadesa i Gestió de Dades',
+  termsPrivacyCard1Title: 'Sense emmagatzematge',
+  termsPrivacyCard1Desc: 'No guardem dades ni fitxers als nostres servidors. Tota la informació es processa exclusivament al vostre navegador.',
+  termsPrivacyCard2Title: 'Processament local',
+  termsPrivacyCard2Desc: 'L\'anàlisi dels documents es realitza de forma temporal. Un cop tancada la sessió, les dades s\'eliminen automàticament.',
+  termsReliabilityTitle: 'Fiabilitat de les Dades',
+  termsReliabilityIntro: 'L\'algoritme extreu informació de fitxers PDF oficials. Tot i els esforços per garantir la precisió, l\'usuari accepta que:',
+  termsReliabilityLi1: 'Poden ocórrer errors tècnics en el parsejat (lectura) de les dades del PDF original.',
+  termsReliabilityLi2: 'Els càlculs de distància i temps són estimacions basades en serveis cartogràfics externs i poden no reflectir la realitat exacta.',
+  termsResponsibilityTitle: 'Responsabilitat de l\'Usuari',
+  termsResponsibilityLabel: 'Obligació de verificació:',
+  termsResponsibilityDesc: 'L\'usuari és l\'únic responsable de verificar la llista oficial de vacants i adjudicacions publicada pels canals institucionals. Aquesta eina no té caràcter vinculant ni jurídic.',
+
+  privacyTransparencyTitle: 'Compromís de Transparència',
+  privacyTransparencyBody: 'Aquesta eina ha estat dissenyada per a l\'administració pública amb un objectiu clar: oferir un servei eficient sense comprometre la seguretat de la informació personal dels treballadors i ciutadans. Tota la lògica de processament es realitza sota un entorn de màxima protecció.',
+  privacyLocalTitle: 'Processament Local en Navegador',
+  privacyLocalBody: 'El fitxer PDF que pugis es processa directament a la memòria del teu navegador.',
+  privacyLocalLi1: 'Mai s\'envia a cap servidor extern.',
+  privacyLocalLi2: 'Les dades s\'esborren en tancar la pestanya.',
+  privacyTrackingTitle: 'Sense Rastreig',
+  privacyTrackingBody: 'No utilitzem galetes (cookies) per a fins publicitaris ni eines de seguiment personalitzat.',
+  privacyDataOriginTitle: 'Origen de les Dades',
+  privacyDataOriginBody: 'La informació que es visualitza a les taules i mapes d\'aquesta aplicació prové <strong>exclusivament</strong> de l\'extracció automatitzada del document PDF proporcionat per l\'usuari. L\'aplicació no creua aquestes dades amb bases de dades externes de caràcter personal.',
+  privacyStep1: '1. Càrrega de PDF',
+  privacyStep2: '2. Extracció Local',
+  privacyStep3: '3. Visualització Efímera',
 };
 
 const ES: I18nTranslations = {
-  appTitle: 'DesplazIES',
+  appTitle: 'Distancia IES',
   landingDescription: 'Sube el archivo PDF de vacantes para visualizar en un mapa interactivo la ubicación de los centros educativos y calcular la distancia y el esfuerzo de desplazamiento desde tus orígenes.',
 
   heroTitle: 'Gestiona tus vacantes con inteligencia',
@@ -345,7 +413,7 @@ const ES: I18nTranslations = {
   uploadDesc: 'Pon a prueba el sistema con tu propio archivo de vacantes en formato PDF.',
   dropPrompt: 'Arrastra el PDF aquí o haz clic para seleccionar el archivo',
   dropHint: 'Sólo archivos PDF válidos (Máx. 10MB)',
-  footerCopyright: '© 2026 DesplazIES',
+  footerCopyright: '© 2026 Distancia IES',
   footerPrivacy: 'Privacidad',
   footerTerms: 'Términos de uso',
   processingPDF: 'Procesando PDF...',
@@ -378,6 +446,7 @@ const ES: I18nTranslations = {
   calculate: 'Calcular',
 
   uploadPDF: 'Subir PDF',
+  resetProcess: 'Reiniciar proceso',
   views: 'Vistas',
   dataConfig: 'Configuración de datos',
   map: 'Mapa',
@@ -424,6 +493,7 @@ const ES: I18nTranslations = {
   selectValidPDF: 'Selecciona un archivo PDF válido',
   errorProcessingPDF: (msg: string) => `Error al procesar el PDF: ${msg}. Asegúrate de que has cargado el PDF oficial de vacantes de educación secundaria.`,
   errorLoadingPDF: (msg: string) => `Error al cargar el PDF: ${msg}`,
+  errorTitle: 'Error',
   errorPDFFormat: 'El archivo no parece un PDF válido de vacantes de educación secundaria. Comprueba que has seleccionado el archivo correcto.',
   couldNotGeocode: (name: string) => `No se ha podido geocodificar "${name}". Prueba con un nombre de municipio.`,
 
@@ -460,8 +530,40 @@ const ES: I18nTranslations = {
   selectAll: 'Seleccionar todas',
   deselectAll: 'Deseleccionar todas',
   termsTitle: 'Términos y Condiciones de Uso',
-  termsUpdated: 'Última actualización: Mayo 2024',
+  termsUpdated: 'Última actualización: Julio 2026',
   privacyTitle: 'Política de Privacidad',
   privacyUpdated: 'Última actualización: Octubre 2023',
   backToHome: 'Volver al inicio',
+  observationsTitle: 'Observaciones de la plaza itinerante',
+  close: 'Cerrar',
+
+  termsNatureTitle: 'Naturaleza de la Herramienta',
+  termsNatureBody: 'Esta aplicación es una herramienta <strong>sin ánimo de lucro</strong>, desarrollada con la finalidad de facilitar la visualización de datos de desplazamiento para personal docente.',
+  termsNatureNotice: '<strong>Aviso de Independencia:</strong> Este software es totalmente independiente y no tiene ninguna vinculación oficial con la <strong>Generalitat Valenciana</strong> ni con la Conselleria d\'Educació.',
+  termsPrivacyTitle: 'Privacidad y Gestión de Datos',
+  termsPrivacyCard1Title: 'Sin almacenamiento',
+  termsPrivacyCard1Desc: 'No guardamos datos ni archivos en nuestros servidores. Toda la información se procesa exclusivamente en tu navegador.',
+  termsPrivacyCard2Title: 'Procesamiento local',
+  termsPrivacyCard2Desc: 'El análisis de los documentos se realiza de forma temporal. Una vez cerrada la sesión, los datos se eliminan automáticamente.',
+  termsReliabilityTitle: 'Fiabilidad de los Datos',
+  termsReliabilityIntro: 'El algoritmo extrae información de archivos PDF oficiales. A pesar de los esfuerzos por garantizar la precisión, el usuario acepta que:',
+  termsReliabilityLi1: 'Pueden ocurrir errores técnicos en el parseo (lectura) de los datos del PDF original.',
+  termsReliabilityLi2: 'Los cálculos de distancia y tiempo son estimaciones basadas en servicios cartográficos externos y pueden no reflejar la realidad exacta.',
+  termsResponsibilityTitle: 'Responsabilidad del Usuario',
+  termsResponsibilityLabel: 'Obligación de verificación:',
+  termsResponsibilityDesc: 'El usuario es el único responsable de verificar la lista oficial de vacantes y adjudicaciones publicada por los canales institucionales. Esta herramienta no tiene carácter vinculante ni jurídico.',
+
+  privacyTransparencyTitle: 'Compromiso de Transparencia',
+  privacyTransparencyBody: 'Esta herramienta ha sido diseñada para la administración pública con un objetivo claro: ofrecer un servicio eficiente sin comprometer la seguridad de la información personal de los trabajadores y ciudadanos. Toda la lógica de procesamiento se realiza bajo un entorno de máxima protección.',
+  privacyLocalTitle: 'Procesamiento Local en Navegador',
+  privacyLocalBody: 'El archivo PDF que subas se procesa directamente en la memoria de tu navegador.',
+  privacyLocalLi1: 'Nunca se envía a ningún servidor externo.',
+  privacyLocalLi2: 'Los datos se borran al cerrar la pestaña.',
+  privacyTrackingTitle: 'Sin Rastreo',
+  privacyTrackingBody: 'No utilizamos cookies para fines publicitarios ni herramientas de seguimiento personalizado.',
+  privacyDataOriginTitle: 'Origen de los Datos',
+  privacyDataOriginBody: 'La información que se visualiza en las tablas y mapas de esta aplicación proviene <strong>exclusivamente</strong> de la extracción automatizada del documento PDF proporcionado por el usuario. La aplicación no cruza estos datos con bases de datos externas de carácter personal.',
+  privacyStep1: '1. Carga de PDF',
+  privacyStep2: '2. Extracción Local',
+  privacyStep3: '3. Visualización Efímera',
 };

@@ -26,7 +26,8 @@ export class PdfParserService {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
 
-      const filesPagina = this.agruparPerFila(content.items);
+      const modalitat = this.detectarModalitat(content.items);
+      const filesPagina = this.agruparPerFila(content.items, modalitat);
       totesLesFiles.push(...filesPagina);
     }
 
@@ -40,7 +41,17 @@ export class PdfParserService {
     return totesLesFiles;
   }
 
-  private agruparPerFila(items: any[]): IesRow[] {
+  private detectarModalitat(items: any[]): string {
+    for (const item of items) {
+      const txt = item.str.trim();
+      if (txt.length > 10 && /^[\dA-Za-z]+\s*-\s*.+\s*\/\s*.+/.test(txt)) {
+        return txt;
+      }
+    }
+    return '';
+  }
+
+  private agruparPerFila(items: any[], modalitat: string): IesRow[] {
     const TOL = 3;
     const grups = new Map<number, any[]>();
 
@@ -107,7 +118,7 @@ export class PdfParserService {
           }
         }
 
-        files.push({ num, centre, localitat, codiCentre, codiLloc, observacions: observacionsNeta, itinerant, centreItinerant, hores });
+        files.push({ num, centre, localitat, codiCentre, codiLloc, observacions: observacionsNeta, itinerant, centreItinerant, hores, modalitat });
       }
     }
 

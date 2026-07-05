@@ -1,4 +1,5 @@
 <div class="h-screen flex flex-col overflow-hidden bg-background text-on-background font-body-md">
+  @if (pdfCarregat()) {
   <!-- TopNavBar -->
   <header class="bg-surface border-b border-outline-variant h-16 flex items-center shrink-0 z-50">
     <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
@@ -18,7 +19,6 @@
       </div>
     </div>
   </header>
-
   <div class="flex flex-1 overflow-hidden">
     <!-- Sidebar -->
     <aside class="w-80 shrink-0 bg-surface-container-low flex flex-col p-md border-r border-outline-variant overflow-y-auto custom-scrollbar">
@@ -250,20 +250,51 @@
                     (click)="filtreNivell.set('molt alt'); aplicarFiltre()">Molt Alt</button>
           </div>
 
-          <!-- Locality filters -->
+          <!-- Locality filter: searchable dropdown -->
           @if (localitats().length > 0) {
-            <div class="flex gap-1 flex-wrap">
-              <button class="text-xs px-2 py-0.5 rounded-full transition-all"
-                      [class.bg-surface-container-high]="filtreLocalitat() === ''"
-                      [class.bg-primary-container]="filtreLocalitat() !== ''"
-                      [class.text-on-primary]="filtreLocalitat() !== ''"
-                      (click)="filtreLocalitat.set(''); aplicarFiltre()">Totes</button>
-              @for (loc of localitats(); track loc) {
-                <button class="text-xs px-2 py-0.5 rounded-full transition-all border border-outline-variant"
-                        [class.bg-primary]="filtreLocalitat() === loc"
-                        [class.text-on-primary]="filtreLocalitat() === loc"
-                        [class.bg-surface-container-high]="filtreLocalitat() !== loc"
-                        (click)="filtreLocalitat.set(loc); aplicarFiltre()">{{ loc }}</button>
+            <div class="relative" (click)="$event.stopPropagation()">
+              <div class="flex items-center gap-1 border border-outline-variant rounded-lg px-2 py-1 bg-surface-container-lowest cursor-text"
+                   (click)="mostrarDropdownLocalitats.set(true); focussarInputLocalitat()">
+                @if (filtreLocalitat()) {
+                  <span class="text-xs bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded flex items-center gap-1">
+                    {{ filtreLocalitat() }}
+                    <span class="material-symbols-outlined text-xs cursor-pointer" (click)="filtreLocalitat.set(''); aplicarFiltre(); $event.stopPropagation()">close</span>
+                  </span>
+                }
+                <input #inputLocalitat
+                       class="flex-1 text-xs outline-none bg-transparent min-w-[80px]"
+                       placeholder="{{ filtreLocalitat() ? '' : 'Filtrar per localitat...' }}"
+                       [value]="cercaLocalitat()"
+                       (input)="cercaLocalitat.set($any($event.target).value); mostrarDropdownLocalitats.set(true)"
+                       (focus)="mostrarDropdownLocalitats.set(true)"
+                       (blur)="tancarDropdownLocalitat()" />
+                <span class="material-symbols-outlined text-outline text-sm">arrow_drop_down</span>
+              </div>
+
+              @if (mostrarDropdownLocalitats()) {
+                @let localitatsFiltrades = cercaLocalitat().trim()
+                  ? localitats().filter(l => l.toLowerCase().includes(cercaLocalitat().toLowerCase()))
+                  : localitats();
+                @if (localitatsFiltrades.length > 0) {
+                  <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto custom-scrollbar">
+                    <div class="px-2 py-1.5 text-xs text-outline hover:bg-surface-container-high cursor-pointer"
+                         [class.font-bold]="filtreLocalitat() === ''"
+                         (mousedown)="filtreLocalitat.set(''); cercaLocalitat.set(''); aplicarFiltre(); mostrarDropdownLocalitats.set(false)">
+                      Totes
+                    </div>
+                    @for (loc of localitatsFiltrades; track loc) {
+                      <div class="px-2 py-1.5 text-xs text-on-surface hover:bg-surface-container-high cursor-pointer"
+                           [class.font-bold]="filtreLocalitat() === loc"
+                           (mousedown)="filtreLocalitat.set(loc); cercaLocalitat.set(''); aplicarFiltre(); mostrarDropdownLocalitats.set(false)">
+                        {{ loc }}
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30">
+                    <div class="px-2 py-1.5 text-xs text-outline">No hi ha resultats</div>
+                  </div>
+                }
               }
             </div>
           }
@@ -276,6 +307,53 @@
                        class="rounded border-outline-variant text-primary focus:ring-primary" />
                 Mostrar només itinerants ({{ totalItinerants() }})
               </label>
+            </div>
+          }
+
+          <!-- Modalitat filter (multi-select searchable dropdown) -->
+          @if (modalitatsDisponibles().length > 0) {
+            <div class="relative" (click)="$event.stopPropagation()">
+              <label class="text-xs text-on-surface-variant font-medium mb-1 block">Modalitat</label>
+              <div class="flex items-center gap-1 border border-outline-variant rounded-lg px-2 py-1 bg-surface-container-lowest cursor-text flex-wrap"
+                   (click)="mostrarDropdownModalitats.set(true); $event.preventDefault()">
+                @for (m of filtreModalitats(); track m) {
+                  <span class="text-xs bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded flex items-center gap-1">
+                    {{ m }}
+                    <span class="material-symbols-outlined text-xs cursor-pointer" (click)="toggleModalitat(m); $event.stopPropagation()">close</span>
+                  </span>
+                }
+                <input #inputModalitat
+                       class="flex-1 text-xs outline-none bg-transparent min-w-[100px]"
+                       placeholder="Filtrar per modalitat..."
+                       [value]="cercaModalitat()"
+                       (input)="cercaModalitat.set($any($event.target).value); mostrarDropdownModalitats.set(true)"
+                       (focus)="mostrarDropdownModalitats.set(true)"
+                       (blur)="tancarDropdownModalitats()" />
+                <span class="material-symbols-outlined text-outline text-sm">arrow_drop_down</span>
+              </div>
+
+              @if (mostrarDropdownModalitats()) {
+                @let modalitatsFiltrades = cercaModalitat().trim()
+                  ? modalitatsDisponibles().filter(m => m.toLowerCase().includes(cercaModalitat().toLowerCase()))
+                  : modalitatsDisponibles();
+                @if (modalitatsFiltrades.length > 0) {
+                  <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 max-h-48 overflow-y-auto custom-scrollbar">
+                    @for (m of modalitatsFiltrades; track m) {
+                      <div class="flex items-center gap-2 px-2 py-1.5 text-xs text-on-surface hover:bg-surface-container-high cursor-pointer"
+                           [class.font-bold]="modalitatSeleccionada(m)"
+                           (mousedown)="toggleModalitat(m); $event.preventDefault()">
+                        <input type="checkbox" [checked]="modalitatSeleccionada(m)" class="rounded border-outline-variant text-primary focus:ring-primary"
+                               (click)="$event.stopPropagation()" />
+                        {{ m }}
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="absolute left-0 right-0 top-full mt-1 bg-surface border border-outline-variant rounded-lg shadow-lg z-30">
+                    <div class="px-2 py-1.5 text-xs text-outline">No hi ha resultats</div>
+                  </div>
+                }
+              }
             </div>
           }
         </div>
@@ -391,4 +469,75 @@
       }
     </main>
   </div>
+  } @else {
+  <!-- Landing page -->
+  <div class="flex-1 flex items-center justify-center p-8" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+    <div class="max-w-lg w-full text-center">
+      <div class="mb-8">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-[32px] text-on-primary">commute</span>
+        </div>
+        <h1 class="text-headline-lg font-extrabold text-primary mb-2">Calculador d'Esforç<br/>de Desplaçament IES</h1>
+        <p class="text-body-md text-on-surface-variant">
+          Puja el fitxer PDF de vacants per a visualitzar en un mapa interactiu
+          la ubicació dels centres educatius i calcular la distància i l'esforç
+          de desplaçament des dels teus orígens.
+        </p>
+      </div>
+
+      @if (error()) {
+        <div class="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm">{{ error() }}</div>
+      }
+
+      @if (proces() && proces()!.totalPagines > 0 && proces()!.percentatge < 100) {
+        <div class="border-2 border-primary/20 rounded-2xl p-12 bg-primary-container/5">
+          <div class="flex flex-col items-center gap-4">
+            <div class="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-label-md font-medium text-on-surface">Processant PDF...</p>
+            <div class="w-full max-w-xs bg-outline-variant rounded-full h-2">
+              <div class="h-2 rounded-full bg-primary transition-all" [style.width.%]="proces()!.percentatge"></div>
+            </div>
+            <p class="text-xs text-on-surface-variant">{{ proces()!.missatge }}</p>
+          </div>
+        </div>
+      } @else {
+        <div class="border-2 border-dashed rounded-2xl p-12 transition-all cursor-pointer"
+             [class.border-primary]="!dragging()"
+             [class.border-secondary]="dragging()"
+             [class.bg-primary-container/10]="dragging()"
+             [class.hover:bg-surface-container-high]="!dragging()"
+             (click)="landingPdfInput.click()">
+          <span class="material-symbols-outlined text-5xl text-outline mb-4 block">cloud_upload</span>
+          <p class="text-label-md font-medium text-on-surface mb-1">Arrossega el PDF ací o fes clic per a seleccionar-lo</p>
+          <p class="text-xs text-outline">Només fitxers PDF</p>
+          <input type="file" #landingPdfInput accept=".pdf" (change)="onFileSelected($event)" class="hidden" />
+        </div>
+
+        <div class="mt-6">
+          <p class="text-xs text-outline mb-3">o prova amb un fitxer d'exemple</p>
+          <button class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-label-md text-on-surface-variant hover:bg-surface-container transition-colors"
+                  (click)="carregarPdfExemple()">
+            <span class="material-symbols-outlined text-[18px]">description</span>
+            Carregar PDF d'exemple
+          </button>
+        </div>
+
+        <div class="mt-10 flex justify-center gap-8 text-xs text-outline">
+          <div class="flex flex-col items-center gap-1">
+            <span class="material-symbols-outlined text-xl">map</span>
+            <span>Mapa interactiu</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="material-symbols-outlined text-xl">table_chart</span>
+            <span>Taula de dades</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="material-symbols-outlined text-xl">straighten</span>
+            <span>Càlcul de distàncies</span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+  }
 </div>

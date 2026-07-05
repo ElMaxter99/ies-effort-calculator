@@ -16,6 +16,7 @@ export class GeocodingService {
 
   private cache = new Map<string, GeoResult>();
   private lastRequestTime = 0;
+  private requestLock = Promise.resolve();
 
   constructor() {
     this.loadCache();
@@ -48,31 +49,42 @@ export class GeocodingService {
     const clau = lloc.toLowerCase().trim();
     if (this.cache.has(clau)) return this.cache.get(clau)!;
 
-    await this.rateLimit();
+    for (let intent = 0; intent < 3; intent++) {
+      await this.rateLimit();
 
-    const query = encodeURIComponent(`${lloc}, Comunitat Valenciana, Spain`);
-    const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&accept-language=ca`;
+      const query = encodeURIComponent(`${lloc}, Comunitat Valenciana, Spain`);
+      const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&accept-language=ca`;
 
-    try {
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'ies-effort-calculator/1.0' },
-      });
-      const dades = await res.json();
+      try {
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'ies-effort-calculator/1.0' },
+        });
 
-      if (dades && dades.length > 0) {
-        const resultat: GeoResult = {
-          lat: parseFloat(dades[0].lat),
-          lng: parseFloat(dades[0].lon),
-          displayName: dades[0].display_name,
-        };
-        this.cache.set(clau, resultat);
-        this.saveCache();
-        return resultat;
+        if (res.status === 429) {
+          const espera = 2000 * (intent + 1);
+          await new Promise((r) => setTimeout(r, espera));
+          this.lastRequestTime = 0;
+          continue;
+        }
+
+        const dades = await res.json();
+
+        if (dades && dades.length > 0) {
+          const resultat: GeoResult = {
+            lat: parseFloat(dades[0].lat),
+            lng: parseFloat(dades[0].lon),
+            displayName: dades[0].display_name,
+          };
+          this.cache.set(clau, resultat);
+          this.saveCache();
+          return resultat;
+        }
+        return null;
+      } catch {
+        return null;
       }
-      return null;
-    } catch {
-      return null;
     }
+    return null;
   }
 
   async geocodificaBatch(localitats: string[]): Promise<Map<string, GeoResult | null>> {
@@ -103,12 +115,15 @@ export class GeocodingService {
   }
 
   private async rateLimit() {
-    const now = Date.now();
-    const elapsed = now - this.lastRequestTime;
-    if (elapsed < 1100) {
-      await new Promise((r) => setTimeout(r, 1100 - elapsed));
-    }
-    this.lastRequestTime = Date.now();
+    this.requestLock = this.requestLock.then(async () => {
+      const now = Date.now();
+      const elapsed = now - this.lastRequestTime;
+      if (elapsed < 1100) {
+        await new Promise((r) => setTimeout(r, 1100 - elapsed));
+      }
+      this.lastRequestTime = Date.now();
+    });
+    await this.requestLock;
   }
 
   distanciaHaversine(lat1: number, lng1: number, lat2: number, lng2: number): number {

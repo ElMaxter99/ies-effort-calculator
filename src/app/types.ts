@@ -8,6 +8,7 @@ export interface IesRow {
   itinerant?: boolean;
   centreItinerant?: string;
   hores?: string;
+  modalitat?: string;
 }
 
 export interface EffortThresholds {
@@ -25,6 +26,7 @@ export interface IesCenter {
   distanciaKm?: number;
   nivellEsforc?: string;
   totalItinerants?: number;
+  modalitats?: string[];
 }
 
 export interface ProcesInfo {

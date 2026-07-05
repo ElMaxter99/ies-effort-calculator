@@ -13,8 +13,22 @@ type ViewType = 'map' | 'table' | 'split';
 })
 export class App implements OnDestroy {
   @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLElement>;
+  @ViewChild('inputLocalitat') inputLocalitatRef?: ElementRef<HTMLInputElement>;
+
+  focussarInputLocalitat() {
+    setTimeout(() => this.inputLocalitatRef?.nativeElement?.focus(), 50);
+  }
+
+  tancarDropdownLocalitat() {
+    setTimeout(() => this.mostrarDropdownLocalitats.set(false), 200);
+  }
+
+  tancarDropdownModalitats() {
+    setTimeout(() => this.mostrarDropdownModalitats.set(false), 200);
+  }
 
   pdfCarregat = signal(false);
+  dragging = signal(false);
   proces = signal<ProcesInfo | null>(null);
   centres = signal<IesCenter[]>([]);
   centresFiltrats = signal<IesCenter[]>([]);
@@ -24,6 +38,18 @@ export class App implements OnDestroy {
   cercaText = signal('');
   filtreLocalitat = signal<string>('');
   filtreItinerants = signal<boolean>(false);
+  cercaLocalitat = signal('');
+  mostrarDropdownLocalitats = signal(false);
+  modalitatsDisponibles = computed(() => {
+    const set = new Set<string>();
+    for (const c of this.centres()) {
+      for (const m of c.modalitats ?? []) set.add(m);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b));
+  });
+  filtreModalitats = signal<Set<string>>(new Set());
+  cercaModalitat = signal('');
+  mostrarDropdownModalitats = signal(false);
 
   thresholds = signal<EffortThresholds>({ baix: 5, moderat: 15, alt: 30 });
   mostrarConfig = signal(false);
@@ -135,18 +161,19 @@ export class App implements OnDestroy {
     this.centreMarkers = [];
 
     const origin = this.origins().find((o) => o.id === this.originActiu());
-    if (!origin?.coordenades) return;
 
-    const { lat, lng } = origin.coordenades;
+    if (origin?.coordenades) {
+      const { lat, lng } = origin.coordenades;
 
-    const originIcon = L.divIcon({
-      className: 'custom-div-icon',
-      html: `<div class="w-4 h-4" style="background:var(--color-primary);border:2px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(0,35,111,0.2)"></div>`,
-      iconSize: [16, 16],
-      iconAnchor: [8, 8],
-    });
+      const originIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div class="w-4 h-4" style="background:var(--color-primary);border:2px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(0,35,111,0.2)"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
 
-    this.originMarker = L.marker([lat, lng], { icon: originIcon }).addTo(this.map);
+      this.originMarker = L.marker([lat, lng], { icon: originIcon }).addTo(this.map);
+    }
 
     for (const c of this.centresFiltrats()) {
       if (!c.coordenades) continue;
@@ -169,22 +196,51 @@ export class App implements OnDestroy {
       this.centreMarkers.push(marker);
     }
 
-    const allCoords: [number, number][] = [[lat, lng]];
+    const allCoords: [number, number][] = [];
+    if (origin?.coordenades) allCoords.push([origin.coordenades.lat, origin.coordenades.lng]);
     for (const c of this.centresFiltrats()) {
       if (c.coordenades) allCoords.push([c.coordenades.lat, c.coordenades.lng]);
     }
-    if (allCoords.length > 1) {
+    if (allCoords.length > 0) {
       this.map.fitBounds(allCoords, { padding: [50, 50] });
+    }
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragging.set(true);
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragging.set(false);
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragging.set(false);
+
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.name.toLowerCase().endsWith('.pdf')) {
+      this.processarFitxer(file);
+    } else {
+      this.error.set('Arrossega un fitxer PDF vàlid');
     }
   }
 
   async onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
+    await this.processarFitxer(input.files[0]);
+    input.value = '';
+  }
 
-    const file = input.files[0];
+  private async processarFitxer(file: File) {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      this.error.set('Selecciona un fitxer PDF');
+      this.error.set('Selecciona un fitxer PDF vàlid');
       return;
     }
 
@@ -206,18 +262,43 @@ export class App implements OnDestroy {
     const centresArr: IesCenter[] = [];
 
     for (const [, c] of agrupats) {
+      const modalitats = [...new Set(c.places.map((p) => p.modalitat).filter(Boolean))] as string[];
       centresArr.push({
         codiCentre: c.codiCentre,
         nom: c.nom,
         localitat: c.localitat,
         places: c.places,
         totalItinerants: c.totalItinerants,
+        modalitats,
       });
     }
 
     this.centres.set(centresArr);
     this.centresFiltrats.set(centresArr);
     this.aplicarFiltre();
+    this.localitzarCentres();
+  }
+
+  private async localitzarCentres() {
+    const localitats = [...new Set(this.centres().map((c) => c.localitat.replace(/ - .*$/, '').trim().toLowerCase()))];
+    if (localitats.length === 0) return;
+
+    this.geoProgress.set({ actual: 0, total: localitats.length, missatge: `Localitzant ${localitats.length} centres...` });
+
+    const results = await this.geo.geocodificaBatch(localitats);
+
+    const centresActuals = this.centres();
+    for (const c of centresActuals) {
+      const clau = c.localitat.replace(/ - .*$/, '').trim().toLowerCase();
+      const geo = results.get(clau);
+      if (geo) {
+        c.coordenades = { lat: geo.lat, lng: geo.lng };
+      }
+    }
+
+    this.centres.set([...centresActuals]);
+    this.updateMap();
+    this.geoProgress.set({ actual: 0, total: 0, missatge: '' });
   }
 
   canviarVista(vista: ViewType) {
@@ -311,6 +392,19 @@ export class App implements OnDestroy {
     this.updateMap();
   }
 
+  toggleModalitat(m: string) {
+    this.filtreModalitats.update((s) => {
+      const nou = new Set(s);
+      if (nou.has(m)) nou.delete(m); else nou.add(m);
+      return nou;
+    });
+    this.aplicarFiltre();
+  }
+
+  modalitatSeleccionada(m: string): boolean {
+    return this.filtreModalitats().has(m);
+  }
+
   aplicarFiltre() {
     let resultats = [...this.centres()];
 
@@ -331,6 +425,10 @@ export class App implements OnDestroy {
 
     if (this.filtreItinerants()) {
       resultats = resultats.filter((c) => (c.totalItinerants ?? 0) > 0);
+    }
+
+    if (this.filtreModalitats().size > 0) {
+      resultats = resultats.filter((c) => c.modalitats?.some((m) => this.filtreModalitats().has(m)));
     }
 
     if (this.ordenarPer() === 'distancia') {

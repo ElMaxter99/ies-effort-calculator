@@ -2,6 +2,7 @@ import { Component, effect, signal, computed, ViewChild, ElementRef, afterNextRe
 import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds } from './types';
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
+import { I18nService } from './services/i18n.service';
 import L from 'leaflet';
 
 type ViewType = 'map' | 'table' | 'split';
@@ -57,6 +58,8 @@ export class App implements OnDestroy {
 
   geoProgress = signal({ current: 0, total: 0, message: '' });
 
+  t = computed(() => this.i18n.t());
+
   localities = computed(() => {
     const set = new Set<string>();
     for (const c of this.centres()) {
@@ -68,8 +71,9 @@ export class App implements OnDestroy {
   currentView = signal<ViewType>('map');
 
   origins = signal<Origin[]>([
-    { id: '1', name: 'Casa (València)' },
-    { id: '2', name: 'Estació Nord' },
+    { id: '1', name: 'València' },
+    { id: '2', name: 'Castelló' },
+    { id: '3', name: 'Alacant' },
   ]);
   activeOrigin = signal<string>('1');
   newOriginName = signal('');
@@ -89,7 +93,8 @@ export class App implements OnDestroy {
 
   constructor(
     private pdfParser: PdfParserService,
-    public geo: GeocodingService
+    public geo: GeocodingService,
+    public i18n: I18nService
   ) {
     this.process = this.pdfParser.process;
 
@@ -104,6 +109,10 @@ export class App implements OnDestroy {
       this.geo.thresholds = this.thresholds();
       this.applyFilter();
       this.updateMapCircles();
+    });
+
+    effect(() => {
+      document.documentElement.lang = this.i18n.lang();
     });
 
     afterNextRender(() => {
@@ -228,7 +237,7 @@ export class App implements OnDestroy {
     if (file && file.name.toLowerCase().endsWith('.pdf')) {
       this.processFile(file);
     } else {
-      this.error.set('Drop a valid PDF file');
+      this.error.set(this.i18n.t().dropValidPDF);
     }
   }
 
@@ -241,7 +250,7 @@ export class App implements OnDestroy {
 
   private async processFile(file: File) {
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      this.error.set('Select a valid PDF file');
+      this.error.set(this.i18n.t().selectValidPDF);
       return;
     }
 
@@ -254,7 +263,7 @@ export class App implements OnDestroy {
       this.rawRecords = await this.pdfParser.parsePdf(file);
       this.pdfLoaded.set(true);
     } catch (e: any) {
-      this.error.set('Error processing PDF: ' + e.message);
+      this.error.set(this.i18n.t().errorProcessingPDF(e.message));
     }
   }
 
@@ -282,7 +291,7 @@ export class App implements OnDestroy {
 
   continueWithModalities() {
     if (this.modalityFilter().size === 0) {
-      this.error.set('Select at least one modality');
+      this.error.set(this.i18n.t().selectAtLeastOneModality);
       return;
     }
     this.error.set('');
@@ -292,7 +301,7 @@ export class App implements OnDestroy {
   async continueWithOrigin() {
     const origin = this.origins().find((o) => o.id === this.activeOrigin());
     if (!origin?.coordinates) {
-      this.error.set('Add a comparison origin');
+      this.error.set(this.i18n.t().addComparisonOrigin);
       return;
     }
     this.error.set('');
@@ -306,8 +315,9 @@ export class App implements OnDestroy {
     this.calculating.set(true);
 
     const results = await this.geo.geocodeBatch(uniqueLocalities);
+    const t = this.i18n.t();
 
-    this.geoProgress.set({ current: 0, total: filteredCentres.length, message: `Calculating distances for ${filteredCentres.length} centres...` });
+    this.geoProgress.set({ current: 0, total: filteredCentres.length, message: t.calculatingForCentres(filteredCentres.length) });
 
     for (let i = 0; i < filteredCentres.length; i++) {
       const c = filteredCentres[i];
@@ -324,7 +334,7 @@ export class App implements OnDestroy {
 
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);
-        this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: `Calculating distances... ${i + 1}/${filteredCentres.length}` });
+        this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: t.calculatingProgress(i + 1, filteredCentres.length) });
       }
     }
 
@@ -350,11 +360,12 @@ export class App implements OnDestroy {
     this.error.set('');
     this.geocoding.set(true);
     this.calculating.set(true);
-    this.geoProgress.set({ current: 0, total: 0, message: 'Geocoding origin...' });
+    const t = this.i18n.t();
+    this.geoProgress.set({ current: 0, total: 0, message: t.geocodingOrigin });
 
     const geoOrigin = await this.geo.geocode(name);
     if (!geoOrigin) {
-      this.error.set(`Could not geocode "${name}". Try with a town name.`);
+      this.error.set(t.couldNotGeocode(name));
       this.geocoding.set(false);
       this.calculating.set(false);
       return;
@@ -411,12 +422,13 @@ export class App implements OnDestroy {
       return !c?.coordinates;
     });
 
+    const t2 = this.i18n.t();
     if (pending.length > 0) {
-      this.geoProgress.set({ current: 0, total: pending.length, message: `Geocoding ${pending.length} new localities...` });
+      this.geoProgress.set({ current: 0, total: pending.length, message: t2.geocodingNew(pending.length) });
       await this.geo.geocodeBatch(pending);
     }
 
-    this.geoProgress.set({ current: 0, total: currentCentres.length, message: `Calculating distances for ${currentCentres.length} centres...` });
+    this.geoProgress.set({ current: 0, total: currentCentres.length, message: t2.calculatingForCentres(currentCentres.length) });
 
     for (let i = 0; i < currentCentres.length; i++) {
       const c = currentCentres[i];
@@ -433,7 +445,7 @@ export class App implements OnDestroy {
 
       if (i % 50 === 0) {
         this.centres.set([...this.centres()]);
-        this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: `Calculating distances... ${i + 1}/${currentCentres.length}` });
+        this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: t2.calculatingProgress(i + 1, currentCentres.length) });
       }
     }
 
@@ -553,6 +565,6 @@ export class App implements OnDestroy {
           input.dispatchEvent(new Event('change'));
         }
       })
-      .catch((e) => this.error.set('Error loading PDF: ' + e.message));
+      .catch((e) => this.error.set(this.i18n.t().errorLoadingPDF(e.message)));
   }
 }

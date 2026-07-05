@@ -1,9 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { IesRow, ProcessInfo } from '../types';
+import { I18nService } from './i18n.service';
 
 @Injectable({ providedIn: 'root' })
 export class PdfParserService {
   process = signal<ProcessInfo>({ currentPage: 0, totalPages: 0, percentage: 0, message: '' });
+
+  constructor(private i18n: I18nService) {}
 
   async parsePdf(file: File): Promise<IesRow[]> {
     const pdfjsLib = await import('pdfjs-dist');
@@ -11,7 +14,8 @@ export class PdfParserService {
     const data = new Uint8Array(await file.arrayBuffer());
     const pdf = await pdfjsLib.getDocument({ data }).promise;
 
-    this.process.set({ currentPage: 0, totalPages: pdf.numPages, percentage: 0, message: 'Starting load...' });
+    const t = this.i18n.t();
+    this.process.set({ currentPage: 0, totalPages: pdf.numPages, percentage: 0, message: t.processingPDF });
 
     const allRows: IesRow[] = [];
 
@@ -20,7 +24,7 @@ export class PdfParserService {
         currentPage: i,
         totalPages: pdf.numPages,
         percentage: Math.round((i / pdf.numPages) * 100),
-        message: `Processing page ${i} of ${pdf.numPages}...`,
+        message: t.pdfProcessingMessage(i, pdf.numPages),
       });
 
       const page = await pdf.getPage(i);
@@ -35,7 +39,7 @@ export class PdfParserService {
       currentPage: pdf.numPages,
       totalPages: pdf.numPages,
       percentage: 100,
-      message: `Complete! ${allRows.length} rows processed.`,
+      message: t.completeRows(allRows.length),
     });
 
     return allRows;

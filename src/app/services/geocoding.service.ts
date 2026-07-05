@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { EffortThresholds } from '../types';
+import { I18nService } from './i18n.service';
 
 interface GeoResult {
   lat: number;
@@ -18,7 +19,7 @@ export class GeocodingService {
   private lastRequestTime = 0;
   private requestLock = Promise.resolve();
 
-  constructor() {
+  constructor(public i18n: I18nService) {
     this.loadCache();
   }
 
@@ -101,16 +102,17 @@ export class GeocodingService {
       }
     }
 
-    this.progress.set({ current: 0, total: pending.length, message: `Geocoding localities...` });
+    const t = this.i18n.t();
+    this.progress.set({ current: 0, total: pending.length, message: t.geocodingLocalities });
 
     for (let i = 0; i < pending.length; i++) {
       const loc = pending[i];
       const result = await this.geocode(loc);
       results.set(loc, result);
-      this.progress.set({ current: i + 1, total: pending.length, message: `Geocoding ${i + 1} of ${pending.length} localities...` });
+      this.progress.set({ current: i + 1, total: pending.length, message: t.geocodingProgress(i + 1, pending.length) });
     }
 
-    this.progress.set({ current: pending.length, total: pending.length, message: `Geocoding complete (${pending.length} localities)` });
+    this.progress.set({ current: pending.length, total: pending.length, message: t.geocodingComplete(pending.length) });
     return results;
   }
 
@@ -163,21 +165,23 @@ export class GeocodingService {
   }
 
   levelLabel(level: string): string {
+    const t = this.i18n.t();
     switch (level) {
-      case 'baix': return 'Baix';
-      case 'moderat': return 'Moderat';
-      case 'alt': return 'Alt';
-      case 'molt alt': return 'Molt Alt';
-      default: return 'Unknown';
+      case 'baix': return t.levelLabelBaix;
+      case 'moderat': return t.levelLabelModerat;
+      case 'alt': return t.levelLabelAlt;
+      case 'molt alt': return t.levelLabelMoltAlt;
+      default: return t.levelLabelUnknown;
     }
   }
 
   levelDescription(level: string): string {
+    const t = this.i18n.t();
     switch (level) {
-      case 'baix': return `< ${this.thresholds.baix} km - Comfortable commute`;
-      case 'moderat': return `${this.thresholds.baix}-${this.thresholds.moderat} km - Reasonable commute`;
-      case 'alt': return `${this.thresholds.moderat}-${this.thresholds.alt} km - Long commute`;
-      case 'molt alt': return `> ${this.thresholds.alt} km - Very long commute`;
+      case 'baix': return t.levelDescBaix(this.thresholds.baix);
+      case 'moderat': return t.levelDescModerat(this.thresholds.baix, this.thresholds.moderat);
+      case 'alt': return t.levelDescAlt(this.thresholds.moderat, this.thresholds.alt);
+      case 'molt alt': return t.levelDescMoltAlt(this.thresholds.alt);
       default: return '';
     }
   }

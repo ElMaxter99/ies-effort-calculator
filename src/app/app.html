@@ -1,0 +1,394 @@
+<div class="h-screen flex flex-col overflow-hidden bg-background text-on-background font-body-md">
+  <!-- TopNavBar -->
+  <header class="bg-surface border-b border-outline-variant h-16 flex items-center shrink-0 z-50">
+    <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
+      <span class="text-headline-md font-extrabold text-primary">Calculador d'Esforç de Desplaçament IES</span>
+      <div class="flex items-center gap-md">
+        <label class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer">
+          <span class="material-symbols-outlined text-[20px]">upload_file</span>
+          Pujar PDF
+          <input type="file" id="pdfInput" accept=".pdf" (change)="onFileSelected($event)" class="hidden" />
+        </label>
+        <button class="text-on-surface-variant hover:text-primary transition-colors" (click)="carregarPdfExemple()" title="Usar PDF d'exemple">
+          <span class="material-symbols-outlined">description</span>
+        </button>
+        <button class="text-on-surface-variant hover:text-primary transition-colors">
+          <span class="material-symbols-outlined">help</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-80 shrink-0 bg-surface-container-low flex flex-col p-md border-r border-outline-variant overflow-y-auto custom-scrollbar">
+      <div class="mb-lg">
+        <h2 class="text-headline-sm font-bold text-primary mb-1">Vistes</h2>
+        <p class="text-label-md text-on-surface-variant">Configuració de dades</p>
+      </div>
+
+      <nav class="space-y-1 mb-xl">
+        @let vista = viewActual();
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer"
+           [class.bg-secondary-container]="vista === 'map'"
+           [class.text-on-secondary-container]="vista === 'map'"
+           [class.scale-95]="vista === 'map'"
+           [class.text-on-surface-variant]="vista !== 'map'"
+           [class.hover:bg-surface-container-high]="vista !== 'map'"
+           (click)="canviarVista('map')">
+          <span class="material-symbols-outlined">map</span>
+          <span class="font-label-md">Mapa</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer"
+           [class.bg-secondary-container]="vista === 'table'"
+           [class.text-on-secondary-container]="vista === 'table'"
+           [class.scale-95]="vista === 'table'"
+           [class.text-on-surface-variant]="vista !== 'table'"
+           [class.hover:bg-surface-container-high]="vista !== 'table'"
+           (click)="canviarVista('table')">
+          <span class="material-symbols-outlined">table_chart</span>
+          <span class="font-label-md">Taula</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer"
+           [class.bg-secondary-container]="vista === 'split'"
+           [class.text-on-secondary-container]="vista === 'split'"
+           [class.scale-95]="vista === 'split'"
+           [class.text-on-surface-variant]="vista !== 'split'"
+           [class.hover:bg-surface-container-high]="vista !== 'split'"
+           (click)="canviarVista('split')">
+          <span class="material-symbols-outlined">vertical_split</span>
+          <span class="font-label-md">Visió Dividida</span>
+        </a>
+      </nav>
+
+      <div class="mb-xl">
+        <h3 class="font-bold text-on-surface mb-md flex items-center gap-2">
+          <span class="material-symbols-outlined text-[20px]">location_on</span>
+          Orígens de comparació
+        </h3>
+        <div class="space-y-2 mb-md">
+          @for (o of origins(); track o.id) {
+            <div class="flex items-center justify-between p-2 bg-surface rounded border border-outline-variant text-label-md"
+                 [class.ring-2]="o.id === originActiu()"
+                 [class.ring-primary]="o.id === originActiu()"
+                 [class.cursor-pointer]="!calculant()"
+                 [class.opacity-60]="calculant() && o.id === origins()[origins().length - 1]?.id"
+                 (click)="!calculant() && seleccionarOrigen(o.id)">
+              <span class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full" [class.bg-primary]="o.id === originActiu()" [class.bg-secondary]="o.id !== originActiu()"></span>
+                {{ o.nom }}
+              </span>
+              <span class="flex items-center gap-1">
+                @if (calculant() && o.id === origins()[origins().length - 1]?.id) {
+                  <span class="material-symbols-outlined text-sm text-primary animate-spin">sync</span>
+                }
+                @if (origins().length > 1 && !calculant()) {
+                  <span class="material-symbols-outlined text-sm text-outline cursor-pointer hover:text-error" (click)="$event.stopPropagation(); eliminarOrigen(o.id)">close</span>
+                }
+              </span>
+            </div>
+          }
+        </div>
+        <div class="relative">
+          <input class="w-full text-label-md px-3 py-2 border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                 placeholder="Afegir nou origen..."
+                 [value]="nouOriginNom()"
+                 (input)="nouOriginNom.set($any($event.target).value)"
+                 (keyup.enter)="afegirOrigen()"
+                 [disabled]="calculant()" />
+          <button class="absolute right-2 top-1.5" (click)="afegirOrigen()" [disabled]="!nouOriginNom().trim() || calculant()">
+            @if (calculant()) {
+              <span class="material-symbols-outlined text-primary animate-spin">sync</span>
+            } @else {
+              <span class="material-symbols-outlined text-primary">add_circle</span>
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress / status area -->
+      @if (proces() && proces()!.totalPagines > 0) {
+        <div class="mb-xl">
+          <div class="w-full bg-outline-variant rounded-full h-2">
+            <div class="h-2 rounded-full bg-primary transition-all" [style.width.%]="proces()!.percentatge"></div>
+          </div>
+          <p class="text-xs text-on-surface-variant mt-1">{{ proces()!.missatge }}</p>
+        </div>
+      }
+
+      @if (geocodificant() || calculant()) {
+        <div class="mb-xl space-y-1">
+          @if (geoProgress().total > 0) {
+            <div class="w-full bg-outline-variant rounded-full h-1.5">
+              <div class="h-1.5 rounded-full bg-primary transition-all" [style.width.%]="(geoProgress().actual / geoProgress().total) * 100"></div>
+            </div>
+          }
+          <p class="text-xs text-on-surface-variant">{{ geoProgress().missatge }}</p>
+        </div>
+      }
+
+      @if (error()) {
+        <div class="mb-xl p-2 bg-error-container text-on-error-container rounded-lg text-xs">{{ error() }}</div>
+      }
+
+      @if (pdfCarregat()) {
+        <div class="mb-xl p-2 bg-green-100 text-green-800 rounded-lg text-xs font-medium">
+          {{ totalPlaces() }} registres en {{ totalCentres() }} centres
+          @if (totalItinerants() > 0) {
+            <span class="ml-1">({{ totalItinerants() }} itinerants)</span>
+          }
+        </div>
+      }
+
+      <!-- Configurable Legend -->
+      <div class="pt-lg border-t border-outline-variant">
+        <div class="flex items-center justify-between mb-sm">
+          <h3 class="font-bold text-on-surface text-label-md">Llegenda d'esforç</h3>
+          <button class="text-outline hover:text-primary transition-colors" (click)="mostrarConfig.set(!mostrarConfig())">
+            <span class="material-symbols-outlined text-lg">{{ mostrarConfig() ? 'expand_less' : 'tune' }}</span>
+          </button>
+        </div>
+
+        @if (mostrarConfig()) {
+          @let t = thresholds();
+          <div class="mb-md p-2 bg-surface rounded border border-outline-variant space-y-2">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-sm bg-green-500 shrink-0"></div>
+              <span class="text-xs text-on-surface-variant">Baix &lt;</span>
+              <input class="w-14 text-xs border border-outline-variant rounded px-1 py-0.5 text-center"
+                     type="number" min="1" max="100"
+                     [value]="t.baix"
+                     (input)="thresholds.set({ ...thresholds(), baix: +$any($event.target).value })" />
+              <span class="text-xs text-on-surface-variant">km</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-sm bg-yellow-500 shrink-0"></div>
+              <span class="text-xs text-on-surface-variant">Moderat &lt;</span>
+              <input class="w-14 text-xs border border-outline-variant rounded px-1 py-0.5 text-center"
+                     type="number" min="1" max="100"
+                     [value]="t.moderat"
+                     (input)="thresholds.set({ ...thresholds(), moderat: +$any($event.target).value })" />
+              <span class="text-xs text-on-surface-variant">km</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-sm bg-orange-500 shrink-0"></div>
+              <span class="text-xs text-on-surface-variant">Alt &lt;</span>
+              <input class="w-14 text-xs border border-outline-variant rounded px-1 py-0.5 text-center"
+                     type="number" min="1" max="200"
+                     [value]="t.alt"
+                     (input)="thresholds.set({ ...thresholds(), alt: +$any($event.target).value })" />
+              <span class="text-xs text-on-surface-variant">km</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-sm bg-red-600 shrink-0"></div>
+              <span class="text-xs text-on-surface-variant">Molt Alt &gt;</span>
+              <span class="text-xs font-medium">{{ t.alt }} km</span>
+            </div>
+          </div>
+        }
+
+        @if (!mostrarConfig()) {
+          <div class="space-y-3">
+            <div class="flex items-center gap-3">
+              <div class="w-4 h-4 rounded-sm bg-green-500"></div>
+              <span class="text-xs font-medium text-on-surface-variant">Baix (&lt;{{ thresholds().baix }}km)</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-4 h-4 rounded-sm bg-yellow-500"></div>
+              <span class="text-xs font-medium text-on-surface-variant">Moderat ({{ thresholds().baix }}-{{ thresholds().moderat }}km)</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-4 h-4 rounded-sm bg-orange-500"></div>
+              <span class="text-xs font-medium text-on-surface-variant">Alt ({{ thresholds().moderat }}-{{ thresholds().alt }}km)</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-4 h-4 rounded-sm bg-red-600"></div>
+              <span class="text-xs font-medium text-on-surface-variant">Molt Alt (&gt;{{ thresholds().alt }}km)</span>
+            </div>
+          </div>
+        }
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-hidden">
+      <!-- Table Section -->
+      <section class="flex flex-col bg-white border-r border-outline-variant"
+               [class.w-[40%]]="viewActual() !== 'table'"
+               [class.flex-1]="viewActual() === 'table'">
+        <div class="p-lg space-y-md border-b border-outline-variant">
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+            <input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-label-md focus:ring-1 focus:ring-primary outline-none"
+                   placeholder="Filtrar centres per nom o localitat..."
+                   [value]="cercaText()"
+                   (input)="cercaText.set($any($event.target).value); aplicarFiltre()" />
+          </div>
+
+          <!-- Effort level filters -->
+          <div class="flex gap-2 flex-wrap">
+            <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
+                    [class.bg-surface-container-high]="filtreNivell() === ''"
+                    [class.bg-primary-container]="filtreNivell() !== ''"
+                    [class.text-on-primary]="filtreNivell() !== ''"
+                    (click)="filtreNivell.set(''); aplicarFiltre()">Tots</button>
+            <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
+                    [class.bg-green-100]="filtreNivell() === 'baix'"
+                    [class.bg-surface-container-high]="filtreNivell() !== 'baix'"
+                    (click)="filtreNivell.set('baix'); aplicarFiltre()">Baix</button>
+            <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
+                    [class.bg-yellow-100]="filtreNivell() === 'moderat'"
+                    [class.bg-surface-container-high]="filtreNivell() !== 'moderat'"
+                    (click)="filtreNivell.set('moderat'); aplicarFiltre()">Moderat</button>
+            <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
+                    [class.bg-orange-100]="filtreNivell() === 'alt'"
+                    [class.bg-surface-container-high]="filtreNivell() !== 'alt'"
+                    (click)="filtreNivell.set('alt'); aplicarFiltre()">Alt</button>
+            <button class="text-xs px-2.5 py-1 rounded-full font-medium border border-outline-variant transition-all"
+                    [class.bg-red-100]="filtreNivell() === 'molt alt'"
+                    [class.bg-surface-container-high]="filtreNivell() !== 'molt alt'"
+                    (click)="filtreNivell.set('molt alt'); aplicarFiltre()">Molt Alt</button>
+          </div>
+
+          <!-- Locality filters -->
+          @if (localitats().length > 0) {
+            <div class="flex gap-1 flex-wrap">
+              <button class="text-xs px-2 py-0.5 rounded-full transition-all"
+                      [class.bg-surface-container-high]="filtreLocalitat() === ''"
+                      [class.bg-primary-container]="filtreLocalitat() !== ''"
+                      [class.text-on-primary]="filtreLocalitat() !== ''"
+                      (click)="filtreLocalitat.set(''); aplicarFiltre()">Totes</button>
+              @for (loc of localitats(); track loc) {
+                <button class="text-xs px-2 py-0.5 rounded-full transition-all border border-outline-variant"
+                        [class.bg-primary]="filtreLocalitat() === loc"
+                        [class.text-on-primary]="filtreLocalitat() === loc"
+                        [class.bg-surface-container-high]="filtreLocalitat() !== loc"
+                        (click)="filtreLocalitat.set(loc); aplicarFiltre()">{{ loc }}</button>
+              }
+            </div>
+          }
+
+          <!-- ITIN filter toggle -->
+          @if (totalItinerants() > 0) {
+            <div class="flex items-center gap-2">
+              <label class="flex items-center gap-2 text-xs text-on-surface-variant cursor-pointer">
+                <input type="checkbox" [checked]="filtreItinerants()" (change)="filtreItinerants.set($any($event.target).checked); aplicarFiltre()"
+                       class="rounded border-outline-variant text-primary focus:ring-primary" />
+                Mostrar només itinerants ({{ totalItinerants() }})
+              </label>
+            </div>
+          }
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+          @if (centresFiltrats().length > 0) {
+            <table class="w-full text-left border-collapse">
+              <thead class="sticky top-0 bg-surface-container-low border-b border-outline-variant z-20">
+                <tr>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">IES</th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Localitat</th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Distància</th>
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant">Esforç</th>
+                  @if (totalItinerants() > 0) {
+                    <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant text-center">ITIN</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-outline-variant">
+                @for (c of centresFiltrats(); track c.codiCentre) {
+                  <tr class="hover:bg-surface-container transition-colors cursor-pointer group">
+                    <td class="px-4 py-4 text-sm font-semibold text-primary">{{ c.nom }}</td>
+                    <td class="px-4 py-4 text-sm text-on-surface-variant">{{ c.localitat }}</td>
+                    <td class="px-4 py-4 text-sm text-on-surface">
+                      @if (c.distanciaKm !== undefined) {
+                        {{ c.distanciaKm }} km
+                      } @else {
+                        <span class="text-outline">—</span>
+                      }
+                    </td>
+                    <td class="px-4 py-4">
+                      @if (c.nivellEsforc) {
+                        @let nivell = c.nivellEsforc;
+                        @let colors = nivell === 'baix' ? 'bg-green-100 text-green-800 border-green-200' :
+                                       nivell === 'moderat' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                       nivell === 'alt' ? 'bg-orange-100 text-orange-800 border-orange-200' :
+                                       'bg-red-100 text-red-800 border-red-200';
+                        <span class="px-2 py-1 rounded-full text-[10px] font-extrabold uppercase border {{ colors }}">
+                          {{ getEtiquetaNivell(c.nivellEsforc) }}
+                        </span>
+                      } @else {
+                        <span class="text-outline text-sm">—</span>
+                      }
+                    </td>
+                    @if (totalItinerants() > 0) {
+                      <td class="px-4 py-4 text-center">
+                        @if ((c.totalItinerants ?? 0) > 0) {
+                          <span class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold"
+                                title="{{ c.totalItinerants }} plaça/es itinerant/s">
+                            {{ c.totalItinerants }}
+                          </span>
+                        } @else {
+                          <span class="text-outline text-xs">—</span>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <div class="flex items-center justify-center h-full text-on-surface-variant text-sm">
+              @if (pdfCarregat()) {
+                Afig un origen al panell lateral per calcular distàncies.
+              } @else {
+                Puja un PDF per començar.
+              }
+            </div>
+          }
+        </div>
+
+        <div class="p-md bg-surface border-t border-outline-variant flex justify-between items-center shrink-0">
+          <span class="text-xs text-on-surface-variant">Total: {{ centresFiltrats().length }} centres</span>
+          <div class="flex gap-2">
+            <select class="text-xs border border-outline-variant rounded px-2 py-1 bg-surface"
+                    [value]="ordenarPer()"
+                    (change)="ordenarPer.set($any($event.target).value); aplicarFiltre()">
+              <option value="distancia">Distància</option>
+              <option value="nom">Nom</option>
+            </select>
+            <button class="flex items-center gap-2 text-primary font-bold text-label-md hover:underline">
+              <span class="material-symbols-outlined text-[18px]">download</span>
+              Exportar CSV
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Map Section -->
+      @if (viewActual() !== 'table') {
+        <section class="flex-1 relative bg-surface-container-highest overflow-hidden">
+          <div id="map" #mapContainer class="h-full w-full z-10"></div>
+
+          <div class="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+            <div class="bg-white p-1 rounded-lg shadow-lg border border-outline-variant flex flex-col">
+              <button class="p-2 hover:bg-surface-container transition-colors border-b border-outline-variant" title="Apropar" (click)="map?.zoomIn()">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+              <button class="p-2 hover:bg-surface-container transition-colors" title="Allunyar" (click)="map?.zoomOut()">
+                <span class="material-symbols-outlined">remove</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-primary/20 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 bg-primary rounded-full"></span>
+            <span class="text-xs font-bold text-primary">
+              @let origin = origins().find(o => o.id === originActiu());
+              Origen: {{ origin?.nom ?? 'Sense seleccionar' }}
+            </span>
+          </div>
+        </section>
+      }
+    </main>
+  </div>
+</div>

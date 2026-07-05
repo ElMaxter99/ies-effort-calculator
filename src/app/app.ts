@@ -276,7 +276,7 @@ export class App implements OnDestroy {
 
     this.centres.set(centresArr);
     this.filteredCentres.set(centresArr);
-    this.modalityFilter.set(new Set(this.availableModalities()));
+    this.modalityFilter.set(new Set());
     this.step.set('modalities');
   }
 

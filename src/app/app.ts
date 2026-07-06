@@ -769,6 +769,12 @@ export class App implements OnDestroy {
     return icons[mode] ?? 'directions_car';
   }
 
+  selectedModalitiesFor(c: IesCenter): string[] {
+    const filter = this.modalityFilter();
+    if (filter.size === 0) return c.modalities ?? [];
+    return (c.modalities ?? []).filter((m) => filter.has(m));
+  }
+
   showObservations(c: IesCenter) {
     const obs = this.getObservations(c);
     if (obs) this.shownItinerantObservations.set(obs);

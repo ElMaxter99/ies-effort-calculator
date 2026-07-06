@@ -856,7 +856,17 @@
               <tbody class="divide-y divide-outline-variant">
                 @for (c of filteredCentres(); track c.code) {
                   <tr class="hover:bg-surface-container transition-colors cursor-pointer group" (click)="focusCentre(c)">
-                    <td class="px-4 py-4 text-sm font-semibold text-primary">{{ c.name }}</td>
+                    <td class="px-4 py-4 text-sm font-semibold text-primary">
+                      <div>{{ c.name }}</div>
+                      @let filteredMods = selectedModalitiesFor(c);
+                      @if (filteredMods.length > 0) {
+                        <div class="flex flex-wrap gap-1 mt-1">
+                          @for (m of filteredMods; track m) {
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">{{ m }}</span>
+                          }
+                        </div>
+                      }
+                    </td>
                     <td class="px-4 py-4 text-sm text-on-surface-variant">{{ c.locality }}</td>
                     <td class="px-4 py-4 text-sm text-on-surface">
                       @if (c.distanceKm !== undefined) {

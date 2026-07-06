@@ -3,9 +3,9 @@
   "version": "1.0.1",
   "scripts": {
     "ng": "ng",
-    "prebuild": "node scripts/update-version.cjs",
+    "prebuild": "node scripts/prebuild.cjs",
     "build": "ng build",
-    "prestart": "node scripts/update-version.cjs",
+    "prestart": "node scripts/prebuild.cjs",
     "start": "ng serve",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

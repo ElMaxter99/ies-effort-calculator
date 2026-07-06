@@ -526,23 +526,37 @@
         </div>
       }
 
-      @if (geocoding() || calculating()) {
-        <div class="mb-xl space-y-1">
-          @if (geoProgress().total > 0) {
-            <div class="w-full bg-outline-variant rounded-full h-1.5">
-              <div class="h-1.5 rounded-full bg-primary transition-all" [style.width.%]="(geoProgress().current / geoProgress().total) * 100"></div>
-            </div>
-          }
-          <p class="text-xs text-on-surface-variant">{{ geoProgress().message }}</p>
-        </div>
-      }
-
       @if (pdfLoaded()) {
         <div class="mb-xl p-2 bg-green-100 text-green-800 rounded-lg text-xs font-medium">
           {{ t().positionsInCentres(totalPositions(), totalCenters()) }}
           @if (filteredItinerantCount() > 0) {
             <span class="ml-1">{{ t().itinerantCount(filteredItinerantCount()) }}</span>
           }
+        </div>
+      }
+
+      <!-- Transport Mode Selector -->
+      @if (pdfLoaded()) {
+        <div class="mb-xl">
+          <div class="flex items-center gap-1 mb-2">
+            <span class="text-label-md font-bold text-on-surface-variant">{{ t().transport }}</span>
+            <span class="material-symbols-outlined text-[14px] text-outline cursor-help"
+                  [title]="t().timeEstimate">info</span>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            @for (mode of ['car', 'public', 'walking', 'bicycle']; track mode) {
+              <button class="text-xs px-2 py-1 rounded-full border transition-all"
+                      [class.bg-primary]="transportMode() === mode"
+                      [class.text-white]="transportMode() === mode"
+                      [class.border-primary]="transportMode() === mode"
+                      [class.bg-surface]="transportMode() !== mode"
+                      [class.text-on-surface-variant]="transportMode() !== mode"
+                      [class.border-outline-variant]="transportMode() !== mode"
+                      (click)="transportMode.set($any(mode))">
+                {{ mode === 'car' ? t().modeCar : mode === 'public' ? t().modePublic : mode === 'walking' ? t().modeWalking : t().modeBicycle }}
+              </button>
+            }
+          </div>
         </div>
       }
 
@@ -732,24 +746,32 @@
 
           <!-- Modality filter (multi-select searchable dropdown) -->
           @if (availableModalities().length > 0) {
-            <div class="relative" (click)="$event.stopPropagation()">
+            <div class="relative" #modalityFilterContainer>
               <label class="text-xs text-on-surface-variant font-medium mb-1 block">{{ t().modality }}</label>
-              <div class="flex items-center gap-1 border border-outline-variant rounded-lg px-2 py-1 bg-surface-container-lowest cursor-text flex-wrap"
-                   (click)="showModalityDropdown.set(true); $event.preventDefault()">
-                @for (m of modalityFilter(); track m) {
-                  <span class="text-xs bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded flex items-center gap-1">
-                    {{ m }}
-                    <span class="material-symbols-outlined text-xs cursor-pointer" (click)="toggleModality(m); $event.stopPropagation()">close</span>
-                  </span>
+              <div class="flex items-center gap-1 border border-outline-variant rounded-lg px-2 py-1 bg-surface-container-lowest cursor-text min-h-[34px]"
+                   (click)="toggleModalityDropdown()">
+                @let selected = modalityFilter();
+                @if (selected.size > 0) {
+                  @for (m of selected; track m; let i = $index) {
+                    @if (i < 2) {
+                      <span class="text-xs bg-primary-container text-on-primary-container px-1.5 py-0.5 rounded flex items-center gap-1 whitespace-nowrap max-w-[120px] truncate">
+                        {{ m }}
+                        <span class="material-symbols-outlined text-xs cursor-pointer shrink-0" (click)="toggleModality(m); $event.stopPropagation()">close</span>
+                      </span>
+                    }
+                  }
+                  @if (selected.size > 2) {
+                    <span class="text-xs bg-surface-container-high text-on-surface-variant px-1.5 py-0.5 rounded font-medium whitespace-nowrap">+{{ selected.size - 2 }}</span>
+                  }
                 }
                 <input #inputModality
-                       class="flex-1 text-xs outline-none bg-transparent min-w-[100px]"
-                       [placeholder]="t().filterByModality"
+                       class="flex-1 text-xs outline-none bg-transparent min-w-[80px]"
+                       [placeholder]="selected.size === 0 ? t().filterByModality : ''"
                        [value]="modalitySearch()"
                        (input)="modalitySearch.set($any($event.target).value); showModalityDropdown.set(true)"
                        (focus)="showModalityDropdown.set(true)"
-                       (blur)="closeModalityDropdown()" />
-                <span class="material-symbols-outlined text-outline text-sm">arrow_drop_down</span>
+                       (keydown.escape)="closeModalityDropdown()" />
+                <span class="material-symbols-outlined text-outline text-sm cursor-pointer" (click)="closeModalityDropdown(); $event.stopPropagation()">arrow_drop_down</span>
               </div>
 
               @if (showModalityDropdown()) {
@@ -828,7 +850,23 @@
                     <td class="px-4 py-4 text-sm text-on-surface-variant">{{ c.locality }}</td>
                     <td class="px-4 py-4 text-sm text-on-surface">
                       @if (c.distanceKm !== undefined) {
-                        {{ c.distanceKm }} km
+                        <div class="flex items-center gap-1">
+                          <span class="font-medium">{{ c.distanceKm }} km</span>
+                          @let route = c.route?.[transportMode()];
+                          @let time = getTravelTime(c);
+                          @if (time !== undefined) {
+                            @if (route) {
+                              <span class="text-outline text-xs" [title]="t().timeEstimate">
+                                {{ geo.formatTravelTime(time) }}
+                              </span>
+                              <span class="text-[10px] text-primary/60 font-medium" [title]="'Ruta: ' + route.distanceKm + ' km'">
+                                {{ route.distanceKm }} km
+                              </span>
+                            } @else {
+                              <span class="text-outline text-xs">(~{{ geo.formatTravelTime(time) }})</span>
+                            }
+                          }
+                        </div>
                       } @else {
                         <span class="text-outline">—</span>
                       }
@@ -1169,6 +1207,23 @@
             {{ t().close }}
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  @if (geocoding() || calculating()) {
+    <div class="fixed inset-0 z-[9998] flex flex-col gap-md items-center justify-center bg-black/20 backdrop-blur-sm">
+      <div class="flex flex-col gap-sm items-center bg-surface rounded-xl shadow-xl border border-outline-variant px-8 py-6 max-w-xs w-full mx-gutter">
+        <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-sm text-on-surface font-medium">{{ geoProgress().message }}</p>
+        @if (geoProgress().total > 0) {
+          <div class="w-full bg-outline-variant rounded-full h-1.5">
+            <div class="h-1.5 rounded-full bg-primary transition-all" [style.width.%]="(geoProgress().current / geoProgress().total) * 100"></div>
+          </div>
+        }
       </div>
     </div>
   }

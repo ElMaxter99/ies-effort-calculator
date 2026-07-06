@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { EffortThresholds } from '../types';
+import { EffortThresholds, TransportMode, RouteData } from '../types';
 import { I18nService } from './i18n.service';
 
 interface GeoResult {
@@ -8,7 +8,13 @@ interface GeoResult {
   displayName: string;
 }
 
+interface OSRMResult {
+  distance: number;
+  duration: number;
+}
+
 const CACHE_KEY = 'ies_geo_cache';
+const ROUTE_CACHE_KEY = 'ies_route_cache';
 
 @Injectable({ providedIn: 'root' })
 export class GeocodingService {
@@ -16,11 +22,13 @@ export class GeocodingService {
   progress = signal({ current: 0, total: 0, message: '' });
 
   private cache = new Map<string, GeoResult>();
+  private routeCache = new Map<string, OSRMResult>();
   private lastRequestTime = 0;
   private requestLock = Promise.resolve();
 
   constructor(public i18n: I18nService) {
     this.loadCache();
+    this.loadRouteCache();
   }
 
   private loadCache() {
@@ -44,6 +52,157 @@ export class GeocodingService {
     } catch {
       // localStorage full or unavailable
     }
+  }
+
+  private loadRouteCache() {
+    try {
+      const raw = localStorage.getItem(ROUTE_CACHE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw) as [string, { distance: number; duration: number }][];
+        for (const [key, val] of data) {
+          this.routeCache.set(key, val);
+        }
+      }
+    } catch {
+      // ignore corrupt cache
+    }
+  }
+
+  private saveRouteCache() {
+    try {
+      const data = Array.from(this.routeCache.entries());
+      localStorage.setItem(ROUTE_CACHE_KEY, JSON.stringify(data));
+    } catch {
+      // localStorage full or unavailable
+    }
+  }
+
+  private osrmBase(): string {
+    const host = typeof window !== 'undefined' ? window.location.hostname : '';
+    return host.includes('vercel.app') ? '/api/osrm' : 'https://router.project-osrm.org';
+  }
+
+  static readonly MODE_PROFILE: Record<TransportMode, string | null> = {
+    car: 'driving',
+    public: null,
+    walking: 'walking',
+    bicycle: 'cycling',
+  };
+
+  async fetchRoute(
+    originLat: number, originLng: number,
+    destLat: number, destLng: number,
+    mode: TransportMode,
+  ): Promise<RouteData | null> {
+    const profile = GeocodingService.MODE_PROFILE[mode];
+    if (!profile) return null;
+
+    const cacheKey = `${originLat.toFixed(5)},${originLng.toFixed(5)}-${destLat.toFixed(5)},${destLng.toFixed(5)}-${mode}`;
+    const cached = this.routeCache.get(cacheKey);
+    if (cached) return { distanceKm: parseFloat((cached.distance / 1000).toFixed(1)), durationMin: Math.round(cached.duration / 60) };
+
+    const base = this.osrmBase();
+    const url = `${base}/route/v1/${profile}/${originLng},${originLat};${destLng},${destLat}?overview=false`;
+
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'ies-effort-calculator/1.0' },
+      });
+
+      if (!res.ok) return null;
+
+      const data = await res.json();
+      if (!data?.routes?.[0]) return null;
+
+      const route = data.routes[0] as { distance: number; duration: number };
+      const result: OSRMResult = { distance: route.distance, duration: route.duration };
+
+      this.routeCache.set(cacheKey, result);
+      this.saveRouteCache();
+
+      return { distanceKm: parseFloat((route.distance / 1000).toFixed(1)), durationMin: Math.round(route.duration / 60) };
+    } catch {
+      return null;
+    }
+  }
+
+  async fetchRouteTable(
+    originLat: number, originLng: number,
+    destinations: { lat: number; lng: number }[],
+    mode: TransportMode,
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<(RouteData | null)[]> {
+    const profile = GeocodingService.MODE_PROFILE[mode];
+    if (!profile) return destinations.map(() => null);
+
+    const results: (RouteData | null)[] = new Array(destinations.length).fill(null);
+    const BATCH_SIZE = 100;
+
+    const uncached: number[] = [];
+    for (let i = 0; i < destinations.length; i++) {
+      const d = destinations[i];
+      const cacheKey = `${originLat.toFixed(5)},${originLng.toFixed(5)}-${d.lat.toFixed(5)},${d.lng.toFixed(5)}-${mode}`;
+      const cached = this.routeCache.get(cacheKey);
+      if (cached) {
+        results[i] = { distanceKm: parseFloat((cached.distance / 1000).toFixed(1)), durationMin: Math.round(cached.duration / 60) };
+      } else {
+        uncached.push(i);
+      }
+    }
+
+    const base = this.osrmBase();
+    let done = 0;
+
+    for (let start = 0; start < uncached.length; start += BATCH_SIZE) {
+      const batch = uncached.slice(start, start + BATCH_SIZE);
+      const coords = [`${originLng},${originLat}`];
+      for (const idx of batch) {
+        coords.push(`${destinations[idx].lng},${destinations[idx].lat}`);
+      }
+
+      const url = `${base}/table/v1/${profile}/${coords.join(';')}?sources=0&annotations=distance,duration`;
+
+      try {
+        const res = await fetch(url, {
+          headers: { 'User-Agent': 'ies-effort-calculator/1.0' },
+        });
+
+        if (!res.ok) {
+          done += batch.length;
+          onProgress?.(done, uncached.length);
+          continue;
+        }
+
+        const data = await res.json();
+        if (data?.durations?.[0] && data?.distances?.[0]) {
+          for (let j = 0; j < batch.length; j++) {
+            const dist = data.distances[0][j + 1];
+            const dur = data.durations[0][j + 1];
+            if (dist !== null && dur !== null) {
+              const idx = batch[j];
+              const result: OSRMResult = { distance: dist, duration: dur };
+              const d = destinations[idx];
+              const cacheKey = `${originLat.toFixed(5)},${originLng.toFixed(5)}-${d.lat.toFixed(5)},${d.lng.toFixed(5)}-${mode}`;
+              this.routeCache.set(cacheKey, result);
+              results[idx] = { distanceKm: parseFloat((dist / 1000).toFixed(1)), durationMin: Math.round(dur / 60) };
+            }
+          }
+        }
+      } catch {
+        // batch failed, results stay null
+      }
+
+      done += batch.length;
+      onProgress?.(done, uncached.length);
+    }
+
+    this.saveRouteCache();
+    return results;
+  }
+
+  clearRouteCache() {
+    this.routeCache.clear();
+    localStorage.removeItem(ROUTE_CACHE_KEY);
   }
 
   private nominatimBase(): string {
@@ -138,9 +297,33 @@ export class GeocodingService {
     return this.cache.get(key);
   }
 
+  getCachedRoute(originLat: number, originLng: number, destLat: number, destLng: number, mode: TransportMode): RouteData | undefined {
+    const cacheKey = `${originLat.toFixed(5)},${originLng.toFixed(5)}-${destLat.toFixed(5)},${destLng.toFixed(5)}-${mode}`;
+    const cached = this.routeCache.get(cacheKey);
+    if (!cached) return undefined;
+    return { distanceKm: parseFloat((cached.distance / 1000).toFixed(1)), durationMin: Math.round(cached.duration / 60) };
+  }
+
   clearCache() {
     this.cache.clear();
     localStorage.removeItem(CACHE_KEY);
+  }
+
+  removeOriginRoutes(originLat: number, originLng: number) {
+    const prefix = `${originLat.toFixed(5)},${originLng.toFixed(5)}-`;
+    for (const key of this.routeCache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.routeCache.delete(key);
+      }
+    }
+    this.saveRouteCache();
+  }
+
+  clearAllCaches() {
+    this.cache.clear();
+    this.routeCache.clear();
+    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(ROUTE_CACHE_KEY);
   }
 
   haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -189,6 +372,43 @@ export class GeocodingService {
       case 'alt': return t.levelDescAlt(this.thresholds.moderat, this.thresholds.alt);
       case 'molt alt': return t.levelDescMoltAlt(this.thresholds.alt);
       default: return '';
+    }
+  }
+
+  static readonly MODE_SPEEDS: Record<TransportMode, number> = {
+    car: 50,
+    public: 35,
+    walking: 5,
+    bicycle: 15,
+  };
+
+  static readonly MODE_MULTIPLIER: Record<TransportMode, number> = {
+    car: 1.4,
+    public: 1.5,
+    walking: 1.3,
+    bicycle: 1.3,
+  };
+
+  estimateTravelTime(distanceKm: number, mode: TransportMode): number {
+    const roadKm = distanceKm * GeocodingService.MODE_MULTIPLIER[mode];
+    const hours = roadKm / GeocodingService.MODE_SPEEDS[mode];
+    return Math.round(hours * 60);
+  }
+
+  formatTravelTime(minutes: number): string {
+    if (minutes < 60) return `${minutes} min`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  }
+
+  modeLabel(mode: TransportMode): string {
+    const t = this.i18n.t();
+    switch (mode) {
+      case 'car': return t.modeCar;
+      case 'public': return t.modePublic;
+      case 'walking': return t.modeWalking;
+      case 'bicycle': return t.modeBicycle;
     }
   }
 

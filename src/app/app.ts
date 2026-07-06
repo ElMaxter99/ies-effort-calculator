@@ -1,5 +1,5 @@
-import { Component, effect, signal, computed, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds } from './types';
+import { Component, effect, signal, computed, untracked, ViewChild, ElementRef, OnDestroy, HostListener } from '@angular/core';
+import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds, TransportMode } from './types';
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
 import { CentresDatabaseService } from './services/centres-database.service';
@@ -16,6 +16,7 @@ type ViewType = 'map' | 'table' | 'split';
 export class App implements OnDestroy {
   @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLElement>;
   @ViewChild('inputLocalitat') inputLocalitatRef?: ElementRef<HTMLInputElement>;
+  @ViewChild('modalityFilterContainer') modalityFilterContainer?: ElementRef<HTMLElement>;
 
   focusLocalityInput() {
     setTimeout(() => this.inputLocalitatRef?.nativeElement?.focus(), 50);
@@ -26,7 +27,22 @@ export class App implements OnDestroy {
   }
 
   closeModalityDropdown() {
-    setTimeout(() => this.showModalityDropdown.set(false), 200);
+    this.showModalityDropdown.set(false);
+    this.modalitySearch.set('');
+  }
+
+  toggleModalityDropdown() {
+    this.showModalityDropdown.update(v => !v);
+    if (!this.showModalityDropdown()) this.modalitySearch.set('');
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.showModalityDropdown()) return;
+    const container = this.modalityFilterContainer?.nativeElement;
+    if (container && !container.contains(event.target as Node)) {
+      this.closeModalityDropdown();
+    }
   }
 
   step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy'>('landing');
@@ -44,6 +60,7 @@ export class App implements OnDestroy {
   localityFilter = signal<string>('');
   itinerantFilter = signal<boolean>(false);
   observationsFilter = signal<boolean>(false);
+  transportMode = signal<TransportMode>('car');
   localitySearch = signal('');
   showLocalityDropdown = signal(false);
   availableModalities = computed(() => {
@@ -127,6 +144,18 @@ export class App implements OnDestroy {
       if (this.step() === 'main') {
         setTimeout(() => this.updateMap(), 50);
       }
+    });
+
+    effect(() => {
+      const mode = this.transportMode();
+      const step = untracked(() => this.step());
+      if (step !== 'main' || untracked(() => this.calculating()) || !GeocodingService.MODE_PROFILE[mode]) return;
+      const origin = untracked(() => this.origins().find((o) => o.id === this.activeOrigin()));
+      if (!origin?.coordinates) return;
+      this.fetchRoutesForCurrentMode(origin).then(() => {
+        this.applyFilter();
+        this.updateMap();
+      });
     });
 
     this.initDefaultOrigins();
@@ -261,8 +290,14 @@ export class App implements OnDestroy {
       });
 
       const marker = L.marker([c.coordinates.lat, c.coordinates.lng], { icon: centerIcon }).addTo(this.map);
+      const route = c.route?.[this.transportMode()];
+      const timeStr = route
+        ? this.geo.formatTravelTime(route.durationMin)
+        : c.distanceKm
+          ? '~' + this.geo.formatTravelTime(this.getTravelTime(c)!)
+          : '—';
       marker.bindPopup(
-        `<strong>${c.name}</strong><br>${c.locality}<br>${c.distanceKm ? c.distanceKm + ' km' : '—'}<br>${c.effortLevel ? this.geo.levelLabel(c.effortLevel) : ''}`,
+        `<strong>${c.name}</strong><br>${c.locality}<br>${c.distanceKm ? c.distanceKm + ' km' : '—'} (${timeStr})<br>${c.effortLevel ? this.geo.levelLabel(c.effortLevel) : ''}`,
       );
       this.centreMarkers.push(marker);
     }
@@ -378,7 +413,6 @@ export class App implements OnDestroy {
     const filteredCentres = this.filteredCentres();
     if (filteredCentres.length === 0) return;
 
-    this.geocoding.set(true);
     this.calculating.set(true);
     const t = this.i18n.t();
 
@@ -404,7 +438,7 @@ export class App implements OnDestroy {
       this.geoProgress.set({ current: i + 1, total: filteredCentres.length, message: t.calculatingProgress(i + 1, filteredCentres.length, c.name) });
 
       if (i % 50 === 0) {
-        this.centres.set([...this.centres()]);
+        await new Promise(r => setTimeout(r, 0));
       }
     }
 
@@ -412,7 +446,10 @@ export class App implements OnDestroy {
     this.applyFilter();
     this.updateMap();
 
-    this.geocoding.set(false);
+    await this.fetchRoutesForCurrentMode(origin);
+    this.applyFilter();
+    this.updateMap();
+
     this.calculating.set(false);
     this.geoProgress.set({ current: 0, total: 0, message: '' });
   }
@@ -467,12 +504,13 @@ export class App implements OnDestroy {
     this.updatePreviewMap(newOrigin);
 
     if (this.step() !== 'origin') {
+      this.geocoding.set(false);
       await this.calculateDistancesForOrigin(newOrigin);
+    } else {
+      this.geocoding.set(false);
+      this.calculating.set(false);
+      this.geoProgress.set({ current: 0, total: 0, message: '' });
     }
-
-    this.geocoding.set(false);
-    if (this.step() !== 'origin') this.calculating.set(false);
-    this.geoProgress.set({ current: 0, total: 0, message: '' });
   }
 
   async selectOrigin(id: string) {
@@ -509,6 +547,10 @@ export class App implements OnDestroy {
   }
 
   removeOrigin(id: string) {
+    const origin = this.origins().find((o) => o.id === id);
+    if (origin?.coordinates) {
+      this.geo.removeOriginRoutes(origin.coordinates.lat, origin.coordinates.lng);
+    }
     this.origins.update((o) => o.filter((x) => x.id !== id));
     if (this.activeOrigin() === id) {
       const remaining = this.origins();
@@ -523,6 +565,7 @@ export class App implements OnDestroy {
     const currentCentres = this.step() === 'main' ? this.filteredCentres() : this.centres();
     if (currentCentres.length === 0) return;
 
+    this.calculating.set(true);
     const t2 = this.i18n.t();
     this.geoProgress.set({ current: 0, total: currentCentres.length, message: t2.calculatingForCentres(currentCentres.length) });
 
@@ -548,13 +591,19 @@ export class App implements OnDestroy {
       this.geoProgress.set({ current: i + 1, total: currentCentres.length, message: t2.calculatingProgress(i + 1, currentCentres.length, c.name) });
 
       if (i % 50 === 0) {
-        this.centres.set([...this.centres()]);
+        await new Promise(r => setTimeout(r, 0));
       }
     }
 
     this.centres.set([...this.centres()]);
     this.applyFilter();
     this.updateMap();
+
+    await this.fetchRoutesForCurrentMode(origin);
+    this.applyFilter();
+    this.updateMap();
+    this.calculating.set(false);
+    this.geoProgress.set({ current: 0, total: 0, message: '' });
   }
 
   async toggleModality(m: string) {
@@ -724,6 +773,58 @@ export class App implements OnDestroy {
       .join('\n');
   }
 
+  private async fetchRoutesForCurrentMode(origin: Origin) {
+    if (!origin.coordinates) return;
+    const mode = this.transportMode();
+    if (!GeocodingService.MODE_PROFILE[mode]) return;
+    const centres = this.filteredCentres().filter(c => c.coordinates);
+    if (centres.length === 0) return;
+
+    const destCoords: { lat: number; lng: number }[] = [];
+    const centreMap: number[] = [];
+
+    for (let i = 0; i < centres.length; i++) {
+      if (!centres[i].route?.[mode]) {
+        destCoords.push(centres[i].coordinates!);
+        centreMap.push(i);
+      }
+    }
+
+    if (destCoords.length === 0) return;
+
+    this.calculating.set(true);
+    const t = this.i18n.t();
+    this.geoProgress.set({ current: 0, total: destCoords.length, message: t.routingProgress(0, destCoords.length) });
+
+    await this.geo.fetchRouteTable(
+      origin.coordinates.lat, origin.coordinates.lng,
+      destCoords,
+      mode,
+      (current, total) => {
+        this.geoProgress.set({ current, total, message: t.routingProgress(current, total) });
+      },
+    );
+
+    for (let i = 0; i < destCoords.length; i++) {
+      const route = this.geo.getCachedRoute(origin.coordinates.lat, origin.coordinates.lng, destCoords[i].lat, destCoords[i].lng, mode);
+      if (route) {
+        const c = centres[centreMap[i]];
+        c.route = { ...(c.route ?? {}), [mode]: route };
+      }
+    }
+
+    this.centres.set([...this.centres()]);
+    this.calculating.set(false);
+    this.geoProgress.set({ current: 0, total: 0, message: '' });
+  }
+
+  getTravelTime(c: IesCenter): number | undefined {
+    if (c.distanceKm === undefined) return undefined;
+    const mode = this.transportMode();
+    if (c.route?.[mode]?.durationMin) return c.route[mode].durationMin;
+    return this.geo.estimateTravelTime(c.distanceKm, this.transportMode());
+  }
+
   focusCentre(c: IesCenter) {
     if (!this.map || !c.coordinates) return;
     this.map.setView([c.coordinates.lat, c.coordinates.lng], this.map.getZoom());
@@ -732,12 +833,13 @@ export class App implements OnDestroy {
   exportCsv() {
     const rows = this.filteredCentres();
     const sep = ',';
-    const header = ['Centre', 'Localitat', 'Distància (km)', 'Esforç', 'Itinerants', 'Observacions'].join(sep);
+    const header = ['Centre', 'Localitat', 'Distància (km)', 'Temps', 'Esforç', 'Itinerants', 'Observacions'].join(sep);
     const lines = rows.map((c) =>
       [
         `"${c.name}"`,
         `"${c.locality}"`,
         c.distanceKm !== undefined ? c.distanceKm : '',
+        c.distanceKm !== undefined ? `"${this.geo.formatTravelTime(this.getTravelTime(c)!)}"` : '',
         c.effortLevel ? this.getLevelLabel(c.effortLevel) : '',
         this.getItinerantCount(c),
         `"${this.getObservations(c)}"`,
@@ -771,6 +873,7 @@ export class App implements OnDestroy {
 
   confirmReset() {
     this.showResetConfirm.set(false);
+    this.geo.clearAllCaches();
     location.reload();
   }
 

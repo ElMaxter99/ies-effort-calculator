@@ -85,6 +85,12 @@ export interface I18nTranslations {
   filterByModality: string;
   showOnlyItinerant: string;
   showOnlyObservations: string;
+  modeCar: string;
+  modePublic: string;
+  modeWalking: string;
+  modeBicycle: string;
+  timeEstimate: string;
+  transport: string;
   modality: string;
   ies: string;
   locality: string;
@@ -129,6 +135,7 @@ export interface I18nTranslations {
   calculatingProgress: (i: number, n: number, name: string) => string;
   geocodingNew: (n: number) => string;
 
+  routingProgress: (current: number, total: number) => string;
   positionsInCentres: (positions: number, centres: number) => string;
   itinerantCount: (n: number) => string;
   totalCentres: (n: number) => string;
@@ -284,6 +291,12 @@ const CA: I18nTranslations = {
   filterByModality: 'Filtrar per modalitat...',
   showOnlyItinerant: 'Mostrar només itinerants',
   showOnlyObservations: 'Mostrar només amb observacions',
+  modeCar: 'Cotxe',
+  modePublic: 'Transport públic',
+  modeWalking: 'A peu',
+  modeBicycle: 'Bicicleta',
+  timeEstimate: 'Temps estimat basat en la distància en línia recta. Pot variar segons la ruta i el trànsit.',
+  transport: 'Transport',
   modality: 'Modalitat',
   ies: 'IES',
   locality: 'Localitat',
@@ -328,6 +341,7 @@ const CA: I18nTranslations = {
   calculatingProgress: (i: number, n: number, name: string) => `Calculant distància: ${name} (${i}/${n})`,
   geocodingNew: (n: number) => `Geocodificant ${n} nous centres...`,
 
+  routingProgress: (current: number, total: number) => `Calculant ruta ${current} de ${total}...`,
   positionsInCentres: (positions: number, centres: number) => `${positions} places en ${centres} centres`,
   itinerantCount: (n: number) => `(${n} itinerant)`,
   totalCentres: (n: number) => `Total: ${n} centres`,
@@ -472,6 +486,12 @@ const ES: I18nTranslations = {
   filterByModality: 'Filtrar por modalidad...',
   showOnlyItinerant: 'Mostrar solo itinerantes',
   showOnlyObservations: 'Mostrar solo con observaciones',
+  modeCar: 'Coche',
+  modePublic: 'Transporte público',
+  modeWalking: 'A pie',
+  modeBicycle: 'Bicicleta',
+  timeEstimate: 'Tiempo estimado basado en la distancia en línea recta. Puede variar según la ruta y el tráfico.',
+  transport: 'Transporte',
   modality: 'Modalidad',
   ies: 'IES',
   locality: 'Localidad',
@@ -516,6 +536,7 @@ const ES: I18nTranslations = {
   calculatingProgress: (i: number, n: number, name: string) => `Calculando distancia: ${name} (${i}/${n})`,
   geocodingNew: (n: number) => `Geocodificando ${n} nuevos centros...`,
 
+  routingProgress: (current: number, total: number) => `Calculando ruta ${current} de ${total}...`,
   positionsInCentres: (positions: number, centres: number) => `${positions} plazas en ${centres} centros`,
   itinerantCount: (n: number) => `(${n} itinerante)`,
   totalCentres: (n: number) => `Total: ${n} centros`,

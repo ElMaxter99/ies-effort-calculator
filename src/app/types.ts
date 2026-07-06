@@ -17,6 +17,11 @@ export interface EffortThresholds {
   alt: number;
 }
 
+export interface RouteData {
+  distanceKm: number;
+  durationMin: number;
+}
+
 export interface IesCenter {
   code: string;
   name: string;
@@ -27,6 +32,7 @@ export interface IesCenter {
   effortLevel?: string;
   totalItinerants?: number;
   modalities?: string[];
+  route?: Partial<Record<TransportMode, RouteData>>;
 }
 
 export interface ProcessInfo {
@@ -37,6 +43,8 @@ export interface ProcessInfo {
 }
 
 export type EffortLevel = 'baix' | 'moderat' | 'alt' | 'molt alt';
+
+export type TransportMode = 'car' | 'public' | 'walking' | 'bicycle';
 
 export interface Origin {
   id: string;

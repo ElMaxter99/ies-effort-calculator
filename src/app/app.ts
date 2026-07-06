@@ -166,7 +166,7 @@ export class App implements OnDestroy {
   private initDefaultOrigins() {
     const defaults = [
       { id: '1', name: 'València' },
-      { id: '2', name: 'Castelló' },
+      { id: '2', name: 'Castelló de la Plana' },
       { id: '3', name: 'Alacant' },
     ];
     const origins: Origin[] = [];
@@ -542,7 +542,7 @@ export class App implements OnDestroy {
     }
   }
 
-  removeOrigin(id: string) {
+  async removeOrigin(id: string) {
     const origin = this.origins().find((o) => o.id === id);
     if (origin?.coordinates) {
       this.geo.removeOriginRoutes(origin.coordinates.lat, origin.coordinates.lng);
@@ -550,9 +550,15 @@ export class App implements OnDestroy {
     this.origins.update((o) => o.filter((x) => x.id !== id));
     if (this.activeOrigin() === id) {
       const remaining = this.origins();
-      this.activeOrigin.set(remaining.length > 0 ? remaining[remaining.length - 1].id : '');
+      if (remaining.length > 0) {
+        await this.selectOrigin(remaining[remaining.length - 1].id);
+      } else {
+        this.activeOrigin.set('');
+        this.updateMap();
+      }
+    } else {
+      this.updateMap();
     }
-    this.updateMap();
   }
 
   async calculateDistancesForOrigin(origin: Origin) {
@@ -756,6 +762,11 @@ export class App implements OnDestroy {
       if (!p.observations) return false;
       return filtered.size === 0 || filtered.has(p.modality ?? '');
     });
+  }
+
+  transportIcon(mode: string): string {
+    const icons: Record<string, string> = { car: 'directions_car', public: 'directions_bus', walking: 'directions_walk', bicycle: 'directions_bike' };
+    return icons[mode] ?? 'directions_car';
   }
 
   showObservations(c: IesCenter) {

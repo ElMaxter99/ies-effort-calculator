@@ -1,10 +1,4 @@
 <div class="h-screen flex flex-col overflow-hidden bg-background text-on-background font-body-md">
-  <div class="fixed top-4 right-4 z-[9999]">
-    <button class="text-xs px-3 py-1 rounded-lg border border-outline-variant text-on-surface-variant hover:text-primary hover:border-primary transition-all bg-surface/80 backdrop-blur-sm"
-            (click)="i18n.toggleLang()">
-      {{ t().langToggle }}
-    </button>
-  </div>
   @if (step() === 'landing') {
   <div class="flex-1 overflow-y-auto" (scroll)="onLandingScroll($event)">
     <!-- Header -->
@@ -59,6 +53,11 @@
               <p class="text-body-sm text-on-surface-variant max-w-lg">
                 {{ t().pdfFormatHint('Vacants_Supr_Despl_Secundaria_2.pdf') }}
               </p>
+              <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
+                 class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
+                <span class="material-symbols-outlined text-[16px]">download</span>
+                {{ t().loadSample }}
+              </a>
             </div>
           </div>
         </div>
@@ -409,8 +408,15 @@
   <!-- TopNavBar -->
   <header class="bg-surface border-b border-outline-variant h-16 flex items-center shrink-0 z-50">
     <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
-      <span class="text-headline-md font-extrabold text-primary">{{ t().appTitle }}</span>
+      <div class="flex items-center gap-xl">
+        <div class="flex items-center gap-sm">
+          <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
+          <span class="text-headline-md font-headline-md font-bold text-primary">{{ t().appTitle }}</span>
+        </div>
+      </div>
       <div class="flex items-center gap-md">
+        <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
+        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help">help</span>
         <button class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer"
                 (click)="showResetConfirm.set(true)">
           <span class="material-symbols-outlined text-[20px]">refresh</span>
@@ -538,22 +544,23 @@
       <!-- Transport Mode Selector -->
       @if (pdfLoaded()) {
         <div class="mb-xl">
-          <div class="flex items-center gap-1 mb-2">
-            <span class="text-label-md font-bold text-on-surface-variant">{{ t().transport }}</span>
+          <div class="flex items-center gap-1 mb-3">
+            <span class="text-label-md font-bold text-on-surface">{{ t().transport }}</span>
             <span class="material-symbols-outlined text-[14px] text-outline cursor-help"
                   [title]="t().timeEstimate">info</span>
           </div>
-          <div class="flex flex-wrap gap-1">
+          <div class="grid grid-cols-2 gap-2">
             @for (mode of ['car', 'public', 'walking', 'bicycle']; track mode) {
-              <button class="text-xs px-2 py-1 rounded-full border transition-all"
+              <button class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-sm"
                       [class.bg-primary]="transportMode() === mode"
                       [class.text-white]="transportMode() === mode"
                       [class.border-primary]="transportMode() === mode"
-                      [class.bg-surface]="transportMode() !== mode"
-                      [class.text-on-surface-variant]="transportMode() !== mode"
+                      [class.bg-surface-container-high]="transportMode() !== mode"
+                      [class.text-on-surface]="transportMode() !== mode"
                       [class.border-outline-variant]="transportMode() !== mode"
                       (click)="transportMode.set($any(mode))">
-                {{ mode === 'car' ? t().modeCar : mode === 'public' ? t().modePublic : mode === 'walking' ? t().modeWalking : t().modeBicycle }}
+                <span class="material-symbols-outlined text-[20px]">{{ transportIcon(mode) }}</span>
+                <span>{{ mode === 'car' ? t().modeCar : mode === 'public' ? t().modePublic : mode === 'walking' ? t().modeWalking : t().modeBicycle }}</span>
               </button>
             }
           </div>
@@ -841,6 +848,9 @@
                       @if (sortBy() === 'itinerant') { <span class="text-xs">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span> }
                     </th>
                   }
+                  <th class="px-4 py-3 text-label-md font-bold text-on-surface-variant text-center w-10">
+                    <span class="material-symbols-outlined text-[18px]">visibility</span>
+                  </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-outline-variant">
@@ -906,6 +916,11 @@
                         }
                       </td>
                     }
+                    <td class="px-4 py-4 text-center">
+                      <button class="text-outline hover:text-primary transition-colors" (click)="$event.stopPropagation(); openItineraryModal(c)" [title]="t().viewItinerary">
+                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                      </button>
+                    </td>
                   </tr>
                 }
               </tbody>

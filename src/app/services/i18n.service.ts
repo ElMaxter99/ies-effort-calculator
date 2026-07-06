@@ -218,7 +218,7 @@ export class I18nService {
 }
 
 const CA: I18nTranslations = {
-  appTitle: 'Distància IES',
+  appTitle: 'DistanciaIES',
   landingDescription: 'Puja el fitxer PDF de vacants per a visualitzar en un mapa interactiu la ubicació dels centres educatius i calcular la distància i l\'esforç de desplaçament des dels teus orígens.',
 
   heroTitle: 'Gestiona les teues vacants amb intel·ligència',
@@ -422,7 +422,7 @@ const CA: I18nTranslations = {
 };
 
 const ES: I18nTranslations = {
-  appTitle: 'Distancia IES',
+  appTitle: 'DistanciaIES',
   landingDescription: 'Sube el archivo PDF de vacantes para visualizar en un mapa interactivo la ubicación de los centros educativos y calcular la distancia y el esfuerzo de desplazamiento desde tus orígenes.',
 
   heroTitle: 'Gestiona tus vacantes con inteligencia',

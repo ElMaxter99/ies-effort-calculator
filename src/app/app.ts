@@ -93,6 +93,11 @@ export class App implements OnDestroy {
   sidebarOpen = signal(true);
   currentView = signal<ViewType>('map');
 
+  isMobile = signal(false);
+  mobileView = signal<ViewType>('map');
+  mobileDrawerOpen = signal(false);
+  showMobileFilters = signal(false);
+
   origins = signal<Origin[]>([]);
   activeOrigin = signal<string>('1');
   newOriginName = signal('');
@@ -162,6 +167,16 @@ export class App implements OnDestroy {
     });
 
     this.initDefaultOrigins();
+
+    const mql = window.matchMedia('(max-width: 1023px)');
+    this.isMobile.set(mql.matches);
+    mql.addEventListener('change', (e: MediaQueryListEvent) => {
+      this.isMobile.set(e.matches);
+      if (!e.matches) {
+        this.mobileDrawerOpen.set(false);
+        this.showMobileFilters.set(false);
+      }
+    });
   }
 
   private initDefaultOrigins() {
@@ -454,6 +469,9 @@ export class App implements OnDestroy {
 
   changeView(view: ViewType) {
     this.currentView.set(view);
+    if (this.isMobile()) {
+      this.mobileView.set(view);
+    }
     if (view !== 'table') {
       setTimeout(() => {
         this.updateMap();
@@ -780,6 +798,11 @@ export class App implements OnDestroy {
 
   getLevelDescription(level?: string): string {
     return this.geo.levelDescription(level || '');
+  }
+
+  updateThreshold(key: 'baix' | 'moderat' | 'alt', value: number) {
+    if (isNaN(value) || value < 0) return;
+    this.thresholds.update((t) => ({ ...t, [key]: value }));
   }
 
   getItinerantCount(c: IesCenter): number {

@@ -9,10 +9,9 @@
       </div>
       <div class="flex items-center gap-md">
         @if (step() === 'main') {
-        <button class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer"
-                (click)="showResetConfirm.set(true)">
+        <button class="flex items-center justify-center w-9 h-9 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-all cursor-pointer"
+                (click)="showResetConfirm.set(true)" [title]="t().resetProcess">
           <span class="material-symbols-outlined text-[20px]">refresh</span>
-          {{ t().resetProcess }}
         </button>
         }
         <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
@@ -28,11 +27,11 @@
       <div class="max-w-container-max mx-auto px-gutter flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div class="max-w-2xl w-full space-y-xl">
           <div class="space-y-md">
-            <h1 class="text-display-lg font-display-lg text-primary">{{ t().heroTitle }}</h1>
-            <p class="text-body-lg font-body-lg text-on-surface-variant">{{ t().heroDescription }}</p>
+            <h1 class="text-display-lg font-display-lg text-primary max-lg:text-headline-lg">{{ t().heroTitle }}</h1>
+            <p class="text-body-lg font-body-lg text-on-surface-variant max-lg:text-body-md">{{ t().heroDescription }}</p>
           </div>
           <div class="space-y-lg">
-            <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant bg-white p-12 rounded-xl transition-all hover:border-primary hover:shadow-lg flex flex-col items-center justify-center gap-md"
+            <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant bg-white rounded-xl transition-all hover:border-primary hover:shadow-lg flex flex-col items-center justify-center gap-md p-12 max-lg:p-6"
                  id="drop-zone"
                  (dragover)="onDragOver($event)"
                  (dragleave)="onDragLeave($event)"
@@ -41,8 +40,8 @@
                  [class.bg-primary/5]="dragging()"
                  (click)="landingPdfInput.click()">
               <input accept=".pdf" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
-              <div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
-                <span class="material-symbols-outlined text-4xl">cloud_upload</span>
+              <div class="w-16 h-16 max-lg:w-12 max-lg:h-12 rounded-full bg-surface-container-high flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                <span class="material-symbols-outlined text-4xl max-lg:text-3xl">cloud_upload</span>
               </div>
               <div class="space-y-xs">
                 <p class="text-body-lg font-bold text-on-surface">{{ t().dropPrompt }}</p>
@@ -145,8 +144,8 @@
 
     <!-- Processing Modal -->
     @if (process() && process()!.totalPages > 0 && process()!.percentage < 100) {
-      <div class="fixed inset-0 z-[9999] bg-black/30 backdrop-blur-sm flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl p-xl max-w-sm w-full mx-4 flex flex-col items-center gap-md">
+      <div class="fixed inset-0 z-[9999] bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 max-lg:p-0">
+        <div class="bg-white rounded-2xl shadow-2xl p-xl max-w-sm w-full flex flex-col items-center gap-md max-lg:mx-0 max-lg:max-w-full max-lg:h-full max-lg:rounded-none max-lg:justify-center">
           <div class="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
           <p class="text-headline-md font-bold text-primary">{{ t().processingPDF }}</p>
           <div class="w-full bg-outline-variant rounded-full h-2">
@@ -164,30 +163,30 @@
     <!-- Progress Stepper -->
     <div class="w-full max-w-3xl mb-xl mt-xl">
       <div class="flex items-center justify-between relative">
-        <div class="absolute top-1/2 left-0 w-full h-0.5 bg-surface-container-high -translate-y-1/2 z-0"></div>
-        <div class="relative z-10 flex flex-col items-center">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+        <div class="absolute top-1/2 left-0 w-full h-0.5 bg-surface-container-high -translate-y-1/2 z-0 max-lg:top-4"></div>
+        <div class="relative z-10 flex flex-col items-center max-lg:flex-row max-lg:gap-2">
+          <div class="w-10 h-10 max-lg:w-8 max-lg:h-8 rounded-full flex items-center justify-center font-bold"
                [class.bg-primary]="step() === 'modalities'"
                [class.text-white]="step() === 'modalities'"
                [class.bg-surface-container-highest]="step() !== 'modalities'"
                [class.text-on-surface-variant]="step() !== 'modalities'">1</div>
-          <span class="mt-2 font-label-md text-label-md"
+          <span class="mt-2 font-label-md text-label-md max-lg:mt-0 max-lg:text-[10px]"
                 [class.text-primary]="step() === 'modalities'"
                 [class.text-on-surface-variant]="step() !== 'modalities'">{{ t().stepModalities }}</span>
         </div>
-        <div class="relative z-10 flex flex-col items-center">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+        <div class="relative z-10 flex flex-col items-center max-lg:flex-row max-lg:gap-2">
+          <div class="w-10 h-10 max-lg:w-8 max-lg:h-8 rounded-full flex items-center justify-center font-bold"
                [class.bg-primary]="step() === 'origin'"
                [class.text-white]="step() === 'origin'"
                [class.bg-surface-container-highest]="step() !== 'origin'"
                [class.text-on-surface-variant]="step() !== 'origin'">2</div>
-          <span class="mt-2 font-label-md text-label-md"
+          <span class="mt-2 font-label-md text-label-md max-lg:mt-0 max-lg:text-[10px]"
                 [class.text-primary]="step() === 'origin'"
                 [class.text-on-surface-variant]="step() !== 'origin'">{{ t().stepOrigin }}</span>
         </div>
-        <div class="relative z-10 flex flex-col items-center">
-          <div class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center">3</div>
-          <span class="mt-2 font-label-md text-label-md text-on-surface-variant">{{ t().stepSummary }}</span>
+        <div class="relative z-10 flex flex-col items-center max-lg:flex-row max-lg:gap-2">
+          <div class="w-10 h-10 max-lg:w-8 max-lg:h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-bold">3</div>
+          <span class="mt-2 font-label-md text-label-md text-on-surface-variant max-lg:mt-0 max-lg:text-[10px]">{{ t().stepSummary }}</span>
         </div>
       </div>
     </div>
@@ -396,10 +395,10 @@
     </div>
   </nav>
   } @else if (step() === 'main') {
-  <div class="flex flex-1 overflow-hidden">
+  <div class="flex flex-1 overflow-hidden max-lg:flex-col">
     <!-- Sidebar -->
-    <aside class="shrink-0 bg-surface-container-low flex flex-col border-r border-outline-variant overflow-y-auto custom-scrollbar transition-all duration-200"
-            [class.w-80]="sidebarOpen()" [class.w-12]="!sidebarOpen()">
+    <aside class="shrink-0 bg-surface-container-low flex-col border-r lg:border-outline-variant overflow-y-auto custom-scrollbar transition-all duration-200 max-lg:hidden"
+            [class.w-80]="sidebarOpen()" [class.flex]="sidebarOpen()" [class.w-12]="!sidebarOpen()" [class.hidden]="!sidebarOpen()">
       <div class="flex items-center p-md" [class.justify-between]="sidebarOpen()" [class.justify-center]="!sidebarOpen()">
         @if (sidebarOpen()) {
           <div>
@@ -611,13 +610,14 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex overflow-hidden">
+    <main class="flex-1 flex overflow-hidden"
+           [class.max-lg:hidden]="mobileView() !== 'map'">
       <!-- Table Section -->
-      <section class="flex flex-col bg-white border-r border-outline-variant"
+      <section class="flex flex-col bg-white lg:border-r lg:border-outline-variant max-lg:flex-1 overflow-hidden"
                [class.hidden]="currentView() === 'map'"
                [class.w-[40%]]="currentView() === 'split'"
                [class.flex-1]="currentView() === 'table'">
-        <div class="p-lg space-y-md border-b border-outline-variant">
+        <div class="p-lg space-y-md border-b border-outline-variant max-lg:hidden">
           <div class="relative">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
             <input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-label-md focus:ring-1 focus:ring-primary outline-none"
@@ -917,7 +917,7 @@
           }
         </div>
 
-        <div class="p-md bg-surface border-t border-outline-variant flex justify-between items-center shrink-0">
+        <div class="p-md bg-surface border-t border-outline-variant flex justify-between items-center shrink-0 max-lg:hidden">
           <span class="text-xs text-on-surface-variant">{{ t().totalCentres(filteredCentres().length) }}</span>
           <div class="flex gap-2">
             <button class="flex items-center gap-2 text-primary font-bold text-label-md hover:underline" (click)="exportCsv()">
@@ -929,8 +929,9 @@
       </section>
 
       <!-- Map Section -->
-      <section class="flex-1 relative bg-surface-container-highest overflow-hidden"
-               [class.hidden]="currentView() === 'table'">
+      <section class="flex-1 relative bg-surface-container-highest overflow-hidden max-lg:flex"
+               [class.hidden]="currentView() === 'table'"
+               [class.max-lg:hidden]="mobileView() !== 'map'">
         <div id="map" #mapContainer class="h-full w-full z-10"></div>
 
           <div class="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
@@ -944,6 +945,15 @@
             </div>
           </div>
 
+          <!-- Mobile: view in table button -->
+          <div class="absolute bottom-6 right-4 z-[1000] lg:hidden">
+            <button class="flex items-center gap-1.5 px-3 py-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant text-xs font-bold text-primary hover:bg-white transition-all"
+                    (click)="changeView('table')">
+              <span class="material-symbols-outlined text-[16px]">table_chart</span>
+              {{ t().table }}
+            </button>
+          </div>
+
           <div class="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-primary/20 flex items-center gap-2">
             <span class="w-2.5 h-2.5 bg-primary rounded-full"></span>
             <span class="text-xs font-bold text-primary">
@@ -954,7 +964,8 @@
 
           @let sel = selectedCentre();
           @if (sel) {
-            <div class="absolute bottom-6 left-6 z-[1000] bg-white rounded-xl shadow-2xl border-l-4 p-lg w-72 animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[calc(100%-200px)] overflow-y-auto"
+            <!-- Desktop: corner popup -->
+            <div class="absolute bottom-6 left-6 z-[1000] bg-white rounded-xl shadow-2xl border-l-4 p-lg w-72 animate-in fade-in slide-in-from-bottom-4 duration-300 max-h-[calc(100%-200px)] overflow-y-auto max-lg:hidden"
                  [class]="levelBorderColor(sel.effortLevel ?? '')">
               <div class="flex justify-between items-start mb-2">
                 <h4 class="font-bold text-primary leading-tight text-sm">{{ sel.name }}</h4>
@@ -978,10 +989,362 @@
                 {{ t().viewItinerary }}
               </button>
             </div>
+
+            <!-- Mobile: bottom sheet popup -->
+            <div class="absolute bottom-0 left-0 right-0 z-[1000] bg-white rounded-t-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-4 duration-300 lg:hidden"
+                 [class]="'border-t-4 ' + levelBorderColor(sel.effortLevel ?? '')">
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex-1 min-w-0">
+                  <h4 class="font-bold text-primary text-sm truncate">{{ sel.name }}</h4>
+                  <p class="text-xs text-on-surface-variant truncate">{{ sel.locality }}</p>
+                </div>
+                <span class="material-symbols-outlined text-outline shrink-0 p-1" (click)="closePopup()">close</span>
+              </div>
+              <div class="flex items-center gap-4 text-xs mb-3">
+                <div>
+                  <span class="text-outline">{{ t().distance }}:</span>
+                  <span class="font-semibold ml-1">{{ sel.distanceKm ?? '—' }} km</span>
+                </div>
+                <div>
+                  <span class="text-outline">{{ t().effort }}:</span>
+                  @if (sel.effortLevel) {
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase {{ levelBadgeClasses(sel.effortLevel) }}">{{ getLevelLabel(sel.effortLevel) }}</span>
+                  }
+                </div>
+              </div>
+              <button class="w-full py-2.5 bg-primary text-white text-sm font-bold rounded-lg" (click)="openItineraryModal(sel)">
+                {{ t().viewItinerary }}
+              </button>
+            </div>
           }
         </section>
     </main>
+
+    <!-- === MOBILE: Cards view (replaces table) === -->
+    <section class="flex flex-col flex-1 overflow-hidden lg:hidden"
+             [class.hidden]="mobileView() !== 'table'">
+      <div class="px-4 py-3 border-b border-outline-variant bg-white flex gap-2 overflow-x-auto shrink-0">
+        <input class="flex-1 min-w-0 pl-8 pr-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-sm outline-none"
+               [placeholder]="t().filterByName"
+               [value]="searchText()"
+               (input)="searchText.set($any($event.target).value); applyFilter()" />
+        <button class="shrink-0 flex items-center gap-1 px-3 py-2 rounded-full border border-outline-variant text-xs font-medium"
+                (click)="showMobileFilters.set(true)">
+          <span class="material-symbols-outlined text-[16px]">tune</span>
+          {{ t().filterByName }}
+        </button>
+      </div>
+          <div class="flex-1 overflow-y-auto max-lg:hidden">
+        @for (c of filteredCentres(); track c.code) {
+          <div class="mx-3 my-2 bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden"
+               [class]="levelBorderColor(c.effortLevel ?? '')">
+            <div class="p-3">
+              <div class="flex justify-between items-start">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-sm text-primary truncate">{{ c.name }}</h3>
+                  <p class="text-xs text-on-surface-variant truncate">{{ c.locality }}</p>
+                  @let mods = selectedModalitiesFor(c);
+                  @if (mods.length > 0) {
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      @for (m of mods; track m) {
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">{{ m }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+                <button class="shrink-0 p-1.5 rounded-lg text-outline hover:text-primary" (click)="$event.stopPropagation(); openItineraryModal(c)">
+                  <span class="material-symbols-outlined text-[18px]">visibility</span>
+                </button>
+              </div>
+              <div class="flex items-center gap-4 mt-3 text-xs">
+                <div>
+                  <span class="text-outline">{{ t().distance }}:</span>
+                  <span class="font-semibold ml-1">{{ c.distanceKm ?? '—' }} km</span>
+                </div>
+                <div>
+                  <span class="text-outline">{{ t().effort }}:</span>
+                  @if (c.effortLevel) {
+                    <span class="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase {{ levelBadgeClasses(c.effortLevel) }}">{{ getLevelLabel(c.effortLevel) }}</span>
+                  } @else {
+                    <span class="ml-1">—</span>
+                  }
+                </div>
+              </div>
+              <button class="mt-2 w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium text-primary bg-primary/5 border border-primary/20 active:bg-primary/10"
+                      (click)="changeView('map')">
+                <span class="material-symbols-outlined text-[16px]">map</span>
+                {{ t().map }}
+              </button>
+            </div>
+          </div>
+        }
+        @if (filteredCentres().length === 0) {
+          <div class="flex items-center justify-center h-full text-on-surface-variant text-xs p-8 text-center">
+            @if (pdfLoaded()) { {{ t().addOriginPrompt }} }
+            @else { {{ t().uploadPDFPrompt }} }
+          </div>
+        }
+      </div>
+      <div class="px-4 py-2 border-t border-outline-variant bg-white flex justify-between items-center shrink-0">
+        <span class="text-xs text-on-surface-variant">{{ t().totalCentres(filteredCentres().length) }}</span>
+        <button class="flex items-center gap-1 text-primary font-bold text-xs" (click)="exportCsv()">
+          <span class="material-symbols-outlined text-[16px]">download</span>
+          {{ t().exportCSV }}
+        </button>
+      </div>
+    </section>
+
+    <!-- === MOBILE: Bottom Navigation === -->
+    <nav class="lg:hidden flex items-center justify-around bg-white border-t border-outline-variant px-2 py-1 shrink-0">
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium"
+              [class.text-primary]="mobileView() === 'map'"
+              [class.text-on-surface-variant]="mobileView() !== 'map'"
+              (click)="mobileView.set('map')">
+        <span class="material-symbols-outlined text-[22px]">map</span>
+        {{ t().map }}
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium"
+              [class.text-primary]="mobileView() === 'table'"
+              [class.text-on-surface-variant]="mobileView() !== 'table'"
+              (click)="mobileView.set('table')">
+        <span class="material-symbols-outlined text-[22px]">table_chart</span>
+        {{ t().table }}
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium text-on-surface-variant"
+              (click)="showMobileFilters.set(true)">
+        <span class="material-symbols-outlined text-[22px]">tune</span>
+        {{ t().filterByName }}
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium text-on-surface-variant"
+              (click)="mobileDrawerOpen.set(true)">
+        <span class="material-symbols-outlined text-[22px]">list_alt</span>
+        {{ t().comparisonOrigins }}
+      </button>
+    </nav>
   </div>
+
+  <!-- === MOBILE: Drawer (origins, transport, legend) === -->
+  @if (isMobile() && mobileDrawerOpen()) {
+    <div class="fixed inset-0 z-[9000] lg:hidden">
+      <div class="absolute inset-0 bg-black/40" (click)="mobileDrawerOpen.set(false)"></div>
+      <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant shrink-0">
+          <h2 class="font-bold text-sm text-primary">{{ t().dataConfig }}</h2>
+          <button class="p-1 text-outline" (click)="mobileDrawerOpen.set(false)">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+
+          <!-- Origins -->
+          <div>
+            <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2">{{ t().comparisonOrigins }}</h3>
+            <div class="space-y-1">
+              @for (o of origins(); track o.id) {
+                <div class="flex items-center gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all"
+                     [class.bg-primary/5]="o.id === activeOrigin()"
+                     [class.border]="o.id === activeOrigin()"
+                     [class.border-primary]="o.id === activeOrigin()"
+                     (click)="selectOrigin(o.id)">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" [class.bg-primary]="o.id === activeOrigin()" [class.bg-outline]="o.id !== activeOrigin()"></span>
+                  <span class="text-sm flex-1 truncate">{{ o.name }}</span>
+                  @if (geocoding() && o.id === activeOrigin()) {
+                    <span class="material-symbols-outlined text-sm animate-spin text-primary">sync</span>
+                  }
+                  @if (origins().length > 1 && !geocoding()) {
+                    <button class="p-1 text-outline hover:text-error transition-colors" (click)="$event.stopPropagation(); removeOrigin(o.id)">
+                      <span class="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <div class="flex gap-2 mt-2">
+              <input class="flex-1 px-3 py-2.5 text-sm bg-surface-container-lowest border border-outline-variant rounded-lg outline-none"
+                     [placeholder]="t().addNewOrigin"
+                     [value]="newOriginName()"
+                     (input)="newOriginName.set($any($event.target).value)"
+                     (keydown.enter)="addOrigin()" />
+              <button class="px-3 py-2.5 bg-primary text-on-primary rounded-lg" [class.opacity-50]="geocoding()" [disabled]="geocoding()" (click)="addOrigin()">
+                <span class="material-symbols-outlined text-[20px]">{{ geocoding() ? 'sync' : 'add_circle' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Transport mode -->
+          <div>
+            <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2">{{ t().transport }}</h3>
+            <div class="grid grid-cols-4 gap-2">
+              @for (mode of ['car', 'public', 'walking', 'bicycle']; track mode) {
+                <button class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border transition-all text-[10px] font-medium"
+                        [class.bg-primary]="transportMode() === mode" [class.text-white]="transportMode() === mode"
+                        [class.border-primary]="transportMode() === mode"
+                        [class.bg-surface-container-high]="transportMode() !== mode" [class.text-on-surface]="transportMode() !== mode"
+                        [class.border-outline-variant]="transportMode() !== mode"
+                        (click)="transportMode.set($any(mode))">
+                  <span class="material-symbols-outlined text-[20px]">{{ transportIcon(mode) }}</span>
+                  <span>{{ mode === 'car' ? t().modeCar : mode === 'public' ? t().modePublic : mode === 'walking' ? t().modeWalking : t().modeBicycle }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Effort Legend -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider">{{ t().effortLegend }}</h3>
+              <button class="text-xs text-primary font-medium" (click)="showConfig.set(!showConfig())">
+                {{ showConfig() ? t().configTitle : t().configSubtitle }}
+              </button>
+            </div>
+            @if (showConfig()) {
+              <div class="grid grid-cols-3 gap-3">
+                <label class="flex flex-col gap-1 text-[10px] font-medium text-on-surface-variant">
+                  {{ t().low }} (km)
+                  <input class="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant rounded text-sm w-full" type="number" [value]="thresholds().baix" (input)="updateThreshold('baix', +$any($event.target).value)" />
+                </label>
+                <label class="flex flex-col gap-1 text-[10px] font-medium text-on-surface-variant">
+                  {{ t().moderate }} (km)
+                  <input class="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant rounded text-sm w-full" type="number" [value]="thresholds().moderat" (input)="updateThreshold('moderat', +$any($event.target).value)" />
+                </label>
+                <label class="flex flex-col gap-1 text-[10px] font-medium text-on-surface-variant">
+                  {{ t().high }} (km)
+                  <input class="px-2 py-1.5 bg-surface-container-lowest border border-outline-variant rounded text-sm w-full" type="number" [value]="thresholds().alt" (input)="updateThreshold('alt', +$any($event.target).value)" />
+                </label>
+              </div>
+            } @else {
+              <div class="space-y-1">
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-3 h-3 rounded-full bg-green-500 shrink-0"></span>
+                  <span class="font-medium">{{ t().low }}</span>
+                  <span class="text-outline">(≤ {{ thresholds().baix }} km)</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-3 h-3 rounded-full bg-yellow-500 shrink-0"></span>
+                  <span class="font-medium">{{ t().moderate }}</span>
+                  <span class="text-outline">({{ thresholds().baix }}–{{ thresholds().moderat }} km)</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-3 h-3 rounded-full bg-orange-500 shrink-0"></span>
+                  <span class="font-medium">{{ t().high }}</span>
+                  <span class="text-outline">({{ thresholds().moderat }}–{{ thresholds().alt }} km)</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="w-3 h-3 rounded-full bg-red-500 shrink-0"></span>
+                  <span class="font-medium">{{ t().veryHigh }}</span>
+                  <span class="text-outline">(&gt; {{ thresholds().alt }} km)</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- === MOBILE: Filters Bottom Sheet === -->
+  @if (isMobile() && showMobileFilters()) {
+    <div class="fixed inset-0 z-[9000] lg:hidden">
+      <div class="absolute inset-0 bg-black/40" (click)="showMobileFilters.set(false)"></div>
+      <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant shrink-0">
+          <h2 class="font-bold text-sm text-primary">{{ t().filterByName }}</h2>
+          <button class="p-1 text-outline" (click)="showMobileFilters.set(false)">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+          <!-- Effort level -->
+          <div>
+            <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2">{{ t().effort }}</h3>
+            <div class="flex flex-wrap gap-2">
+              <button class="px-3 py-2 rounded-full text-xs font-medium border transition-all"
+                      [class.bg-surface-container-high]="levelFilter() === ''" [class.border-outline-variant]="levelFilter() === ''"
+                      [class.bg-primary]="levelFilter() !== ''" [class.text-white]="levelFilter() !== ''"
+                      (click)="levelFilter.set(''); applyFilter()">{{ t().all }}</button>
+              <button class="px-3 py-2 rounded-full text-xs font-medium border transition-all"
+                      [class.bg-green-100]="levelFilter() === 'baix'" [class.bg-surface-container-high]="levelFilter() !== 'baix'"
+                      [class.border-green-200]="levelFilter() === 'baix'" [class.border-outline-variant]="levelFilter() !== 'baix'"
+                      (click)="levelFilter.set('baix'); applyFilter()">{{ t().low }}</button>
+              <button class="px-3 py-2 rounded-full text-xs font-medium border transition-all"
+                      [class.bg-yellow-100]="levelFilter() === 'moderat'" [class.bg-surface-container-high]="levelFilter() !== 'moderat'"
+                      [class.border-yellow-200]="levelFilter() === 'moderat'" [class.border-outline-variant]="levelFilter() !== 'moderat'"
+                      (click)="levelFilter.set('moderat'); applyFilter()">{{ t().moderate }}</button>
+              <button class="px-3 py-2 rounded-full text-xs font-medium border transition-all"
+                      [class.bg-orange-100]="levelFilter() === 'alt'" [class.bg-surface-container-high]="levelFilter() !== 'alt'"
+                      [class.border-orange-200]="levelFilter() === 'alt'" [class.border-outline-variant]="levelFilter() !== 'alt'"
+                      (click)="levelFilter.set('alt'); applyFilter()">{{ t().high }}</button>
+              <button class="px-3 py-2 rounded-full text-xs font-medium border transition-all"
+                      [class.bg-red-100]="levelFilter() === 'molt alt'" [class.bg-surface-container-high]="levelFilter() !== 'molt alt'"
+                      [class.border-red-200]="levelFilter() === 'molt alt'" [class.border-outline-variant]="levelFilter() !== 'molt alt'"
+                      (click)="levelFilter.set('molt alt'); applyFilter()">{{ t().veryHigh }}</button>
+            </div>
+          </div>
+
+          <!-- Locality -->
+          @if (localities().length > 0) {
+            <div>
+              <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2">{{ t().locality }}</h3>
+              <select class="w-full px-3 py-2.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm outline-none"
+                      [value]="localityFilter()"
+                      (change)="localityFilter.set($any($event.target).value); applyFilter()">
+                <option value="">{{ t().all }}</option>
+                @for (loc of localities(); track loc) {
+                  <option [value]="loc">{{ loc }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <!-- Modality -->
+          @if (availableModalities().length > 0) {
+            <div>
+              <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2">{{ t().modality }}</h3>
+              <div class="space-y-1 max-h-40 overflow-y-auto">
+                <label class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-low text-xs font-medium">
+                  <input type="checkbox" class="w-4 h-4 accent-primary"
+                         [checked]="modalityFilter().size === availableModalities().length"
+                         (change)="toggleAllModalities(($any($event.target).checked))" />
+                  {{ modalityFilter().size === availableModalities().length ? t().deselectAll : t().selectAll }}
+                </label>
+                @for (m of availableModalities(); track m) {
+                  <label class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-container-low transition-colors text-xs cursor-pointer">
+                    <input type="checkbox" class="w-4 h-4 accent-primary"
+                           [checked]="isModalitySelected(m)"
+                           (change)="toggleModality(m)" />
+                    {{ m }}
+                  </label>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Switches -->
+          @if (filteredItinerantCount() > 0 || filteredObservationsCount() > 0) {
+            <div class="space-y-2">
+              @if (filteredItinerantCount() > 0) {
+                <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface-container-low cursor-pointer">
+                  <input type="checkbox" class="w-4 h-4 accent-primary" [checked]="itinerantFilter()" (change)="itinerantFilter.set(!itinerantFilter()); applyFilter()" />
+                  <span class="text-xs font-medium">{{ t().showOnlyItinerant }} ({{ filteredItinerantCount() }})</span>
+                </label>
+              }
+              @if (filteredObservationsCount() > 0) {
+                <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-surface-container-low cursor-pointer">
+                  <input type="checkbox" class="w-4 h-4 accent-primary" [checked]="observationsFilter()" (change)="observationsFilter.set(!observationsFilter()); applyFilter()" />
+                  <span class="text-xs font-medium">{{ t().showOnlyObservations }} ({{ filteredObservationsCount() }})</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+        <div class="px-4 py-3 border-t border-outline-variant shrink-0">
+          <button class="w-full py-2.5 bg-primary text-on-primary rounded-lg text-sm font-bold" (click)="showMobileFilters.set(false)">
+            {{ t().close }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
   } @else if (step() === 'terms') {
   <div class="flex-1 overflow-y-auto bg-surface">
     <header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
@@ -1166,7 +1529,7 @@
   @if (shownItinerantObservations(); as obs) {
     <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm"
          (click)="shownItinerantObservations.set(null)">
-      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-lg w-full mx-gutter overflow-hidden"
+      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-lg w-full mx-gutter overflow-hidden max-lg:mx-0 max-lg:max-w-full max-lg:h-full max-lg:rounded-none"
            (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between px-lg py-md border-b border-outline-variant">
           <span class="font-bold text-on-surface">{{ t().observationsTitle }}</span>          <button class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"
@@ -1174,7 +1537,7 @@
             <span class="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
-        <div class="p-lg max-h-64 overflow-y-auto whitespace-pre-wrap text-sm text-on-surface leading-relaxed">
+        <div class="p-lg flex-1 overflow-y-auto whitespace-pre-wrap text-sm text-on-surface leading-relaxed max-lg:max-h-none max-lg:h-full">
           {{ obs }}
         </div>
         <div class="flex justify-end px-lg py-md border-t border-outline-variant">
@@ -1190,21 +1553,21 @@
   @if (showResetConfirm()) {
     <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm"
          (click)="showResetConfirm.set(false)">
-      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-md w-full mx-gutter overflow-hidden"
+      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-md w-full mx-gutter overflow-hidden max-lg:mx-0 max-lg:max-w-full max-lg:h-full max-lg:rounded-none max-lg:flex max-lg:flex-col"
            (click)="$event.stopPropagation()">
         <div class="flex items-center gap-sm px-lg py-md border-b border-outline-variant">
           <span class="material-symbols-outlined text-[20px] text-primary">refresh</span>
           <span class="font-bold text-on-surface">{{ t().resetProcess }}</span>
         </div>
-        <div class="p-lg text-sm text-on-surface leading-relaxed">
+        <div class="p-lg text-sm text-on-surface leading-relaxed flex-1">
           {{ t().confirmReset }}
         </div>
-        <div class="flex justify-end gap-2 px-lg py-md border-t border-outline-variant">
-          <button class="px-lg py-sm rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all font-label-md text-sm"
+        <div class="flex justify-end gap-2 px-lg py-md border-t border-outline-variant max-lg:flex-col max-lg:gap-2">
+          <button class="px-lg py-sm rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container-high transition-all font-label-md text-sm max-lg:w-full"
                   (click)="showResetConfirm.set(false)">
             {{ t().cancel }}
           </button>
-          <button class="bg-error text-on-error px-lg py-sm rounded-lg hover:opacity-90 transition-all font-label-md text-sm"
+          <button class="bg-error text-on-error px-lg py-sm rounded-lg hover:opacity-90 transition-all font-label-md text-sm max-lg:w-full"
                   (click)="confirmReset()">
             {{ t().resetProcess }}
           </button>
@@ -1214,15 +1577,15 @@
   }
 
   @if (error()) {
-    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
          (click)="error.set('')">
-      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-md w-full mx-gutter overflow-hidden"
+      <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-md w-full overflow-hidden max-lg:mx-0 max-lg:max-w-full max-lg:h-full max-lg:rounded-none max-lg:flex max-lg:flex-col"
            (click)="$event.stopPropagation()">
         <div class="flex items-center gap-sm px-lg py-md border-b border-outline-variant bg-error-container">
           <span class="material-symbols-outlined text-error text-[20px]">error</span>
           <span class="font-bold text-on-error-container">{{ t().errorTitle }}</span>
         </div>
-        <div class="p-lg text-sm text-on-surface leading-relaxed">
+        <div class="p-lg text-sm text-on-surface leading-relaxed flex-1">
           {{ error() }}
         </div>
         <div class="flex justify-end px-lg py-md border-t border-outline-variant">
@@ -1257,11 +1620,11 @@
     @if (c) {
       @let carTime = getTravelTimeForMode(c, 'car');
       @let walkTime = getTravelTimeForMode(c, 'walking');
-      <div class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-        <div class="bg-surface-container-lowest w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 backdrop-blur-sm max-lg:p-0">
+        <div class="bg-surface-container-lowest w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] max-lg:max-w-full max-lg:max-h-full max-lg:rounded-none max-lg:h-full">
           <div class="px-lg py-4 border-b border-outline-variant flex justify-between items-center bg-surface shrink-0">
-            <h3 class="text-sm font-bold text-primary">{{ t().itineraryTitle }} - {{ c.name }}</h3>
-            <button class="text-on-surface-variant hover:text-error transition-colors" (click)="closeItineraryModal()">
+            <h3 class="text-sm font-bold text-primary truncate">{{ t().itineraryTitle }} - {{ c.name }}</h3>
+            <button class="text-on-surface-variant hover:text-error transition-colors shrink-0" (click)="closeItineraryModal()">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>

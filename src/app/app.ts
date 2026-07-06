@@ -1,4 +1,4 @@
-import { Component, effect, signal, computed, untracked, ViewChild, ElementRef, OnDestroy, HostListener, isDevMode } from '@angular/core';
+import { Component, effect, signal, computed, untracked, ViewChild, ElementRef, OnDestroy, HostListener } from '@angular/core';
 import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds, TransportMode } from './types';
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
@@ -6,6 +6,7 @@ import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import L from 'leaflet';
 import { APP_VERSION } from './version';
+import { APP_ENV } from './env';
 
 type ViewType = 'map' | 'table' | 'split';
 
@@ -84,9 +85,8 @@ export class App implements OnDestroy {
   t = computed(() => this.i18n.t());
 
   appVersionLabel = computed(() => {
-    if (isDevMode()) return 'LOCAL';
-    const host = (typeof window !== 'undefined' ? window.location.hostname : '');
-    if (host.includes('vercel.app')) return 'PRE';
+    if (APP_ENV === 'development') return 'LOCAL';
+    if (APP_ENV === 'preview') return 'PRE';
     return 'v' + APP_VERSION;
   });
 

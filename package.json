@@ -1,10 +1,12 @@
 {
   "name": "ies-effort-calculator",
-  "version": "0.0.0",
+  "version": "1.0.4",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "prebuild": "node scripts/prebuild.cjs",
     "build": "ng build",
+    "prestart": "node scripts/prebuild.cjs",
+    "start": "ng serve",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -19,9 +21,10 @@
     "@angular/router": "^22.0.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/leaflet": "^1.9.21",
+    "@vercel/analytics": "^2.0.1",
     "autoprefixer": "^10.5.2",
     "leaflet": "^1.9.4",
-    "pdfjs-dist": "^4.0.379",
+    "pdfjs-dist": "^4.4.168",
     "postcss": "^8.5.16",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.3.2",

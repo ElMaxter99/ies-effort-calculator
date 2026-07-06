@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.3 (2026-07-06)
+
+### Fixed
+- App version label no longer depends on domain name (`hostname.includes('vercel.app')`)
+- Use Vercel environment variable (`VERCEL_ENV`) via generated `env.ts` instead
+- Fixed TypeScript error with `APP_ENV` literal type narrowing (TS2367)
+
+### Changed
+- Migrated from `isDevMode()` + hostname check to build-time `VERCEL_ENV` injection via `scripts/prebuild.cjs`
+
 ## v1.0.2 (2026-07-06)
 
 ### Security

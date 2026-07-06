@@ -98,6 +98,8 @@ export class App implements OnDestroy {
 
   geocoding = signal(false);
   calculating = signal(false);
+  selectedCentre = signal<IesCenter | null>(null);
+  showItineraryModal = signal(false);
   shownItinerantObservations = signal<string | null>(null);
   showResetConfirm = signal(false);
   originPanelHeight = signal('40vh');
@@ -290,15 +292,9 @@ export class App implements OnDestroy {
       });
 
       const marker = L.marker([c.coordinates.lat, c.coordinates.lng], { icon: centerIcon }).addTo(this.map);
-      const route = c.route?.[this.transportMode()];
-      const timeStr = route
-        ? this.geo.formatTravelTime(route.durationMin)
-        : c.distanceKm
-          ? '~' + this.geo.formatTravelTime(this.getTravelTime(c)!)
-          : '—';
-      marker.bindPopup(
-        `<strong>${c.name}</strong><br>${c.locality}<br>${c.distanceKm ? c.distanceKm + ' km' : '—'} (${timeStr})<br>${c.effortLevel ? this.geo.levelLabel(c.effortLevel) : ''}`,
-      );
+      marker.on('click', () => {
+        this.selectedCentre.set(c);
+      });
       this.centreMarkers.push(marker);
     }
 
@@ -716,7 +712,17 @@ export class App implements OnDestroy {
   }
 
   getLevelLabel(level?: string): string {
-    return this.geo.levelLabel(level || '');
+    return this.geo.levelLabel(level ?? '');
+  }
+
+  levelBorderColor(level: string): string {
+    const map: Record<string, string> = { baix: 'border-green-500', moderat: 'border-yellow-500', alt: 'border-orange-500', 'molt alt': 'border-red-600' };
+    return map[level] ?? 'border-outline';
+  }
+
+  levelBadgeClasses(level: string): string {
+    const map: Record<string, string> = { baix: 'bg-green-100 text-green-800 border-green-200', moderat: 'bg-yellow-100 text-yellow-800 border-yellow-200', alt: 'bg-orange-100 text-orange-800 border-orange-200', 'molt alt': 'bg-red-100 text-red-800 border-red-200' };
+    return map[level] ?? '';
   }
 
   getLevelDescription(level?: string): string {
@@ -825,7 +831,27 @@ export class App implements OnDestroy {
     return this.geo.estimateTravelTime(c.distanceKm, this.transportMode());
   }
 
+  getTravelTimeForMode(c: IesCenter, mode: TransportMode): number | undefined {
+    if (c.distanceKm === undefined) return undefined;
+    if (c.route?.[mode]?.durationMin) return c.route[mode].durationMin;
+    return this.geo.estimateTravelTime(c.distanceKm, mode);
+  }
+
+  openItineraryModal(c: IesCenter) {
+    this.selectedCentre.set(c);
+    this.showItineraryModal.set(true);
+  }
+
+  closeItineraryModal() {
+    this.showItineraryModal.set(false);
+  }
+
+  closePopup() {
+    this.selectedCentre.set(null);
+  }
+
   focusCentre(c: IesCenter) {
+    this.selectedCentre.set(c);
     if (!this.map || !c.coordinates) return;
     this.map.setView([c.coordinates.lat, c.coordinates.lng], this.map.getZoom());
   }

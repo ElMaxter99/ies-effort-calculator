@@ -195,6 +195,15 @@ export interface I18nTranslations {
   privacyStep1: string;
   privacyStep2: string;
   privacyStep3: string;
+
+  viewItinerary: string;
+  itineraryTitle: string;
+  route: string;
+  destination: string;
+  metrics: string;
+  openInGoogleMaps: string;
+  minutes: string;
+  arrivalAtDestination: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -401,6 +410,15 @@ const CA: I18nTranslations = {
   privacyStep1: '1. Càrrega de PDF',
   privacyStep2: '2. Extracció Local',
   privacyStep3: '3. Visualització Efímera',
+
+  viewItinerary: 'Veure itinerari',
+  itineraryTitle: 'Detalls de l\'itinerari',
+  route: 'Trajecte',
+  destination: 'Destinació',
+  metrics: 'Mètriques',
+  openInGoogleMaps: 'Obrir a Google Maps',
+  minutes: 'min',
+  arrivalAtDestination: 'Arribada a la destinació',
 };
 
 const ES: I18nTranslations = {
@@ -596,4 +614,13 @@ const ES: I18nTranslations = {
   privacyStep1: '1. Carga de PDF',
   privacyStep2: '2. Extracción Local',
   privacyStep3: '3. Visualización Efímera',
+
+  viewItinerary: 'Ver itinerario',
+  itineraryTitle: 'Detalles del itinerario',
+  route: 'Trayecto',
+  destination: 'Destino',
+  metrics: 'Métricas',
+  openInGoogleMaps: 'Abrir en Google Maps',
+  minutes: 'min',
+  arrivalAtDestination: 'Llegada al destino',
 };

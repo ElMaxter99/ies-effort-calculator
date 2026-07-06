@@ -1,1 +1,1 @@
-export const APP_ENV = 'development';
+export const APP_ENV: string = 'development';

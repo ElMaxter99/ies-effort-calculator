@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.4 (2026-07-06)
+
+### Security
+- Upgrade `pdfjs-dist` from 4.2.67 to 4.4.168 (fixes 9 transitive vulnerabilities via `tar`)
+
 ## v1.0.3 (2026-07-06)
 
 ### Fixed

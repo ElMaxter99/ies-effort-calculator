@@ -53,7 +53,7 @@
             </div>
 
             <div class="flex flex-col items-center gap-sm mt-md text-center">
-              <div class="bg-amber-50 border border-amber-200 text-amber-800 text-body-sm px-lg py-md rounded-lg max-w-lg">
+              <div class="bg-surface-container-low border border-outline-variant text-on-surface-variant text-body-sm px-lg py-md rounded-lg max-w-lg">
                 {{ t().regionDisclaimer }}
               </div>
               <p class="text-body-sm text-on-surface-variant max-w-lg">
@@ -220,7 +220,7 @@
             @for (m of modalityFilter(); track m) {
               <div class="flex items-center gap-xs bg-primary text-white px-3 py-1 rounded-full text-[12px] font-medium">
                 <span>{{ m }}</span>
-                <button class="material-symbols-outlined text-[16px] hover:text-red-200 transition-colors" (click)="toggleModality(m); $event.stopPropagation()">close</button>
+                <button class="material-symbols-outlined text-[16px] hover:text-on-surface-variant transition-colors" (click)="toggleModality(m); $event.stopPropagation()">close</button>
               </div>
             }
           </div>
@@ -278,7 +278,7 @@
                 (click)="backToLanding()">
           {{ t().cancel }}
         </button>
-        <button class="px-lg py-3 rounded-lg bg-primary text-white font-label-md text-label-md hover:bg-[#001c5a] transition-all shadow-md active:scale-95 flex items-center gap-sm"
+        <button class="px-lg py-3 rounded-lg bg-primary text-white font-label-md text-label-md hover:opacity-90 transition-all shadow-md active:scale-95 flex items-center gap-sm"
                 (click)="continueWithModalities()">
           {{ t().continue }}
           <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -527,7 +527,7 @@
       }
 
       @if (pdfLoaded()) {
-        <div class="mb-xl p-2 bg-green-100 text-green-800 rounded-lg text-xs font-medium">
+        <div class="mb-xl p-2 bg-secondary-container/40 text-on-secondary-container rounded-lg text-xs font-medium">
           {{ t().positionsInCentres(totalPositions(), totalCenters()) }}
           @if (filteredItinerantCount() > 0) {
             <span class="ml-1">{{ t().itinerantCount(filteredItinerantCount()) }}</span>
@@ -890,13 +890,13 @@
                         @let itinCount = getItinerantCount(c);
                         @let hasObs = hasObservations(c);
                         @if (itinCount > 0) {
-                          <button class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold hover:bg-purple-200 transition-colors cursor-pointer"
+                          <button class="text-xs px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-bold hover:bg-surface-container-highest transition-colors cursor-pointer"
                                   [title]="getItinerantTooltip(c)"
                                   (click)="showObservations(c)">
                             {{ itinCount }}
                           </button>
                         } @else if (hasObs) {
-                          <button class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer"
+                          <button class="text-xs px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors cursor-pointer"
                                   [title]="getObservations(c)"
                                   (click)="showObservations(c)">
                             <span class="material-symbols-outlined text-[14px]">info</span>
@@ -1197,7 +1197,7 @@
       <div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-md w-full mx-gutter overflow-hidden"
            (click)="$event.stopPropagation()">
         <div class="flex items-center gap-sm px-lg py-md border-b border-outline-variant">
-          <span class="material-symbols-outlined text-[20px] text-amber-500">refresh</span>
+          <span class="material-symbols-outlined text-[20px] text-primary">refresh</span>
           <span class="font-bold text-on-surface">{{ t().resetProcess }}</span>
         </div>
         <div class="p-lg text-sm text-on-surface leading-relaxed">

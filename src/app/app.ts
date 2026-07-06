@@ -73,6 +73,7 @@ export class App implements OnDestroy {
   modalityFilter = signal<Set<string>>(new Set());
   modalitySearch = signal('');
   showModalityDropdown = signal(false);
+  private modalityDebounceTimer: ReturnType<typeof setTimeout> | undefined;
 
   thresholds = signal<EffortThresholds>({ baix: 10, moderat: 45, alt: 75 });
   showConfig = signal(false);
@@ -178,6 +179,7 @@ export class App implements OnDestroy {
   }
 
   ngOnDestroy() {
+    clearTimeout(this.modalityDebounceTimer);
     this.map?.remove();
   }
 
@@ -617,21 +619,8 @@ export class App implements OnDestroy {
     this.applyFilter();
 
     if (this.step() === 'main') {
-      const visibleCentres = this.filteredCentres();
-      const pending = visibleCentres.filter((c) => !c.coordinates);
-      if (pending.length === 0) return;
-
-      for (const c of pending) {
-        let coords = this.centresDb.getCoordinates(c.code);
-        if (!coords) {
-          const locality = c.locality.replace(/ - .*$/, '').trim();
-          coords = this.centresDb.getLocalityCoordinates(locality);
-        }
-        if (coords) c.coordinates = coords;
-      }
-      this.centres.set([...this.centres()]);
-      this.applyFilter();
-      this.updateMap();
+      clearTimeout(this.modalityDebounceTimer);
+      this.modalityDebounceTimer = setTimeout(() => this.flushModalityChanges(), 2000);
     }
   }
 
@@ -642,6 +631,64 @@ export class App implements OnDestroy {
       this.modalityFilter.set(new Set());
     }
     this.applyFilter();
+
+    if (this.step() === 'main') {
+      clearTimeout(this.modalityDebounceTimer);
+      this.modalityDebounceTimer = setTimeout(() => this.flushModalityChanges(), 2000);
+    }
+  }
+
+  private async flushModalityChanges() {
+    const origin = this.origins().find((o) => o.id === this.activeOrigin());
+    if (!origin?.coordinates) return;
+
+    const visibleCentres = this.filteredCentres();
+    if (visibleCentres.length === 0) return;
+
+    this.calculating.set(true);
+    const t = this.i18n.t();
+
+    const pending = visibleCentres.filter((c) => !c.coordinates);
+    let changed = pending.length > 0;
+
+    for (const c of pending) {
+      let coords = this.centresDb.getCoordinates(c.code);
+      if (!coords) {
+        const locality = c.locality.replace(/ - .*$/, '').trim();
+        coords = this.centresDb.getLocalityCoordinates(locality);
+      }
+      if (coords) c.coordinates = coords;
+    }
+
+    const noDistance = visibleCentres.filter((c) => c.coordinates && c.distanceKm === undefined);
+    if (noDistance.length > 0) changed = true;
+
+    this.geoProgress.set({ current: 0, total: noDistance.length, message: t.calculatingForCentres(noDistance.length) });
+
+    for (let i = 0; i < noDistance.length; i++) {
+      const c = noDistance[i];
+      if (c.coordinates) {
+        c.distanceKm = parseFloat(
+          this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, c.coordinates.lat, c.coordinates.lng).toFixed(1),
+        );
+        c.effortLevel = this.geo.effortLevel(c.distanceKm);
+      }
+      this.geoProgress.set({ current: i + 1, total: noDistance.length, message: t.calculatingProgress(i + 1, noDistance.length, c.name) });
+      if (i % 50 === 0) await new Promise(r => setTimeout(r, 0));
+    }
+
+    if (changed) {
+      this.centres.set([...this.centres()]);
+      this.applyFilter();
+      this.updateMap();
+    }
+
+    await this.fetchRoutesForCurrentMode(origin);
+    this.applyFilter();
+    this.updateMap();
+
+    this.calculating.set(false);
+    this.geoProgress.set({ current: 0, total: 0, message: '' });
   }
 
   setSort(column: string) {

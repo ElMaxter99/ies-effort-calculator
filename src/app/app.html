@@ -1,24 +1,28 @@
 <div class="h-screen flex flex-col overflow-hidden bg-background text-on-background font-body-md">
+  <header class="bg-surface border-b border-outline-variant h-16 flex items-center shrink-0 z-50">
+    <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-full">
+      <div class="flex items-center gap-xl">
+        <div class="flex items-center gap-sm">
+          <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
+          <span class="text-headline-md font-headline-md font-bold text-primary">{{ t().appTitle }}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-md">
+        @if (step() === 'main') {
+        <button class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer"
+                (click)="showResetConfirm.set(true)">
+          <span class="material-symbols-outlined text-[20px]">refresh</span>
+          {{ t().resetProcess }}
+        </button>
+        }
+        <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
+        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help">help</span>
+      </div>
+    </div>
+  </header>
+
   @if (step() === 'landing') {
   <div class="flex-1 overflow-y-auto" (scroll)="onLandingScroll($event)">
-    <!-- Header -->
-    <header class="bg-surface sticky top-0 z-50 border-b border-outline-variant transition-shadow"
-            [class.shadow-md]="headerShadow()">
-      <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-16">
-        <div class="flex items-center gap-xl">
-          <div class="flex items-center gap-sm">
-            <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
-            <span class="text-headline-md font-headline-md font-bold text-primary">{{ t().appTitle }}</span>
-          </div>
-          
-        </div>
-        <nav class="flex items-center gap-md">
-          <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
-          <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help">help</span>
-        </nav>
-      </div>
-    </header>
-
     <!-- Hero / Upload Section -->
     <section class="bg-surface py-xl border-b border-outline-variant">
       <div class="max-w-container-max mx-auto px-gutter flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -155,21 +159,8 @@
 
   </div>
   } @else if (step() === 'modalities' || step() === 'origin') {
-  <!-- TopAppBar -->
-  <header class="bg-surface border-b border-outline-variant fixed top-0 w-full z-50">
-    <div class="flex justify-between items-center w-full px-gutter h-16 max-w-container-max mx-auto">
-      <div class="flex items-center gap-md">
-        <span class="font-headline-md text-headline-md font-bold text-primary">{{ t().appTitle }}</span>
-      </div>
-      <div class="flex items-center gap-md">
-        <span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80" [title]="t().help">help</span>
-        <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
-      </div>
-    </div>
-  </header>
-
   <!-- Main Content Canvas -->
-  <main class="flex-1 flex flex-col items-center pt-24 pb-12 px-gutter overflow-y-auto">
+  <main class="flex-1 flex flex-col items-center pt-16 pb-12 px-gutter overflow-y-auto">
     <!-- Progress Stepper -->
     <div class="w-full max-w-3xl mb-xl mt-xl">
       <div class="flex items-center justify-between relative">
@@ -405,26 +396,6 @@
     </div>
   </nav>
   } @else if (step() === 'main') {
-  <!-- TopNavBar -->
-  <header class="bg-surface border-b border-outline-variant h-16 flex items-center shrink-0 z-50">
-    <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto">
-      <div class="flex items-center gap-xl">
-        <div class="flex items-center gap-sm">
-          <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
-          <span class="text-headline-md font-headline-md font-bold text-primary">{{ t().appTitle }}</span>
-        </div>
-      </div>
-      <div class="flex items-center gap-md">
-        <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
-        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help">help</span>
-        <button class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg hover:opacity-90 transition-all font-label-md cursor-pointer"
-                (click)="showResetConfirm.set(true)">
-          <span class="material-symbols-outlined text-[20px]">refresh</span>
-          {{ t().resetProcess }}
-        </button>
-      </div>
-    </div>
-  </header>
   <div class="flex flex-1 overflow-hidden">
     <!-- Sidebar -->
     <aside class="shrink-0 bg-surface-container-low flex flex-col border-r border-outline-variant overflow-y-auto custom-scrollbar transition-all duration-200"

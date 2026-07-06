@@ -1,10 +1,11 @@
-import { Component, effect, signal, computed, untracked, ViewChild, ElementRef, OnDestroy, HostListener } from '@angular/core';
+import { Component, effect, signal, computed, untracked, ViewChild, ElementRef, OnDestroy, HostListener, isDevMode } from '@angular/core';
 import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds, TransportMode } from './types';
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
 import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import L from 'leaflet';
+import { APP_VERSION } from './version';
 
 type ViewType = 'map' | 'table' | 'split';
 
@@ -81,6 +82,13 @@ export class App implements OnDestroy {
   geoProgress = signal({ current: 0, total: 0, message: '' });
 
   t = computed(() => this.i18n.t());
+
+  appVersionLabel = computed(() => {
+    if (isDevMode()) return 'LOCAL';
+    const host = (typeof window !== 'undefined' ? window.location.hostname : '');
+    if (host.includes('vercel.app')) return 'PRE';
+    return 'v' + APP_VERSION;
+  });
 
   localities = computed(() => {
     const set = new Set<string>();
@@ -198,7 +206,6 @@ export class App implements OnDestroy {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
     }).addTo(this.map);
 
-    L.control.zoom({ position: 'topright' }).addTo(this.map);
 
     this.updateMap();
     setTimeout(() => this.map?.invalidateSize(), 100);

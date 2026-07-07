@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2.2 (2026-07-07)
+
+### Fixed
+- OSRM routing requests no longer hang indefinitely — added `AbortController` timeout (30s default, 60s for walking/bicycle)
+- Reduced batch size for walking/cycling OSRM table requests (30 instead of 100) to prevent timeouts
+- Injected `@vercel/analytics` — analytics was never initialized
+
 ## v1.2.1 (2026-07-07)
 
 ### Changed

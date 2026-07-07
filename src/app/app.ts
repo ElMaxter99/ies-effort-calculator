@@ -463,6 +463,7 @@ export class App implements OnDestroy {
       }
     }
 
+    await this.resolveMissingCoords(filteredCentres, origin);
     this.centres.set([...this.centres()]);
     this.applyFilter();
     this.updateMap();
@@ -625,6 +626,7 @@ export class App implements OnDestroy {
       }
     }
 
+    await this.resolveMissingCoords(currentCentres, origin);
     this.centres.set([...this.centres()]);
     this.applyFilter();
     this.updateMap();
@@ -686,6 +688,8 @@ export class App implements OnDestroy {
       if (coords) c.coordinates = coords;
     }
 
+    await this.resolveMissingCoords(visibleCentres, origin);
+
     const noDistance = visibleCentres.filter((c) => c.coordinates && c.distanceKm === undefined);
     if (noDistance.length > 0) changed = true;
 
@@ -715,6 +719,42 @@ export class App implements OnDestroy {
 
     this.calculating.set(false);
     this.geoProgress.set({ current: 0, total: 0, message: '' });
+  }
+
+  private async resolveMissingCoords(centres: IesCenter[], origin: Origin) {
+    if (!origin.coordinates) return;
+    const missing = centres.filter(c => !c.coordinates);
+    if (missing.length === 0) return;
+
+    const locMap = new Map<string, IesCenter[]>();
+    for (const c of missing) {
+      const loc = c.locality.replace(/ - .*$/, '').trim().toLowerCase();
+      if (loc) {
+        if (!locMap.has(loc)) locMap.set(loc, []);
+        locMap.get(loc)!.push(c);
+      }
+    }
+
+    const uniqueLocalities = [...locMap.keys()];
+    const t = this.i18n.t();
+    this.geoProgress.set({ current: 0, total: uniqueLocalities.length, message: t.geocodingLocalities });
+
+    let completed = 0;
+    for (const loc of uniqueLocalities) {
+      const result = await this.geo.geocode(loc);
+      if (result) {
+        const coords = { lat: result.lat, lng: result.lng };
+        for (const c of locMap.get(loc)!) {
+          c.coordinates = coords;
+          c.distanceKm = parseFloat(
+            this.geo.haversineDistance(origin.coordinates.lat, origin.coordinates.lng, coords.lat, coords.lng).toFixed(1),
+          );
+          c.effortLevel = this.geo.effortLevel(c.distanceKm);
+        }
+      }
+      completed++;
+      this.geoProgress.set({ current: completed, total: uniqueLocalities.length, message: t.geocodingProgress(completed, uniqueLocalities.length) });
+    }
   }
 
   setSort(column: string) {

@@ -112,6 +112,7 @@ export interface I18nTranslations {
   langToggle: string;
   collapseSidebar: string;
   expandSidebar: string;
+  filters: string;
 
   selectAtLeastOneModality: string;
   addComparisonOrigin: string;
@@ -327,6 +328,7 @@ const CA: I18nTranslations = {
   langToggle: 'CA',
   collapseSidebar: 'Contraure barra lateral',
   expandSidebar: 'Expandir barra lateral',
+  filters: 'Filtres',
 
   selectAtLeastOneModality: 'Selecciona almenys una modalitat',
   addComparisonOrigin: 'Afig un origen de comparació',
@@ -531,6 +533,7 @@ const ES: I18nTranslations = {
   langToggle: 'ES',
   collapseSidebar: 'Contraer barra lateral',
   expandSidebar: 'Expandir barra lateral',
+  filters: 'Filtros',
 
   selectAtLeastOneModality: 'Selecciona al menos una modalidad',
   addComparisonOrigin: 'Añade un origen de comparación',

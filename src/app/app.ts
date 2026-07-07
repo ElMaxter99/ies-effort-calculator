@@ -5,8 +5,6 @@ import { GeocodingService } from './services/geocoding.service';
 import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import L from 'leaflet';
-import { APP_VERSION } from './version';
-import { APP_ENV } from './env';
 
 type ViewType = 'map' | 'table' | 'split';
 
@@ -84,12 +82,6 @@ export class App implements OnDestroy {
 
   t = computed(() => this.i18n.t());
 
-  appVersionLabel = computed(() => {
-    if (APP_ENV === 'development') return 'LOCAL';
-    if (APP_ENV === 'preview') return 'PRE';
-    return 'v' + APP_VERSION;
-  });
-
   localities = computed(() => {
     const set = new Set<string>();
     for (const c of this.centres()) {
@@ -100,6 +92,11 @@ export class App implements OnDestroy {
 
   sidebarOpen = signal(true);
   currentView = signal<ViewType>('map');
+
+  isMobile = signal(false);
+  mobileView = signal<ViewType>('map');
+  mobileDrawerOpen = signal(false);
+  showMobileFilters = signal(false);
 
   origins = signal<Origin[]>([]);
   activeOrigin = signal<string>('1');
@@ -170,6 +167,16 @@ export class App implements OnDestroy {
     });
 
     this.initDefaultOrigins();
+
+    const mql = window.matchMedia('(max-width: 1023px)');
+    this.isMobile.set(mql.matches);
+    mql.addEventListener('change', (e: MediaQueryListEvent) => {
+      this.isMobile.set(e.matches);
+      if (!e.matches) {
+        this.mobileDrawerOpen.set(false);
+        this.showMobileFilters.set(false);
+      }
+    });
   }
 
   private initDefaultOrigins() {
@@ -206,6 +213,7 @@ export class App implements OnDestroy {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
     }).addTo(this.map);
 
+    L.control.zoom({ position: 'topright' }).addTo(this.map);
 
     this.updateMap();
     setTimeout(() => this.map?.invalidateSize(), 100);
@@ -461,6 +469,9 @@ export class App implements OnDestroy {
 
   changeView(view: ViewType) {
     this.currentView.set(view);
+    if (this.isMobile()) {
+      this.mobileView.set(view);
+    }
     if (view !== 'table') {
       setTimeout(() => {
         this.updateMap();
@@ -787,6 +798,11 @@ export class App implements OnDestroy {
 
   getLevelDescription(level?: string): string {
     return this.geo.levelDescription(level || '');
+  }
+
+  updateThreshold(key: 'baix' | 'moderat' | 'alt', value: number) {
+    if (isNaN(value) || value < 0) return;
+    this.thresholds.update((t) => ({ ...t, [key]: value }));
   }
 
   getItinerantCount(c: IesCenter): number {

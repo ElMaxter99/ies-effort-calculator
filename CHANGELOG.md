@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.4 (2026-07-07)
+
+### Fixed
+- PDF worker `SyntaxError: Unexpected token 'export'` by loading worker as ES module (`{ type: 'module' }`)
+- Suppressed Vite dynamic-import warning for pdfjs-dist worker
+
 ## v1.2.3 (2026-07-07)
 
 ### Fixed

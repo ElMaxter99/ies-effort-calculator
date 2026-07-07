@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.3 (2026-07-07)
+
+### Fixed
+- Removed duplicate zoom controls on map (`L.control.zoom` was double with custom HTML buttons)
+
 ## v1.2.2 (2026-07-07)
 
 ### Fixed

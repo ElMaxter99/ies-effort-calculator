@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.1 (2026-07-07)
+
+### Changed
+- `.gitignore` — ignore entire `.vscode/` directory; remove it from Git tracking
+
 ## v1.2.0 (2026-07-07)
 
 ### Added

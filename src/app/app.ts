@@ -4,6 +4,8 @@ import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
 import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
+import { APP_VERSION } from './version';
+import { APP_ENV } from './env';
 import L from 'leaflet';
 
 type ViewType = 'map' | 'table' | 'split';
@@ -81,6 +83,12 @@ export class App implements OnDestroy {
   geoProgress = signal({ current: 0, total: 0, message: '' });
 
   t = computed(() => this.i18n.t());
+
+  appVersionLabel = computed(() => {
+    if (APP_ENV === 'development') return 'LOCAL';
+    if (APP_ENV === 'preview') return 'PRE';
+    return 'v' + APP_VERSION;
+  });
 
   localities = computed(() => {
     const set = new Set<string>();

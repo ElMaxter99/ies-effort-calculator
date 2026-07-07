@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.1.1 (2026-07-07)
+
+### Fixed
+- Restored app version label in header (regression from responsive refactor)
+- Mobile table cards not rendering due to `max-lg:hidden` on scroll container
+- View switching inconsistency on mobile (`currentView` desync when using bottom nav)
+
+### Added
+- Mobile bottom navigation: Table, Map, Filters, Configuration
+- Distance sort controls in mobile table header (nearest / farthest)
+- Sort by distance option in mobile filter bottom sheet
+- Responsive layout for mobile: full-screen modals, card-based table view
+
+### Changed
+- Bottom nav filter button label shortened to "Filtres" / "Filtros"
+- Map view on mobile hides floating overlays for cleaner display
+- Replaced redundant filter button in mobile table bar with sort toggles
+
 ## v1.0.4 (2026-07-06)
 
 ### Security

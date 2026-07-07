@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.0 (2026-07-07)
+
+### Added
+- Fallback geocoding via Nominatim (OpenStreetMap) for centres not found in local JSON database
+- Centres missing from `ies-coordinates.json` now resolve coordinates by locality name
+
 ## v1.1.1 (2026-07-07)
 
 ### Fixed

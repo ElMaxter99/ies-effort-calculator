@@ -10,7 +10,8 @@ export class PdfParserService {
 
   async parsePdf(file: File): Promise<IesRow[]> {
     const pdfjsLib = await import('pdfjs-dist');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+    const worker = new Worker('/pdf.worker.min.mjs', { type: 'module' });
+    pdfjsLib.GlobalWorkerOptions.workerPort = worker;
     const data = new Uint8Array(await file.arrayBuffer());
     const pdf = await pdfjsLib.getDocument({ data }).promise;
 

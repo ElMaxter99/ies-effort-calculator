@@ -104,13 +104,10 @@ export class GeocodingService {
     const base = this.osrmBase();
     const url = `${base}/route/v1/${profile}/${originLng},${originLat};${destLng},${destLat}?overview=false`;
 
+    const res = await this.fetchWithTimeout(url);
+    if (!res?.ok) return null;
+
     try {
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'ies-effort-calculator/1.0' },
-      });
-
-      if (!res.ok) return null;
-
       const data = await res.json();
       if (!data?.routes?.[0]) return null;
 
@@ -136,7 +133,7 @@ export class GeocodingService {
     if (!profile) return destinations.map(() => null);
 
     const results: (RouteData | null)[] = new Array(destinations.length).fill(null);
-    const BATCH_SIZE = 100;
+    const BATCH_SIZE = mode === 'walking' || mode === 'bicycle' ? 30 : 100;
 
     const uncached: number[] = [];
     for (let i = 0; i < destinations.length; i++) {
@@ -162,34 +159,27 @@ export class GeocodingService {
 
       const url = `${base}/table/v1/${profile}/${coords.join(';')}?sources=0&annotations=distance,duration`;
 
-      try {
-        const res = await fetch(url, {
-          headers: { 'User-Agent': 'ies-effort-calculator/1.0' },
-        });
-
-        if (!res.ok) {
-          done += batch.length;
-          onProgress?.(done, uncached.length);
-          continue;
-        }
-
-        const data = await res.json();
-        if (data?.durations?.[0] && data?.distances?.[0]) {
-          for (let j = 0; j < batch.length; j++) {
-            const dist = data.distances[0][j + 1];
-            const dur = data.durations[0][j + 1];
-            if (dist !== null && dur !== null) {
-              const idx = batch[j];
-              const result: OSRMResult = { distance: dist, duration: dur };
-              const d = destinations[idx];
-              const cacheKey = `${originLat.toFixed(5)},${originLng.toFixed(5)}-${d.lat.toFixed(5)},${d.lng.toFixed(5)}-${mode}`;
-              this.routeCache.set(cacheKey, result);
-              results[idx] = { distanceKm: parseFloat((dist / 1000).toFixed(1)), durationMin: Math.round(dur / 60) };
+      const res = await this.fetchWithTimeout(url, mode === 'walking' || mode === 'bicycle' ? 60000 : 30000);
+      if (res?.ok) {
+        try {
+          const data = await res.json();
+          if (data?.durations?.[0] && data?.distances?.[0]) {
+            for (let j = 0; j < batch.length; j++) {
+              const dist = data.distances[0][j + 1];
+              const dur = data.durations[0][j + 1];
+              if (dist !== null && dur !== null) {
+                const idx = batch[j];
+                const result: OSRMResult = { distance: dist, duration: dur };
+                const d = destinations[idx];
+                const cacheKey = `${originLat.toFixed(5)},${originLng.toFixed(5)}-${d.lat.toFixed(5)},${d.lng.toFixed(5)}-${mode}`;
+                this.routeCache.set(cacheKey, result);
+                results[idx] = { distanceKm: parseFloat((dist / 1000).toFixed(1)), durationMin: Math.round(dur / 60) };
+              }
             }
           }
+        } catch {
+          // batch parse failed, results stay null
         }
-      } catch {
-        // batch failed, results stay null
       }
 
       done += batch.length;
@@ -279,6 +269,22 @@ export class GeocodingService {
 
     this.progress.set({ current: pending.length, total: pending.length, message: t.geocodingComplete(pending.length) });
     return results;
+  }
+
+  private async fetchWithTimeout(url: string, timeoutMs = 30000): Promise<Response | null> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'ies-effort-calculator/1.0' },
+      });
+      return res;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   private async rateLimit() {

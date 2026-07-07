@@ -6,6 +6,7 @@ import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import { APP_VERSION } from './version';
 import { APP_ENV } from './env';
+import { inject } from '@vercel/analytics';
 import L from 'leaflet';
 
 type ViewType = 'map' | 'table' | 'split';
@@ -175,6 +176,7 @@ export class App implements OnDestroy {
     });
 
     this.initDefaultOrigins();
+    inject();
 
     const mql = window.matchMedia('(max-width: 1023px)');
     this.isMobile.set(mql.matches);

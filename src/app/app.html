@@ -945,16 +945,7 @@
             </div>
           </div>
 
-          <!-- Mobile: view in table button -->
-          <div class="absolute bottom-6 right-4 z-[1000] lg:hidden">
-            <button class="flex items-center gap-1.5 px-3 py-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant text-xs font-bold text-primary hover:bg-white transition-all"
-                    (click)="changeView('table')">
-              <span class="material-symbols-outlined text-[16px]">table_chart</span>
-              {{ t().table }}
-            </button>
-          </div>
-
-          <div class="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-primary/20 flex items-center gap-2">
+          <div class="absolute top-4 left-4 z-[1000] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-primary/20 flex items-center gap-2 max-lg:hidden">
             <span class="w-2.5 h-2.5 bg-primary rounded-full"></span>
             <span class="text-xs font-bold text-primary">
               @let origin = origins().find(o => o.id === activeOrigin());
@@ -1028,13 +1019,30 @@
                [placeholder]="t().filterByName"
                [value]="searchText()"
                (input)="searchText.set($any($event.target).value); applyFilter()" />
-        <button class="shrink-0 flex items-center gap-1 px-3 py-2 rounded-full border border-outline-variant text-xs font-medium"
-                (click)="showMobileFilters.set(true)">
-          <span class="material-symbols-outlined text-[16px]">tune</span>
-          {{ t().filterByName }}
-        </button>
+        <div class="flex gap-1 shrink-0">
+          <button class="flex items-center gap-0.5 px-2 py-2 rounded-lg border text-xs font-medium transition-colors"
+                  [class.border-primary]="sortBy() === 'distance' && sortDir() === 'asc'"
+                  [class.text-primary]="sortBy() === 'distance' && sortDir() === 'asc'"
+                  [class.text-on-surface-variant]="sortBy() !== 'distance' || sortDir() !== 'asc'"
+                  [class.border-outline-variant]="sortBy() !== 'distance' || sortDir() !== 'asc'"
+                  (click)="sortBy.set('distance'); sortDir.set('asc'); applyFilter()"
+                  [title]="t().distance">
+            <span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+            <span class="text-[10px]">{{ t().km }}</span>
+          </button>
+          <button class="flex items-center gap-0.5 px-2 py-2 rounded-lg border text-xs font-medium transition-colors"
+                  [class.border-primary]="sortBy() === 'distance' && sortDir() === 'desc'"
+                  [class.text-primary]="sortBy() === 'distance' && sortDir() === 'desc'"
+                  [class.text-on-surface-variant]="sortBy() !== 'distance' || sortDir() !== 'desc'"
+                  [class.border-outline-variant]="sortBy() !== 'distance' || sortDir() !== 'desc'"
+                  (click)="sortBy.set('distance'); sortDir.set('desc'); applyFilter()"
+                  [title]="t().distance">
+            <span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+            <span class="text-[10px]">{{ t().km }}</span>
+          </button>
+        </div>
       </div>
-          <div class="flex-1 overflow-y-auto max-lg:hidden">
+          <div class="flex-1 overflow-y-auto">
         @for (c of filteredCentres(); track c.code) {
           <div class="mx-3 my-2 bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden"
                [class]="levelBorderColor(c.effortLevel ?? '')">
@@ -1097,28 +1105,28 @@
     <!-- === MOBILE: Bottom Navigation === -->
     <nav class="lg:hidden flex items-center justify-around bg-white border-t border-outline-variant px-2 py-1 shrink-0">
       <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium"
-              [class.text-primary]="mobileView() === 'map'"
-              [class.text-on-surface-variant]="mobileView() !== 'map'"
-              (click)="mobileView.set('map')">
-        <span class="material-symbols-outlined text-[22px]">map</span>
-        {{ t().map }}
-      </button>
-      <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium"
               [class.text-primary]="mobileView() === 'table'"
               [class.text-on-surface-variant]="mobileView() !== 'table'"
-              (click)="mobileView.set('table')">
+              (click)="changeView('table')">
         <span class="material-symbols-outlined text-[22px]">table_chart</span>
         {{ t().table }}
+      </button>
+      <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium"
+              [class.text-primary]="mobileView() === 'map'"
+              [class.text-on-surface-variant]="mobileView() !== 'map'"
+              (click)="changeView('map')">
+        <span class="material-symbols-outlined text-[22px]">map</span>
+        {{ t().map }}
       </button>
       <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium text-on-surface-variant"
               (click)="showMobileFilters.set(true)">
         <span class="material-symbols-outlined text-[22px]">tune</span>
-        {{ t().filterByName }}
+        {{ t().filters }}
       </button>
       <button class="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-medium text-on-surface-variant"
               (click)="mobileDrawerOpen.set(true)">
-        <span class="material-symbols-outlined text-[22px]">list_alt</span>
-        {{ t().comparisonOrigins }}
+        <span class="material-symbols-outlined text-[22px]">settings</span>
+        {{ t().configTitle }}
       </button>
     </nav>
   </div>
@@ -1248,12 +1256,36 @@
       <div class="absolute inset-0 bg-black/40" (click)="showMobileFilters.set(false)"></div>
       <div class="absolute bottom-0 left-0 right-0 bg-surface rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
         <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant shrink-0">
-          <h2 class="font-bold text-sm text-primary">{{ t().filterByName }}</h2>
+          <h2 class="font-bold text-sm text-primary">{{ t().filters }}</h2>
           <button class="p-1 text-outline" (click)="showMobileFilters.set(false)">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
         <div class="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+          <!-- Sort by distance -->
+          <div>
+            <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2">{{ t().distance }}</h3>
+            <div class="flex gap-2">
+              <button class="flex items-center gap-1 px-3 py-2 rounded-lg border text-xs font-medium transition-colors flex-1 justify-center"
+                      [class.bg-primary]="sortBy() === 'distance' && sortDir() === 'asc'"
+                      [class.text-white]="sortBy() === 'distance' && sortDir() === 'asc'"
+                      [class.text-on-surface-variant]="sortBy() !== 'distance' || sortDir() !== 'asc'"
+                      [class.border-outline-variant]="sortBy() !== 'distance' || sortDir() !== 'asc'"
+                      (click)="sortBy.set('distance'); sortDir.set('asc'); applyFilter()">
+                <span class="material-symbols-outlined text-[18px]">arrow_upward</span>
+                {{ t().km }}
+              </button>
+              <button class="flex items-center gap-1 px-3 py-2 rounded-lg border text-xs font-medium transition-colors flex-1 justify-center"
+                      [class.bg-primary]="sortBy() === 'distance' && sortDir() === 'desc'"
+                      [class.text-white]="sortBy() === 'distance' && sortDir() === 'desc'"
+                      [class.text-on-surface-variant]="sortBy() !== 'distance' || sortDir() !== 'desc'"
+                      [class.border-outline-variant]="sortBy() !== 'distance' || sortDir() !== 'desc'"
+                      (click)="sortBy.set('distance'); sortDir.set('desc'); applyFilter()">
+                <span class="material-symbols-outlined text-[18px]">arrow_downward</span>
+                {{ t().km }}
+              </button>
+            </div>
+          </div>
           <!-- Effort level -->
           <div>
             <h3 class="font-bold text-xs text-on-surface-variant uppercase tracking-wider mb-2">{{ t().effort }}</h3>

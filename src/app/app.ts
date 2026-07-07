@@ -223,8 +223,6 @@ export class App implements OnDestroy {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
     }).addTo(this.map);
 
-    L.control.zoom({ position: 'topright' }).addTo(this.map);
-
     this.updateMap();
     setTimeout(() => this.map?.invalidateSize(), 100);
   }

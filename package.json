@@ -24,7 +24,7 @@
     "@vercel/analytics": "^2.0.1",
     "autoprefixer": "^10.5.2",
     "leaflet": "^1.9.4",
-    "pdfjs-dist": "^4.4.168",
+    "pdfjs-dist": "^4.10.38",
     "postcss": "^8.5.16",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.3.2",

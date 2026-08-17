@@ -2,6 +2,7 @@ import { RegionConfig, RegionId } from './region.types';
 import { VAL } from './val';
 import { CLM } from './clm';
 import { CAN } from './can';
+import { MUR } from './mur';
 
 /**
  * Comunidades soportadas.
@@ -14,6 +15,7 @@ export const REGIONS: Record<RegionId, RegionConfig> = {
   val: VAL,
   clm: CLM,
   can: CAN,
+  mur: MUR,
 } as Record<RegionId, RegionConfig>;
 
 /** Región por defecto cuando el usuario aún no ha elegido ninguna. */

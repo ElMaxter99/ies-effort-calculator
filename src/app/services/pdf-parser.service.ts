@@ -7,6 +7,7 @@ import {
   TextRow,
   assignColumn,
   detectHeaderRow,
+  matchHeaderField,
   normalizeHeader,
 } from './column-dictionary';
 
@@ -28,8 +29,11 @@ export interface ParserHints {
    * - `grouped`: bloques por centro, cada uno con una subtabla de
    *   especialidades y sus recuentos de vacantes. Es el caso de
    *   Castilla-La Mancha.
+   * - `transposed`: la tabla está girada. Cada *columna* es una plaza y cada
+   *   *fila* un campo, con el rótulo del campo a la izquierda. Es el caso de
+   *   Murcia, que además reparte las plazas en dos paneles por página.
    */
-  strategy?: 'columns' | 'grouped';
+  strategy?: 'columns' | 'grouped' | 'transposed';
   /**
    * Rangos [min, max] de coordenada X por campo. Si se indican, tienen
    * prioridad sobre la detección de cabecera. Es la vía de escape para PDFs
@@ -73,6 +77,15 @@ export interface ParserHints {
    * digital del documento en lugar de con la especialidad.
    */
   modalityPattern?: string;
+  /**
+   * Separación mínima en X para considerar que dos valores pertenecen a plazas
+   * distintas, en la estrategia `transposed`.
+   *
+   * Un valor largo se parte en varias líneas ligeramente desplazadas (unos
+   * 10 pt en Murcia), mientras que dos plazas contiguas distan unos 50, así
+   * que 25 separa bien sin partir un valor por la mitad.
+   */
+  transposedGap?: number;
 }
 
 /**
@@ -191,6 +204,10 @@ export class PdfParserService {
       return this.parseGroupedPage(rows, hints, state);
     }
 
+    if (hints.strategy === 'transposed') {
+      return { rows: this.parseTransposedPage(rows, hints), state };
+    }
+
     const modality = this.detectModality(items, hints);
     const usesOverrides = !!hints.columnOverrides && Object.keys(hints.columnOverrides).length > 0;
 
@@ -212,6 +229,97 @@ export class PdfParserService {
       rows: this.extractRows(dataRows, modality, hints, columns),
       state: { ...state, columns },
     };
+  }
+
+  /**
+   * Extrae un listado con la tabla girada.
+   *
+   * Cada plaza es una *columna* y cada campo una *fila*, con el rótulo del
+   * campo a la izquierda:
+   *
+   *     Función        0590004 LENGUA    0590013 ITALIANO   0592002 ARABE
+   *     Localidad      CARTAGENA         MURCIA             MURCIA
+   *     Nombre Centro  IES MEDITERRÁNEO  IES SAAVEDRA ...   EOI ...
+   *     Cod. Centro    30012276          30006173           30009757
+   *
+   * Se localizan las filas cuyo primer texto es un rótulo conocido, y el resto
+   * de sus items se agrupan en columnas por cercanía en X: cada columna es una
+   * plaza. Los valores largos se parten en varias líneas ligeramente
+   * desplazadas, y por eso se agrupa por hueco y no por coincidencia exacta.
+   *
+   * Murcia imprime dos paneles por página ("Vacantes de PLANTILLA" y "de
+   * SUSTITUCIÓN"), cada uno con su propia columna de rótulos; como los rótulos
+   * se excluyen del agrupado, ambos paneles se resuelven a la vez.
+   */
+  private parseTransposedPage(rows: TextRow[], hints: ParserHints): IesRow[] {
+    const gap = hints.transposedGap ?? 25;
+
+    // Fila etiquetada: su primer item es un rótulo que el diccionario conoce.
+    const labelled: { field: ColumnField; values: { x: number; str: string }[] }[] = [];
+
+    for (const row of rows) {
+      const labels = row.items.filter((i) => matchHeaderField(i.str));
+      if (labels.length === 0) continue;
+
+      const field = matchHeaderField(row.items[0].str);
+      if (!field) continue;
+
+      labelled.push({
+        field,
+        values: row.items.filter((i) => !labels.includes(i)),
+      });
+    }
+
+    if (labelled.length === 0) return [];
+
+    // Las columnas salen de todas las X de valor vistas en la página.
+    const xs = labelled.flatMap((l) => l.values.map((v) => v.x)).sort((a, b) => a - b);
+    const anchors: number[] = [];
+    for (const x of xs) {
+      if (anchors.length === 0 || x - anchors[anchors.length - 1] > gap) anchors.push(x);
+    }
+
+    const columnOf = (x: number): number => {
+      let best = 0;
+      for (let i = 1; i < anchors.length; i++) {
+        if (Math.abs(x - anchors[i]) < Math.abs(x - anchors[best])) best = i;
+      }
+      return best;
+    };
+
+    const records = anchors.map(() => new Map<ColumnField, string[]>());
+
+    for (const { field, values } of labelled) {
+      for (const value of values) {
+        const record = records[columnOf(value.x)];
+        record.set(field, [...(record.get(field) ?? []), value.str.trim()]);
+      }
+    }
+
+    const out: IesRow[] = [];
+
+    for (const record of records) {
+      const read = (field: ColumnField) => (record.get(field) ?? []).join(' ').trim();
+
+      const code = read('code');
+      const centre = read('centre');
+      if (!/^\d{6,8}$/.test(code) || !centre) continue;
+
+      const itinerant = read('itinerant').toUpperCase();
+
+      out.push({
+        number: out.length + 1,
+        centre,
+        locality: read('locality'),
+        code,
+        locationCode: '',
+        observations: read('observations'),
+        isItinerant: itinerant.startsWith('S'),
+        modality: read('modality'),
+      });
+    }
+
+    return out;
   }
 
   /**

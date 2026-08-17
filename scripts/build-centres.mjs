@@ -314,6 +314,31 @@ const ADAPTERS = {
    * vacantes no trae localidad, y el municipio es la unidad con la que se
    * corresponden los topónimos del resto del sistema.
    */
+  /**
+   * Región de Murcia — API del Mapa Escolar (murciaeduca).
+   *
+   * Es la única comunidad que publica sus centros como servicio en vivo con
+   * las coordenadas ya calculadas, así que no hay que geocodificar nada. Aun
+   * así se vuelca a un JSON estático: la aplicación no debe depender de que la
+   * API responda.
+   */
+  mur: {
+    label: 'Región de Murcia',
+    source: 'https://mapaescolar.murciaeduca.es/mapaescolar-api/api/centros',
+    async fetch() {
+      const data = await fetchJson(this.source);
+      const list = Array.isArray(data) ? data : (data.content ?? []);
+
+      return list.map((c) => ({
+        code: c.codcen,
+        name: c.dencen,
+        locality: c.muncen || c.loccen,
+        lat: c['geo-referencia']?.lat,
+        lng: c['geo-referencia']?.lon,
+      }));
+    },
+  },
+
   can: {
     label: 'Canarias',
     source:

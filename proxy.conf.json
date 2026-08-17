@@ -22,5 +22,13 @@
     "pathRewrite": {
       "^/api/can": ""
     }
+  },
+  "/api/mur": {
+    "target": "https://rrhheducacion.carm.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/mur": ""
+    }
   }
 }

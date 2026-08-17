@@ -11,6 +11,7 @@
     { "source": "/api/val/(.*)", "destination": "https://ceice.gva.es/$1" },
     { "source": "/api/clm/(.*)", "destination": "https://educacion.castillalamancha.es/$1" },
     { "source": "/api/can/(.*)", "destination": "https://www.gobiernodecanarias.org/$1" },
+    { "source": "/api/mur/(.*)", "destination": "https://rrhheducacion.carm.es/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

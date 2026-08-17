@@ -16,6 +16,7 @@ export type ColumnField =
   | 'code'
   | 'itinerant'
   | 'vacancies'
+  | 'modality'
   | 'observations';
 
 /**
@@ -32,7 +33,8 @@ const SYNONYMS: Record<ColumnField, string[]> = {
   locality: ['LOCALITAT', 'LOCALIDAD', 'LOCALIDADE', 'MUNICIPIO', 'MUNICIPI', 'CONCELLO', 'POBLACION', 'POBLACIO'],
   centre: ['CENTRE', 'CENTRO', 'DENOMINACION', 'DENOMINACIO', 'NOM CENTRE', 'NOMBRE CENTRO', 'CENTRO EDUCATIVO'],
   code: ['CODI', 'CODIGO', 'COD', 'COD CENTRO', 'CODIGO CENTRO', 'CODI CENTRE', 'CODIGO DE CENTRO'],
-  itinerant: ['ITIN', 'ITINERANT', 'ITINERANTE'],
+  itinerant: ['ITIN', 'ITINERANT', 'ITINERANTE', 'ITI'],
+  modality: ['FUNCION', 'ESPECIALIDAD', 'ESPECIALITAT', 'FUNCION ESPECIALIDAD', 'CUERPO'],
   vacancies: ['VAC', 'VACANTES', 'VACANTS', 'VACANTE', 'PLAZAS', 'PLACES'],
   observations: ['OBSERVACIONS', 'OBSERVACIONES', 'OBS', 'NOTAS', 'NOTES'],
 };

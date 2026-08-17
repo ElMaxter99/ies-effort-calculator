@@ -51,8 +51,26 @@
             </div>
 
             <div class="flex flex-col items-center gap-sm mt-md text-center">
+              <div class="flex items-center gap-sm flex-wrap justify-center">
+                <label for="region-select" class="text-body-sm font-bold text-on-surface-variant">{{ t().regionSelectorLabel }}</label>
+                <select id="region-select" class="bg-surface border border-outline-variant text-on-surface text-body-sm rounded-lg px-md py-sm cursor-pointer hover:border-primary transition-colors"
+                        [value]="activeRegionId()" (change)="onRegionChange($event)">
+                  @for (r of region.all; track r.id) {
+                    <option [value]="r.id">{{ r.name[i18n.lang()] }}</option>
+                  }
+                </select>
+                @if (activeRegion().status === 'beta') {
+                  <span class="text-label-md bg-tertiary/15 text-tertiary px-sm py-0.5 rounded font-bold">{{ t().regionStatusBeta }}</span>
+                }
+                @if (activeRegion().status === 'manual-only') {
+                  <span class="text-label-md bg-tertiary/15 text-tertiary px-sm py-0.5 rounded font-bold">{{ t().regionStatusManualOnly }}</span>
+                }
+              </div>
               <div class="bg-surface-container-low border border-outline-variant text-on-surface-variant text-body-sm px-lg py-md rounded-lg max-w-lg">
-                {{ t().regionDisclaimer }}
+                {{ t().regionDisclaimer(activeRegion().name[i18n.lang()]) }}
+                @if (activeRegion().status === 'manual-only') {
+                  <span class="block mt-xs">{{ t().regionManualOnlyNotice }}</span>
+                }
               </div>
               <p class="text-body-sm text-on-surface-variant max-w-lg">
                 {{ t().pdfFormatHint('Vacants_Supr_Despl_Secundaria_2.pdf') }}
@@ -93,7 +111,7 @@
                   } @else {
                     <p class="text-body-sm text-on-surface-variant">
                       {{ t().officialPdfsEmpty }}
-                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                      <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback(activeAuthority()) }}</a>
                     </p>
                   }
                 </div>
@@ -118,7 +136,7 @@
                   } @else {
                     <p class="text-body-sm text-on-surface-variant">
                       {{ t().officialPdfsEmpty }}
-                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                      <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback(activeAuthority()) }}</a>
                     </p>
                   }
                 </div>
@@ -1481,7 +1499,7 @@
           </h2>
           <div class="space-y-sm text-on-surface-variant">
             <p [innerHTML]="t().termsNatureBody"></p>
-            <div class="bg-surface-container-low border-l-4 border-primary p-md rounded-r-lg italic" [innerHTML]="t().termsNatureNotice">
+            <div class="bg-surface-container-low border-l-4 border-primary p-md rounded-r-lg italic" [innerHTML]="t().termsNatureNotice(activeAuthority())">
             </div>
           </div>
         </article>
@@ -1659,18 +1677,18 @@
             <span class="material-symbols-outlined">picture_as_pdf</span>
             {{ t().sourceWhatTitle }}
           </h2>
-          <p class="text-on-surface-variant">{{ t().sourceWhatBody }}</p>
+          <p class="text-on-surface-variant">{{ t().sourceWhatBody(activeAuthority()) }}</p>
         </article>
         <article class="space-y-md border-t border-outline-variant pt-xl">
           <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
             <span class="material-symbols-outlined">account_balance</span>
             {{ t().sourcePublisherTitle }}
           </h2>
-          <p class="text-on-surface-variant" [innerHTML]="t().sourcePublisherBody"></p>
-          <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener"
+          <p class="text-on-surface-variant" [innerHTML]="t().sourcePublisherBody(activeAuthority())"></p>
+          <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener"
              class="inline-flex items-center gap-2 bg-primary text-on-primary px-lg py-3 rounded-lg font-bold text-label-md hover:opacity-90 transition-all shadow-md">
             <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-            {{ t().sourceCtaLabel }}
+            {{ t().sourceCtaLabel(activeAuthority()) }}
           </a>
         </article>
         <article class="space-y-md border-t border-outline-variant pt-xl">

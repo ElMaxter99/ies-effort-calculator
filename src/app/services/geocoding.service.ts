@@ -1,6 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { EffortThresholds, TransportMode, RouteData } from '../types';
 import { I18nService } from './i18n.service';
+import { RegionService } from '../regions/region.service';
 
 interface GeoResult {
   lat: number;
@@ -13,7 +14,13 @@ interface OSRMResult {
   duration: number;
 }
 
-const CACHE_KEY = 'ies_geo_cache';
+/**
+ * La caché de geocodificación se aísla por región: "Alcoi" o "Santiago" no
+ * significan lo mismo en dos comunidades, y compartir la caché mezclaría
+ * coordenadas. El sufijo _v2 invalida la caché plana de la versión anterior.
+ */
+const CACHE_PREFIX = 'ies_geo_cache_v2_';
+/** Las rutas se cachean por coordenadas, así que sirven para cualquier región. */
 const ROUTE_CACHE_KEY = 'ies_route_cache';
 
 @Injectable({ providedIn: 'root' })
@@ -21,19 +28,32 @@ export class GeocodingService {
   thresholds: EffortThresholds = { baix: 10, moderat: 45, alt: 75 };
   progress = signal({ current: 0, total: 0, message: '' });
 
+  private readonly region = inject(RegionService);
+
   private cache = new Map<string, GeoResult>();
+  private cacheRegionId: string | null = null;
   private routeCache = new Map<string, OSRMResult>();
   private lastRequestTime = 0;
   private requestLock = Promise.resolve();
 
   constructor(public i18n: I18nService) {
-    this.loadCache();
     this.loadRouteCache();
   }
 
-  private loadCache() {
+  private cacheKey(): string {
+    return CACHE_PREFIX + this.region.current().id;
+  }
+
+  /** Recarga la caché si se ha cambiado de comunidad desde la última consulta. */
+  private syncCache() {
+    const id = this.region.current().id;
+    if (this.cacheRegionId === id) return;
+
+    this.cache = new Map();
+    this.cacheRegionId = id;
+
     try {
-      const raw = localStorage.getItem(CACHE_KEY);
+      const raw = localStorage.getItem(this.cacheKey());
       if (raw) {
         const data = JSON.parse(raw) as [string, { lat: number; lng: number; displayName: string }][];
         for (const [key, val] of data) {
@@ -48,7 +68,7 @@ export class GeocodingService {
   private saveCache() {
     try {
       const data = Array.from(this.cache.entries());
-      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(this.cacheKey(), JSON.stringify(data));
     } catch {
       // localStorage full or unavailable
     }
@@ -201,13 +221,15 @@ export class GeocodingService {
   }
 
   async geocode(place: string): Promise<GeoResult | null> {
+    this.syncCache();
+
     const key = place.toLowerCase().trim();
     if (this.cache.has(key)) return this.cache.get(key)!;
 
     for (let attempt = 0; attempt < 3; attempt++) {
       await this.rateLimit();
 
-      const query = encodeURIComponent(`${place}, Comunitat Valenciana, Spain`);
+      const query = encodeURIComponent(`${place}, ${this.region.current().geocodeSuffix}`);
       const base = this.nominatimBase();
       const url = `${base}/search?q=${query}&format=json&limit=1&accept-language=ca`;
 
@@ -244,6 +266,8 @@ export class GeocodingService {
   }
 
   async geocodeBatch(places: string[]): Promise<Map<string, GeoResult | null>> {
+    this.syncCache();
+
     const unique = [...new Set(places.map((p) => p.trim().toLowerCase()))];
     const results = new Map<string, GeoResult | null>();
     const pending: string[] = [];
@@ -300,6 +324,7 @@ export class GeocodingService {
   }
 
   getCached(key: string): GeoResult | undefined {
+    this.syncCache();
     return this.cache.get(key);
   }
 
@@ -312,7 +337,7 @@ export class GeocodingService {
 
   clearCache() {
     this.cache.clear();
-    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(this.cacheKey());
   }
 
   removeOriginRoutes(originLat: number, originLng: number) {
@@ -328,7 +353,7 @@ export class GeocodingService {
   clearAllCaches() {
     this.cache.clear();
     this.routeCache.clear();
-    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(this.cacheKey());
     localStorage.removeItem(ROUTE_CACHE_KEY);
   }
 

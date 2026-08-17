@@ -1,10 +1,26 @@
 {
-  "/api/ceice": {
+  "/api/val": {
     "target": "https://ceice.gva.es",
     "secure": true,
     "changeOrigin": true,
     "pathRewrite": {
-      "^/api/ceice": ""
+      "^/api/val": ""
+    }
+  },
+  "/api/clm": {
+    "target": "https://educacion.castillalamancha.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/clm": ""
+    }
+  },
+  "/api/can": {
+    "target": "https://www.gobiernodecanarias.org",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/can": ""
     }
   }
 }

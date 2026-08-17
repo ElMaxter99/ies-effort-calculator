@@ -8,6 +8,7 @@
   "rewrites": [
     { "source": "/api/nominatim/(.*)", "destination": "https://nominatim.openstreetmap.org/$1" },
     { "source": "/api/osrm/(.*)", "destination": "https://router.project-osrm.org/$1" },
+    { "source": "/api/ceice/(.*)", "destination": "https://ceice.gva.es/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

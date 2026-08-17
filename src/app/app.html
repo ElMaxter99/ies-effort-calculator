@@ -57,11 +57,77 @@
               <p class="text-body-sm text-on-surface-variant max-w-lg">
                 {{ t().pdfFormatHint('Vacants_Supr_Despl_Secundaria_2.pdf') }}
               </p>
-              <a [href]="pdfSourceUrl" target="_blank" rel="noopener"
-                 class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm">
-                <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-                {{ t().officialPdfCta }}
-              </a>
+              <div class="flex gap-sm flex-wrap justify-center">
+                <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
+                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'secundaria'">
+                    {{ officialPdfsLoading() === 'secundaria' ? 'sync' : 'school' }}
+                  </span>
+                  {{ t().secundariaPdfLabel }}
+                </button>
+                <button (click)="loadOfficialPdfs('primaria')" [disabled]="officialPdfsLoading() === 'primaria'"
+                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'primaria'">
+                    {{ officialPdfsLoading() === 'primaria' ? 'sync' : 'school' }}
+                  </span>
+                  {{ t().primariaPdfLabel }}
+                </button>
+              </div>
+
+              @let secundariaLinks = officialPdfs().secundaria;
+              @if (secundariaLinks) {
+                <div class="w-full max-w-lg bg-surface-container-low border border-outline-variant rounded-lg p-md text-left">
+                  <p class="text-label-md font-bold text-on-surface mb-1">{{ t().secundariaPdfLabel }}</p>
+                  @if (secundariaLinks.length > 0) {
+                    <ul class="space-y-1">
+                      @for (link of secundariaLinks; track link.url) {
+                        <li>
+                          <a [href]="link.url" target="_blank" rel="noopener"
+                             class="flex items-center gap-1 text-primary text-body-sm font-medium hover:opacity-80 transition-opacity">
+                            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                            {{ link.label }}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="text-body-sm text-on-surface-variant">
+                      {{ t().officialPdfsEmpty }}
+                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                    </p>
+                  }
+                </div>
+              }
+
+              @let primariaLinks = officialPdfs().primaria;
+              @if (primariaLinks) {
+                <div class="w-full max-w-lg bg-surface-container-low border border-outline-variant rounded-lg p-md text-left">
+                  <p class="text-label-md font-bold text-on-surface mb-1">{{ t().primariaPdfLabel }}</p>
+                  @if (primariaLinks.length > 0) {
+                    <ul class="space-y-1">
+                      @for (link of primariaLinks; track link.url) {
+                        <li>
+                          <a [href]="link.url" target="_blank" rel="noopener"
+                             class="flex items-center gap-1 text-primary text-body-sm font-medium hover:opacity-80 transition-opacity">
+                            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                            {{ link.label }}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="text-body-sm text-on-surface-variant">
+                      {{ t().officialPdfsEmpty }}
+                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                    </p>
+                  }
+                </div>
+              }
+
+              @if (officialPdfs().secundaria || officialPdfs().primaria) {
+                <p class="text-body-sm text-on-surface-variant/80 max-w-lg font-medium">{{ t().officialPdfsVerifyNotice }}</p>
+              }
+
               <div class="flex flex-col items-center gap-1 mt-xs">
                 <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
                    class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
@@ -1601,7 +1667,7 @@
             {{ t().sourcePublisherTitle }}
           </h2>
           <p class="text-on-surface-variant" [innerHTML]="t().sourcePublisherBody"></p>
-          <a [href]="pdfSourceUrl" target="_blank" rel="noopener"
+          <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener"
              class="inline-flex items-center gap-2 bg-primary text-on-primary px-lg py-3 rounded-lg font-bold text-label-md hover:opacity-90 transition-all shadow-md">
             <span class="material-symbols-outlined text-[18px]">open_in_new</span>
             {{ t().sourceCtaLabel }}

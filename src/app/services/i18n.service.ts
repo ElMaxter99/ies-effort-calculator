@@ -156,7 +156,11 @@ export interface I18nTranslations {
   filterLocalitiesPlaceholder: string;
   regionDisclaimer: string;
   pdfFormatHint: (filename: string) => string;
-  officialPdfCta: string;
+  secundariaPdfLabel: string;
+  primariaPdfLabel: string;
+  officialPdfsEmpty: string;
+  officialPdfsVerifyNotice: string;
+  openPortalFallback: string;
   sampleFileDisclaimer: string;
   selectAll: string;
   deselectAll: string;
@@ -384,7 +388,11 @@ const CA: I18nTranslations = {
   filterLocalitiesPlaceholder: '',
   regionDisclaimer: 'De moment, l\'aplicació només funciona per a centres de la Comunitat Valenciana.',
   pdfFormatHint: (filename: string) => `Necessites el PDF oficial vigent de vacants d'educació secundària (mateix format que ${filename}, que és només un exemple).`,
-  officialPdfCta: 'Descarregar el PDF oficial vigent',
+  secundariaPdfLabel: 'Secundària',
+  primariaPdfLabel: 'Primària',
+  officialPdfsEmpty: 'No s\'ha pogut detectar automàticament cap PDF en aquesta pàgina. Visita el',
+  officialPdfsVerifyNotice: 'Verifica que el document és el vigent abans d\'utilitzar-lo: aquests enllaços es detecten automàticament del portal oficial i la seua estructura pot canviar.',
+  openPortalFallback: 'portal oficial de la GVA',
   sampleFileDisclaimer: 'Fitxer d\'exemple estàtic per a provar l\'aplicació — no reflecteix les vacants vigents.',
   selectAll: 'Seleccionar totes',
   deselectAll: 'Desseleccionar totes',
@@ -601,7 +609,11 @@ const ES: I18nTranslations = {
   filterLocalitiesPlaceholder: '',
   regionDisclaimer: 'Por ahora, la aplicación solo funciona para centros de la Comunitat Valenciana.',
   pdfFormatHint: (filename: string) => `Necesitas el PDF oficial vigente de vacantes de educación secundaria (mismo formato que ${filename}, que es solo un ejemplo).`,
-  officialPdfCta: 'Descargar el PDF oficial vigente',
+  secundariaPdfLabel: 'Secundaria',
+  primariaPdfLabel: 'Primaria',
+  officialPdfsEmpty: 'No se ha podido detectar automáticamente ningún PDF en esta página. Visita el',
+  officialPdfsVerifyNotice: 'Verifica que el documento es el vigente antes de usarlo: estos enlaces se detectan automáticamente del portal oficial y su estructura puede cambiar.',
+  openPortalFallback: 'portal oficial de la GVA',
   sampleFileDisclaimer: 'Archivo de ejemplo estático para probar la aplicación — no refleja las vacantes vigentes.',
   selectAll: 'Seleccionar todas',
   deselectAll: 'Deseleccionar todas',

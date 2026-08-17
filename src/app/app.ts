@@ -5,7 +5,7 @@ import { GeocodingService } from './services/geocoding.service';
 import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import { APP_VERSION } from './version';
-import { APP_ENV } from './env';
+import { APP_ENV, PDF_SOURCE_URL } from './env';
 import { inject } from '@vercel/analytics';
 import L from 'leaflet';
 
@@ -48,7 +48,8 @@ export class App implements OnDestroy {
     }
   }
 
-  step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy'>('landing');
+  step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy' | 'source'>('landing');
+  pdfSourceUrl = PDF_SOURCE_URL;
   pdfLoaded = signal(false);
   dragging = signal(false);
   headerShadow = signal(false);
@@ -1049,6 +1050,10 @@ export class App implements OnDestroy {
 
   showPrivacy() {
     this.step.set('privacy');
+  }
+
+  showSource() {
+    this.step.set('source');
   }
 
   backToStep(step: 'landing' | 'modalities' | 'origin' | 'main') {

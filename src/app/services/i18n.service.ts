@@ -156,12 +156,24 @@ export interface I18nTranslations {
   filterLocalitiesPlaceholder: string;
   regionDisclaimer: string;
   pdfFormatHint: (filename: string) => string;
+  officialPdfCta: string;
+  sampleFileDisclaimer: string;
   selectAll: string;
   deselectAll: string;
   termsTitle: string;
   termsUpdated: string;
   privacyTitle: string;
   privacyUpdated: string;
+  sourceTitle: string;
+  sourceUpdated: string;
+  sourceIntro: string;
+  sourceWhatTitle: string;
+  sourceWhatBody: string;
+  sourcePublisherTitle: string;
+  sourcePublisherBody: string;
+  sourceStaleWarningTitle: string;
+  sourceStaleWarning: string;
+  sourceCtaLabel: string;
   backToHome: string;
   observationsTitle: string;
   close: string;
@@ -371,13 +383,25 @@ const CA: I18nTranslations = {
   pdfProcessingMessage: (page: number, total: number) => `Processant pàgina ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
   regionDisclaimer: 'De moment, l\'aplicació només funciona per a centres de la Comunitat Valenciana.',
-  pdfFormatHint: (filename: string) => `El PDF ha de tindre el format oficial de vacants d'educació secundària (ex: ${filename}).`,
+  pdfFormatHint: (filename: string) => `Necessites el PDF oficial vigent de vacants d'educació secundària (mateix format que ${filename}, que és només un exemple).`,
+  officialPdfCta: 'Descarregar el PDF oficial vigent',
+  sampleFileDisclaimer: 'Fitxer d\'exemple estàtic per a provar l\'aplicació — no reflecteix les vacants vigents.',
   selectAll: 'Seleccionar totes',
   deselectAll: 'Desseleccionar totes',
   termsTitle: 'Termes i Condicions d\'Ús',
   termsUpdated: 'Darrera actualització: Maig 2024',
   privacyTitle: 'Política de Privadesa',
   privacyUpdated: 'Darrera actualització: Octubre 2023',
+  sourceTitle: 'Font de les Dades',
+  sourceUpdated: 'Darrera revisió: Agost 2026',
+  sourceIntro: 'Aquesta aplicació no publica cap dada pròpia: tot el que veus ix del PDF que tu puges. Ací t\'expliquem d\'on ve eixe document i com aconseguir sempre la versió vigent.',
+  sourceWhatTitle: 'Què és el PDF de vacants?',
+  sourceWhatBody: 'És el llistat oficial de vacants, supressions i desplaçaments del cos de secundària i altres cossos, publicat per la Conselleria d\'Educació de la Generalitat Valenciana dins dels procediments de provisió de llocs de treball docents.',
+  sourcePublisherTitle: 'Qui el publica i amb quina freqüència',
+  sourcePublisherBody: 'El publica la Conselleria d\'Educació (GVA) a través del portal de Recursos Humans - Educació. Cada curs se sol publicar primer una resolució/llistat <strong>provisional</strong> i després la versió <strong>definitiva</strong>, per la qual cosa el document canvia diverses vegades a l\'any.',
+  sourceStaleWarningTitle: 'El PDF d\'exemple pot estar desactualitzat',
+  sourceStaleWarning: 'El PDF d\'exemple inclòs en aquesta app és un fitxer estàtic incrustat fa temps: és útil per a provar l\'eina, però <strong>no és el document vigent</strong>. Descarrega sempre el PDF actual des del portal oficial abans de fer-ne servir els resultats.',
+  sourceCtaLabel: 'Anar al portal oficial de la GVA',
   backToHome: 'Tornar a l\'inici',
   observationsTitle: 'Observacions de la plaça',
   close: 'Tancar',
@@ -576,13 +600,25 @@ const ES: I18nTranslations = {
   pdfProcessingMessage: (page: number, total: number) => `Procesando página ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
   regionDisclaimer: 'Por ahora, la aplicación solo funciona para centros de la Comunitat Valenciana.',
-  pdfFormatHint: (filename: string) => `El PDF debe tener el formato oficial de vacantes de educación secundaria (ej: ${filename}).`,
+  pdfFormatHint: (filename: string) => `Necesitas el PDF oficial vigente de vacantes de educación secundaria (mismo formato que ${filename}, que es solo un ejemplo).`,
+  officialPdfCta: 'Descargar el PDF oficial vigente',
+  sampleFileDisclaimer: 'Archivo de ejemplo estático para probar la aplicación — no refleja las vacantes vigentes.',
   selectAll: 'Seleccionar todas',
   deselectAll: 'Deseleccionar todas',
   termsTitle: 'Términos y Condiciones de Uso',
   termsUpdated: 'Última actualización: Julio 2026',
   privacyTitle: 'Política de Privacidad',
   privacyUpdated: 'Última actualización: Octubre 2023',
+  sourceTitle: 'Fuente de los Datos',
+  sourceUpdated: 'Última revisión: Agosto 2026',
+  sourceIntro: 'Esta aplicación no publica ningún dato propio: todo lo que ves sale del PDF que tú subes. Aquí te explicamos de dónde viene ese documento y cómo conseguir siempre la versión vigente.',
+  sourceWhatTitle: '¿Qué es el PDF de vacantes?',
+  sourceWhatBody: 'Es el listado oficial de vacantes, supresiones y desplazamientos del cuerpo de secundaria y otros cuerpos, publicado por la Conselleria d\'Educació de la Generalitat Valenciana dentro de los procedimientos de provisión de puestos de trabajo docentes.',
+  sourcePublisherTitle: 'Quién lo publica y con qué frecuencia',
+  sourcePublisherBody: 'Lo publica la Conselleria d\'Educació (GVA) a través del portal de Recursos Humanos - Educación. Cada curso se suele publicar primero una resolución/listado <strong>provisional</strong> y después la versión <strong>definitiva</strong>, por lo que el documento cambia varias veces al año.',
+  sourceStaleWarningTitle: 'El PDF de ejemplo puede estar desactualizado',
+  sourceStaleWarning: 'El PDF de ejemplo incluido en esta app es un archivo estático incrustado hace tiempo: es útil para probar la herramienta, pero <strong>no es el documento vigente</strong>. Descarga siempre el PDF actual desde el portal oficial antes de usar los resultados.',
+  sourceCtaLabel: 'Ir al portal oficial de la GVA',
   backToHome: 'Volver al inicio',
   observationsTitle: 'Observaciones de la plaza',
   close: 'Cerrar',

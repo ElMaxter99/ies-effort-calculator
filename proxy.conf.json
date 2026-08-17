@@ -1,0 +1,10 @@
+{
+  "/api/ceice": {
+    "target": "https://ceice.gva.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/ceice": ""
+    }
+  }
+}

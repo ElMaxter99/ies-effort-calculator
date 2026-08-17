@@ -6,6 +6,8 @@ import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import { APP_VERSION } from './version';
 import { APP_ENV } from './env';
+import { PDF_PORTAL_HUB_URL } from './constants';
+import { PdfSourceService, Cos, OfficialPdfLink } from './services/pdf-source.service';
 import { inject } from '@vercel/analytics';
 import L from 'leaflet';
 
@@ -48,7 +50,10 @@ export class App implements OnDestroy {
     }
   }
 
-  step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy'>('landing');
+  step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy' | 'source'>('landing');
+  pdfPortalHubUrl = PDF_PORTAL_HUB_URL;
+  officialPdfs = signal<Record<Cos, OfficialPdfLink[] | null>>({ secundaria: null, primaria: null });
+  officialPdfsLoading = signal<Cos | null>(null);
   pdfLoaded = signal(false);
   dragging = signal(false);
   headerShadow = signal(false);
@@ -138,6 +143,7 @@ export class App implements OnDestroy {
     private pdfParser: PdfParserService,
     public geo: GeocodingService,
     public centresDb: CentresDatabaseService,
+    private pdfSource: PdfSourceService,
     public i18n: I18nService
   ) {
     this.process = this.pdfParser.process;
@@ -1049,6 +1055,18 @@ export class App implements OnDestroy {
 
   showPrivacy() {
     this.step.set('privacy');
+  }
+
+  showSource() {
+    this.step.set('source');
+  }
+
+  async loadOfficialPdfs(cos: Cos) {
+    if (this.officialPdfs()[cos]) return;
+    this.officialPdfsLoading.set(cos);
+    const links = await this.pdfSource.fetchOfficialPdfs(cos);
+    this.officialPdfs.update((v) => ({ ...v, [cos]: links }));
+    this.officialPdfsLoading.set(null);
   }
 
   backToStep(step: 'landing' | 'modalities' | 'origin' | 'main') {

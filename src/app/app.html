@@ -15,7 +15,7 @@
         </button>
         }
         <button class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
-        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help">help</span>
+        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help" (click)="showSource()">help</span>
         <span class="text-xs font-label-md text-on-surface-variant/60 select-none">{{ appVersionLabel() }}</span>
       </div>
     </div>
@@ -57,11 +57,85 @@
               <p class="text-body-sm text-on-surface-variant max-w-lg">
                 {{ t().pdfFormatHint('Vacants_Supr_Despl_Secundaria_2.pdf') }}
               </p>
-              <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
-                 class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
-                <span class="material-symbols-outlined text-[16px]">download</span>
-                {{ t().loadSample }}
-              </a>
+              <div class="flex gap-sm flex-wrap justify-center">
+                <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
+                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'secundaria'">
+                    {{ officialPdfsLoading() === 'secundaria' ? 'sync' : 'school' }}
+                  </span>
+                  {{ t().secundariaPdfLabel }}
+                </button>
+                <button (click)="loadOfficialPdfs('primaria')" [disabled]="officialPdfsLoading() === 'primaria'"
+                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'primaria'">
+                    {{ officialPdfsLoading() === 'primaria' ? 'sync' : 'school' }}
+                  </span>
+                  {{ t().primariaPdfLabel }}
+                </button>
+              </div>
+
+              @let secundariaLinks = officialPdfs().secundaria;
+              @if (secundariaLinks) {
+                <div class="w-full max-w-lg bg-surface-container-low border border-outline-variant rounded-lg p-md text-left">
+                  <p class="text-label-md font-bold text-on-surface mb-1">{{ t().secundariaPdfLabel }}</p>
+                  @if (secundariaLinks.length > 0) {
+                    <ul class="space-y-1">
+                      @for (link of secundariaLinks; track link.url) {
+                        <li>
+                          <a [href]="link.url" target="_blank" rel="noopener"
+                             class="flex items-center gap-1 text-primary text-body-sm font-medium hover:opacity-80 transition-opacity">
+                            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                            {{ link.label }}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="text-body-sm text-on-surface-variant">
+                      {{ t().officialPdfsEmpty }}
+                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                    </p>
+                  }
+                </div>
+              }
+
+              @let primariaLinks = officialPdfs().primaria;
+              @if (primariaLinks) {
+                <div class="w-full max-w-lg bg-surface-container-low border border-outline-variant rounded-lg p-md text-left">
+                  <p class="text-label-md font-bold text-on-surface mb-1">{{ t().primariaPdfLabel }}</p>
+                  @if (primariaLinks.length > 0) {
+                    <ul class="space-y-1">
+                      @for (link of primariaLinks; track link.url) {
+                        <li>
+                          <a [href]="link.url" target="_blank" rel="noopener"
+                             class="flex items-center gap-1 text-primary text-body-sm font-medium hover:opacity-80 transition-opacity">
+                            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                            {{ link.label }}
+                          </a>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="text-body-sm text-on-surface-variant">
+                      {{ t().officialPdfsEmpty }}
+                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                    </p>
+                  }
+                </div>
+              }
+
+              @if (officialPdfs().secundaria || officialPdfs().primaria) {
+                <p class="text-body-sm text-on-surface-variant/80 max-w-lg font-medium">{{ t().officialPdfsVerifyNotice }}</p>
+              }
+
+              <div class="flex flex-col items-center gap-1 mt-xs">
+                <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
+                   class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
+                  <span class="material-symbols-outlined text-[16px]">download</span>
+                  {{ t().loadSample }}
+                </a>
+                <p class="text-body-sm text-on-surface-variant/70 max-w-lg">{{ t().sampleFileDisclaimer }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -136,7 +210,7 @@
           </div>
           <div class="flex gap-xl">
             <button class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" (click)="showPrivacy()">{{ t().footerPrivacy }}</button>
-            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">{{ t().help }}</a>
+            <button class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" (click)="showSource()">{{ t().help }}</button>
             <button class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" (click)="showTerms()">{{ t().footerTerms }}</button>
           </div>
         </div>
@@ -1551,6 +1625,64 @@
       </div>
       <footer class="mt-xl pt-lg border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-md">
         <p class="text-label-md text-on-surface-variant">{{ t().privacyUpdated }} | {{ t().appTitle }}</p>
+        <button class="bg-primary text-on-primary px-xl py-sm rounded-lg hover:opacity-90 transition-all font-label-md shadow-md" (click)="backToStep('landing')">
+          {{ t().backToHome }}
+        </button>
+      </footer>
+    </main>
+  </div>
+  } @else if (step() === 'source') {
+  <div class="flex-1 overflow-y-auto bg-surface">
+    <header class="bg-surface border-b border-outline-variant sticky top-0 z-50">
+      <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-16">
+        <div class="flex items-center gap-md">
+          <button class="flex items-center gap-1 text-primary hover:opacity-80 transition-all font-label-md" (click)="backToStep('landing')">
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            {{ t().backToHome }}
+          </button>
+        </div>
+        <span class="font-headline-sm text-headline-sm font-bold text-primary">{{ t().appTitle }}</span>
+      </div>
+    </header>
+    <main class="max-w-4xl mx-auto px-gutter py-xl">
+      <section class="mb-xl text-center">
+        <span class="inline-flex items-center justify-center p-md bg-secondary-container text-on-secondary-container rounded-full mb-md">
+          <span class="material-symbols-outlined text-[32px]">description</span>
+        </span>
+        <h1 class="text-headline-lg font-headline-lg text-primary mb-sm">{{ t().sourceTitle }}</h1>
+        <p class="text-on-surface-variant font-body-lg">{{ t().sourceUpdated }}</p>
+      </section>
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-xl md:p-32 space-y-xl">
+        <p class="text-body-lg text-on-surface-variant">{{ t().sourceIntro }}</p>
+        <article class="space-y-md border-t border-outline-variant pt-xl">
+          <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
+            <span class="material-symbols-outlined">picture_as_pdf</span>
+            {{ t().sourceWhatTitle }}
+          </h2>
+          <p class="text-on-surface-variant">{{ t().sourceWhatBody }}</p>
+        </article>
+        <article class="space-y-md border-t border-outline-variant pt-xl">
+          <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
+            <span class="material-symbols-outlined">account_balance</span>
+            {{ t().sourcePublisherTitle }}
+          </h2>
+          <p class="text-on-surface-variant" [innerHTML]="t().sourcePublisherBody"></p>
+          <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-2 bg-primary text-on-primary px-lg py-3 rounded-lg font-bold text-label-md hover:opacity-90 transition-all shadow-md">
+            <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+            {{ t().sourceCtaLabel }}
+          </a>
+        </article>
+        <article class="space-y-md border-t border-outline-variant pt-xl">
+          <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
+            <span class="material-symbols-outlined">warning</span>
+            {{ t().sourceStaleWarningTitle }}
+          </h2>
+          <div class="bg-error-container text-on-error-container p-md rounded-lg" [innerHTML]="t().sourceStaleWarning"></div>
+        </article>
+      </div>
+      <footer class="mt-xl flex flex-col md:flex-row items-center justify-between gap-md">
+        <p class="text-on-surface-variant text-label-md italic">{{ t().sourceUpdated }}</p>
         <button class="bg-primary text-on-primary px-xl py-sm rounded-lg hover:opacity-90 transition-all font-label-md shadow-md" (click)="backToStep('landing')">
           {{ t().backToHome }}
         </button>

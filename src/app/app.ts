@@ -8,6 +8,7 @@ import { APP_VERSION } from './version';
 import { APP_ENV } from './env';
 import { RegionService } from './regions/region.service';
 import { RegionId } from './regions/region.types';
+import { COVERAGE, CoverageStatus } from './regions/coverage';
 import { PdfSourceService, Cos, OfficialPdfLink } from './services/pdf-source.service';
 import { inject } from '@vercel/analytics';
 import L from 'leaflet';
@@ -56,6 +57,30 @@ export class App implements OnDestroy {
   activeRegionId = computed<RegionId>(() => this.region.currentId());
   activeRegion = computed(() => this.region.current());
   activeAuthority = computed(() => this.region.current().authority[this.i18n.lang()]);
+
+  coverage = COVERAGE;
+  coverageWorking = COVERAGE.filter((c) => c.status === 'stable' || c.status === 'beta').length;
+  coverageTotal = COVERAGE.length;
+
+  coverageLabel(status: CoverageStatus): string {
+    const t = this.t();
+    switch (status) {
+      case 'stable': return t.coverageStable;
+      case 'beta': return t.coverageBeta;
+      case 'pending': return t.coveragePending;
+      case 'blocked': return t.coverageBlocked;
+    }
+  }
+
+  /** Color del distintivo de estado, con el mismo criterio que el mapa. */
+  coverageBadgeClasses(status: CoverageStatus): string {
+    switch (status) {
+      case 'stable': return 'bg-green-100 text-green-800';
+      case 'beta': return 'bg-amber-100 text-amber-800';
+      case 'blocked': return 'bg-red-100 text-red-800';
+      default: return 'bg-surface-container-high text-on-surface-variant';
+    }
+  }
   officialPdfs = signal<Record<Cos, OfficialPdfLink[] | null>>({ secundaria: null, primaria: null });
   officialPdfsLoading = signal<Cos | null>(null);
   pdfLoaded = signal(false);

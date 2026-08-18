@@ -159,6 +159,16 @@ export interface I18nTranslations {
   regionStatusBeta: string;
   regionStatusManualOnly: string;
   regionManualOnlyNotice: string;
+  coverageTitle: string;
+  coverageIntro: string;
+  coverageColRegion: string;
+  coverageColStatus: string;
+  coverageColNote: string;
+  coverageStable: string;
+  coverageBeta: string;
+  coveragePending: string;
+  coverageBlocked: string;
+  coverageSummary: (working: number, total: number) => string;
   pdfFormatHint: (filename: string) => string;
   secundariaPdfLabel: string;
   primariaPdfLabel: string;
@@ -395,6 +405,16 @@ const CA: I18nTranslations = {
   regionStatusBeta: 'En proves',
   regionStatusManualOnly: 'Només pujada manual',
   regionManualOnlyNotice: 'Aquesta comunitat no permet descarregar els llistats automàticament: has de baixar el PDF del portal oficial i pujar-lo tu.',
+  coverageTitle: 'On funciona ara mateix',
+  coverageIntro: "Cada administració publica les seues vacants a la seua manera, així que les comunitats es van afegint d'una en una. Aquest és l'estat real, comprovat sobre els documents oficials de cada una.",
+  coverageColRegion: 'Comunitat',
+  coverageColStatus: 'Estat',
+  coverageColNote: 'Detall',
+  coverageStable: 'Funciona',
+  coverageBeta: 'En proves',
+  coveragePending: 'Pendent',
+  coverageBlocked: 'Bloquejada',
+  coverageSummary: (working: number, total: number) => `${working} de ${total} administracions educatives operatives`,
   pdfFormatHint: (filename: string) => `Necessites el PDF oficial vigent de vacants d'educació secundària (mateix format que ${filename}, que és només un exemple).`,
   secundariaPdfLabel: 'Secundària',
   primariaPdfLabel: 'Primària',
@@ -620,6 +640,16 @@ const ES: I18nTranslations = {
   regionStatusBeta: 'En pruebas',
   regionStatusManualOnly: 'Solo subida manual',
   regionManualOnlyNotice: 'Esta comunidad no permite descargar los listados automáticamente: tienes que bajar el PDF del portal oficial y subirlo tú.',
+  coverageTitle: 'Dónde funciona ahora mismo',
+  coverageIntro: 'Cada administración publica sus vacantes a su manera, así que las comunidades se van añadiendo de una en una. Este es el estado real, comprobado sobre los documentos oficiales de cada una.',
+  coverageColRegion: 'Comunidad',
+  coverageColStatus: 'Estado',
+  coverageColNote: 'Detalle',
+  coverageStable: 'Funciona',
+  coverageBeta: 'En pruebas',
+  coveragePending: 'Pendiente',
+  coverageBlocked: 'Bloqueada',
+  coverageSummary: (working: number, total: number) => `${working} de ${total} administraciones educativas operativas`,
   pdfFormatHint: (filename: string) => `Necesitas el PDF oficial vigente de vacantes de educación secundaria (mismo formato que ${filename}, que es solo un ejemplo).`,
   secundariaPdfLabel: 'Secundaria',
   primariaPdfLabel: 'Primaria',

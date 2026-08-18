@@ -30,5 +30,21 @@
     "pathRewrite": {
       "^/api/mur": ""
     }
+  },
+  "/api/cyl": {
+    "target": "https://www.educa.jcyl.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/cyl": ""
+    }
+  },
+  "/api/mad": {
+    "target": "https://sede.comunidad.madrid",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/mad": ""
+    }
   }
 }

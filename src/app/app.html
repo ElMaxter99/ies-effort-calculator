@@ -218,6 +218,47 @@
       </div>
     </section>
 
+    <!-- Cobertura por comunidad autónoma -->
+    <section class="bg-surface py-xl border-t border-outline-variant">
+      <div class="max-w-container-max mx-auto px-gutter">
+        <div class="text-center space-y-sm mb-lg">
+          <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().coverageTitle }}</h2>
+          <p class="text-body-md text-on-surface-variant max-w-3xl mx-auto">{{ t().coverageIntro }}</p>
+          <p class="font-label-md text-label-md font-bold text-on-surface-variant">
+            {{ t().coverageSummary(coverageWorking, coverageTotal) }}
+          </p>
+        </div>
+
+        <div class="overflow-x-auto border border-outline-variant rounded-xl bg-surface-container-lowest">
+          <table class="w-full border-collapse text-body-sm min-w-[36rem]">
+            <thead>
+              <tr class="bg-surface-container-low text-on-surface-variant text-left">
+                <th scope="col" class="px-lg py-md font-bold">{{ t().coverageColRegion }}</th>
+                <th scope="col" class="px-lg py-md font-bold whitespace-nowrap">{{ t().coverageColStatus }}</th>
+                <th scope="col" class="px-lg py-md font-bold">{{ t().coverageColNote }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of coverage; track entry.name.es) {
+                <tr class="border-t border-outline-variant/60">
+                  <th scope="row" class="px-lg py-md font-bold text-on-surface text-left whitespace-nowrap">
+                    {{ entry.name[i18n.lang()] }}
+                  </th>
+                  <td class="px-lg py-md align-top">
+                    <span class="inline-block px-sm py-0.5 rounded font-label-md text-label-md font-bold whitespace-nowrap"
+                          [class]="coverageBadgeClasses(entry.status)">
+                      {{ coverageLabel(entry.status) }}
+                    </span>
+                  </td>
+                  <td class="px-lg py-md text-on-surface-variant align-top">{{ entry.note[i18n.lang()] }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- Footer -->
     <footer class="bg-surface-container border-t border-outline-variant py-xl">
       <div class="max-w-container-max mx-auto px-gutter">

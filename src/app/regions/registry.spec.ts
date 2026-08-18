@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { REGIONS, DEFAULT_REGION_ID, availableRegions, isRegionId } from './registry';
 import { RegionConfig } from './region.types';
+import { COVERAGE } from './coverage';
 
 const regions = availableRegions();
 
@@ -187,4 +188,42 @@ describe('datasets de centros', () => {
       expect(codes.size, `${id}: hay códigos de centro duplicados`).toBe(centres.length);
     },
   );
+});
+
+describe('tabla de cobertura de la portada', () => {
+  it('cubre las 17 comunidades y las 2 ciudades autónomas', () => {
+    expect(COVERAGE).toHaveLength(19);
+    expect(new Set(COVERAGE.map((c) => c.name.es)).size).toBe(19);
+  });
+
+  it('toda entrada tiene nombre y detalle en los dos idiomas', () => {
+    for (const entry of COVERAGE) {
+      expect(entry.name.ca, entry.name.es).toBeTruthy();
+      expect(entry.name.es).toBeTruthy();
+      expect(entry.note.ca, `${entry.name.es}: falta detall en català`).toBeTruthy();
+      expect(entry.note.es, `${entry.name.es}: falta detalle en castellano`).toBeTruthy();
+    }
+  });
+
+  it('no anuncia como operativa ninguna comunidad que no esté implementada', () => {
+    // Es el error que haría mentir a la portada: prometer soporte inexistente.
+    for (const entry of COVERAGE.filter((c) => c.status === 'stable' || c.status === 'beta')) {
+      expect(entry.id, `${entry.name.es} se anuncia operativa sin región`).toBeDefined();
+      expect(REGIONS[entry.id!], `${entry.name.es} apunta a una región inexistente`).toBeDefined();
+    }
+  });
+
+  it('toda región implementada aparece en la tabla con su estado real', () => {
+    for (const region of regions) {
+      const entry = COVERAGE.find((c) => c.id === region.id);
+      expect(entry, `${region.id} no aparece en la tabla de cobertura`).toBeDefined();
+      expect(entry!.status, `${region.id}: el estado de la tabla no coincide`).toBe(region.status);
+    }
+  });
+
+  it('una comunidad pendiente o bloqueada no puede apuntar a una región', () => {
+    for (const entry of COVERAGE.filter((c) => c.status === 'pending' || c.status === 'blocked')) {
+      expect(entry.id, `${entry.name.es} está ${entry.status} pero tiene región`).toBeUndefined();
+    }
+  });
 });

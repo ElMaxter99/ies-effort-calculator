@@ -86,6 +86,22 @@ export interface ParserHints {
    * que 25 separa bien sin partir un valor por la mitad.
    */
   transposedGap?: number;
+  /**
+   * Descarta las filas que no traigan código de centro.
+   *
+   * Hay maquetas donde cada plaza ocupa varias filas: la primera lleva el
+   * centro y las siguientes solo detalles ("Provincia:", "Tipo Vacante:").
+   * Sin este filtro, esas filas de detalle se colarían como plazas fantasma.
+   */
+  requireCode?: boolean;
+  /**
+   * Rótulo de la fila que anuncia la especialidad en curso.
+   *
+   * En Castilla y León cada tramo del listado empieza con
+   * "Especialidad: 001 FILOSOFIA", y esa modalidad se aplica a todas las
+   * plazas siguientes hasta el próximo rótulo. Se arrastra entre páginas.
+   */
+  modalityLabel?: string;
 }
 
 /**
@@ -121,6 +137,8 @@ export interface ParseState {
   inItems?: boolean;
   /** Contador correlativo de plazas, para numerarlas al vuelo. */
   counter?: number;
+  /** Especialidad en curso, cuando la anuncia una fila con rótulo. */
+  modality?: string;
 }
 
 /**
@@ -225,9 +243,11 @@ export class PdfParserService {
       if (!columns) return { rows: [], state: { ...state, columns: null } };
     }
 
+    const extracted = this.extractRows(dataRows, modality || (state.modality ?? ''), hints, columns);
+
     return {
-      rows: this.extractRows(dataRows, modality, hints, columns),
-      state: { ...state, columns },
+      rows: extracted.rows,
+      state: { ...state, columns, modality: extracted.modality },
     };
   }
 
@@ -531,10 +551,14 @@ export class PdfParserService {
 
   private extractRows(
     textRows: TextRow[],
-    modality: string,
+    initialModality: string,
     hints: ParserHints,
     columns: HeaderColumn[] | null,
-  ): IesRow[] {
+  ): { rows: IesRow[]; modality: string } {
+    // La especialidad puede venir anunciada por una fila con rótulo y aplicarse
+    // a todas las plazas siguientes, incluso pasando de página.
+    const modalityLabel = hints.modalityLabel ? normalizeHeader(hints.modalityLabel) : null;
+    let modality = initialModality;
     const hasNumberColumn = columns
       ? columns.some((c) => c.field === 'number')
       : !!hints.columnOverrides?.number;
@@ -543,6 +567,15 @@ export class PdfParserService {
     let lastRow: IesRow | null = null;
 
     for (const textRow of textRows) {
+      if (modalityLabel && normalizeHeader(textRow.items[0]?.str ?? '') === modalityLabel) {
+        modality = textRow.items
+          .slice(1)
+          .map((i) => i.str.trim())
+          .join(' ')
+          .trim();
+        continue;
+      }
+
       let num = 0;
       let centre = '';
       let locality = '';
@@ -551,6 +584,9 @@ export class PdfParserService {
       let observations = '';
       let isItinerant = false;
       let vacancies = 1;
+      // Hay listados que traen la especialidad como una columna más, en vez de
+      // anunciarla en un rótulo por encima de la tabla.
+      let rowModality = '';
 
       for (const item of textRow.items) {
         const text = item.str;
@@ -564,7 +600,7 @@ export class PdfParserService {
             if (/^\d{6,8}$/.test(text)) code = text;
             break;
           case 'locationCode':
-            if (/^\d{4,8}$/.test(text)) locationCode = text;
+            if (/^\d{4,10}$/.test(text)) locationCode = text;
             break;
           case 'locality':
             if (text.trim().length > 2) locality = this.append(locality, text);
@@ -574,6 +610,9 @@ export class PdfParserService {
             break;
           case 'vacancies':
             if (/^\d+$/.test(text)) vacancies = parseInt(text, 10);
+            break;
+          case 'modality':
+            if (text.trim()) rowModality = this.append(rowModality, text);
             break;
           case 'observations':
             observations = this.append(observations, text);
@@ -596,7 +635,7 @@ export class PdfParserService {
 
       // Cuando la comunidad declara que el código va dentro de la celda del
       // centro, una fila sin código es un título o un pie, no una plaza.
-      const codeRequired = !!hints.splitCodeFromCentre;
+      const codeRequired = !!hints.splitCodeFromCentre || !!hints.requireCode;
       const isValid =
         !!(centre || locality) && (!hasNumberColumn || num > 0) && (!codeRequired || !!code);
 
@@ -614,7 +653,7 @@ export class PdfParserService {
             locationCode,
             observations: cleanObservations,
             isItinerant,
-            modality,
+            modality: rowModality || modality,
           };
           if (isItinerant) this.enrichItinerant(row);
           rows.push(row);
@@ -634,7 +673,7 @@ export class PdfParserService {
     }
 
     rows.sort((a, b) => a.number - b.number);
-    return rows;
+    return { rows, modality };
   }
 
   /** Deduce centro de itinerancia y horas a partir de las observaciones. */

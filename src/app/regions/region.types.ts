@@ -13,7 +13,9 @@ export type RegionId =
   | 'gal' // Galicia
   | 'can' // Canarias
   | 'bal' // Illes Balears
-  | 'mur'; // Región de Murcia
+  | 'mur' // Región de Murcia
+  | 'cyl' // Castilla y León
+  | 'mad'; // Comunidad de Madrid
 
 /**
  * Hasta dónde llega el soporte de una comunidad.

@@ -100,6 +100,66 @@ function normalizeLocality(name) {
   return article.endsWith("'") ? `${article}${body}` : `${article} ${body}`;
 }
 
+/**
+ * Convierte UTM a latitud/longitud sobre el elipsoide WGS84.
+ *
+ * Hay registros que solo publican coordenadas proyectadas —Madrid da UTM_X y
+ * UTM_Y en el huso 30N—, y sin convertirlas los centros caerían en mitad del
+ * Atlántico. Se implementa aquí en lugar de añadir proj4 como dependencia:
+ * es la fórmula inversa estándar y solo hace falta en tiempo de construcción.
+ *
+ * La diferencia de datum (ED50 frente a ETRS89) es de unos 100 m, despreciable
+ * para estimar distancias de desplazamiento en kilómetros.
+ */
+function utmToLatLng(easting, northing, zone = 30, northernHemisphere = true) {
+  const a = 6378137.0;
+  const f = 1 / 298.257223563;
+  const k0 = 0.9996;
+
+  const e2 = f * (2 - f);
+  const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+
+  const x = easting - 500000;
+  const y = northernHemisphere ? northing : northing - 10000000;
+
+  const m = y / k0;
+  const mu = m / (a * (1 - e2 / 4 - (3 * e2 * e2) / 64 - (5 * e2 ** 3) / 256));
+
+  const phi1 =
+    mu +
+    ((3 * e1) / 2 - (27 * e1 ** 3) / 32) * Math.sin(2 * mu) +
+    ((21 * e1 * e1) / 16 - (55 * e1 ** 4) / 32) * Math.sin(4 * mu) +
+    ((151 * e1 ** 3) / 96) * Math.sin(6 * mu);
+
+  const sin1 = Math.sin(phi1);
+  const cos1 = Math.cos(phi1);
+  const tan1 = Math.tan(phi1);
+
+  const ep2 = e2 / (1 - e2);
+  const c1 = ep2 * cos1 * cos1;
+  const t1 = tan1 * tan1;
+  const n1 = a / Math.sqrt(1 - e2 * sin1 * sin1);
+  const r1 = (a * (1 - e2)) / Math.pow(1 - e2 * sin1 * sin1, 1.5);
+  const d = x / (n1 * k0);
+
+  const lat =
+    phi1 -
+    ((n1 * tan1) / r1) *
+      ((d * d) / 2 -
+        ((5 + 3 * t1 + 10 * c1 - 4 * c1 * c1 - 9 * ep2) * d ** 4) / 24 +
+        ((61 + 90 * t1 + 298 * c1 + 45 * t1 * t1 - 252 * ep2 - 3 * c1 * c1) * d ** 6) / 720);
+
+  const lng =
+    (d -
+      ((1 + 2 * t1 + c1) * d ** 3) / 6 +
+      ((5 - 2 * c1 + 28 * t1 - 3 * c1 * c1 + 8 * ep2 + 24 * t1 * t1) * d ** 5) / 120) /
+    cos1;
+
+  const lngOrigin = (zone - 1) * 6 - 180 + 3;
+
+  return { lat: (lat * 180) / Math.PI, lng: lngOrigin + (lng * 180) / Math.PI };
+}
+
 /** Límites aproximados de España (incluye Canarias) para descartar basura. */
 const SPAIN_BOUNDS = { minLat: 27.5, maxLat: 43.9, minLng: -18.3, maxLng: 4.4 };
 
@@ -339,6 +399,67 @@ const ADAPTERS = {
     },
   },
 
+  /**
+   * Castilla y León — "Directorio de Centros Docentes" (OpenDataSoft).
+   *
+   * Trae latitud y longitud directas y el código de centro de 8 dígitos. El
+   * dataset incluye varios cursos académicos, así que se ordena por curso
+   * descendente y normalize() se queda con la primera aparición de cada código.
+   */
+  cyl: {
+    label: 'Castilla y León',
+    source:
+      'https://analisis.datosabiertos.jcyl.es/api/explore/v2.1/catalog/datasets/' +
+      'directorio-de-centros-docentes/exports/json',
+    async fetch() {
+      const data = await fetchJson(this.source);
+
+      return data
+        .filter((r) => r.situacion !== 'BAJA')
+        .sort((a, b) => String(b.curso_academico ?? '').localeCompare(String(a.curso_academico ?? '')))
+        .map((r) => ({
+          code: r.codigo,
+          name: r.denominacion_especifica,
+          locality: r.localidad || r.municipio,
+          lat: r.coord_latitud,
+          lng: r.coord_longitud,
+        }));
+    },
+  },
+
+  /**
+   * Comunidad de Madrid — "Centros educativos" (portal de datos abiertos).
+   *
+   * CSV con separador ';'. Publica las coordenadas en UTM huso 30N, no en
+   * latitud/longitud, así que hay que reproyectarlas. Se descartan los centros
+   * dados de baja.
+   */
+  mad: {
+    label: 'Comunidad de Madrid',
+    source:
+      'https://datos.comunidad.madrid/catalogo/dataset/c750856d-3166-4dac-8e80-d1b824c968b5/' +
+      'resource/28d60557-1d73-4281-ab08-6cfd3b2f5f83/download/centros_educativos.csv',
+    async fetch() {
+      const csv = await fetchText(this.source);
+
+      return parseCsv(csv, ';')
+        .filter((r) => (r['SITUACIÓN'] ?? r.SITUACION ?? '').toUpperCase() !== 'BAJA')
+        .map((r) => {
+          const x = toNumber(r.UTM_X);
+          const y = toNumber(r.UTM_Y);
+          const point = Number.isFinite(x) && Number.isFinite(y) ? utmToLatLng(x, y, 30) : null;
+
+          return {
+            code: r.CODIGO,
+            name: r.CENTRO,
+            locality: r.MUNICIPIO,
+            lat: point?.lat,
+            lng: point?.lng,
+          };
+        });
+    },
+  },
+
   can: {
     label: 'Canarias',
     source:
@@ -502,9 +623,15 @@ async function main() {
   console.log('\nHecho.');
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Solo se ejecuta al invocarlo directamente: los tests y otros scripts
+// importan las utilidades de este fichero y no deben disparar descargas.
+const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
-export { parseCsv, normalize, normalizeLocality, fetchText, fetchJson, isPlausible };
+if (invokedDirectly) {
+  main().catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}
+
+export { parseCsv, normalize, normalizeLocality, fetchText, fetchJson, isPlausible, utmToLatLng, polygonCentroid };

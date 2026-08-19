@@ -23,14 +23,6 @@
       "^/api/can": ""
     }
   },
-  "/api/mur": {
-    "target": "https://rrhheducacion.carm.es",
-    "secure": true,
-    "changeOrigin": true,
-    "pathRewrite": {
-      "^/api/mur": ""
-    }
-  },
   "/api/cyl": {
     "target": "https://www.educa.jcyl.es",
     "secure": true,
@@ -77,6 +69,14 @@
     "changeOrigin": true,
     "pathRewrite": {
       "^/api/ext": ""
+    }
+  },
+  "/api/mel": {
+    "target": "https://www.educacionfpydeportes.gob.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/mel": ""
     }
   }
 }

@@ -11,13 +11,13 @@
     { "source": "/api/val/(.*)", "destination": "https://ceice.gva.es/$1" },
     { "source": "/api/clm/(.*)", "destination": "https://educacion.castillalamancha.es/$1" },
     { "source": "/api/can/(.*)", "destination": "https://www.gobiernodecanarias.org/$1" },
-    { "source": "/api/mur/(.*)", "destination": "https://rrhheducacion.carm.es/$1" },
     { "source": "/api/cyl/(.*)", "destination": "https://www.educa.jcyl.es/$1" },
     { "source": "/api/mad/(.*)", "destination": "https://sede.comunidad.madrid/$1" },
     { "source": "/api/cnt/(.*)", "destination": "https://www.educantabria.es/$1" },
     { "source": "/api/ast/(.*)", "destination": "https://www.educastur.es/$1" },
     { "source": "/api/nav/(.*)", "destination": "https://tramitespersonal.navarra.es/$1" },
     { "source": "/api/ext/(.*)", "destination": "https://profex.educarex.es/$1" },
+    { "source": "/api/mel/(.*)", "destination": "https://www.educacionfpydeportes.gob.es/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

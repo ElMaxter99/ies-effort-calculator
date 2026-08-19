@@ -42,20 +42,28 @@ export const CNT: RegionConfig = {
   officialSource: {
     proxyPath: '/api/cnt',
     baseUrl: 'https://www.educantabria.es',
+    // Los listados cuelgan de una URL amistosa sin extensión.
+    documentPattern: '/documents/d/',
     pages: [
       {
         cos: 'secundaria',
         // El rótulo del enlace cambia con cada revisión del listado
         // ("MODIFICACIÓN 11 DE AGOSTO VACANTES..."), así que hay que rastrear
-        // la página en vez de fijar la URL. Se descartan las de prácticas,
-        // que son de funcionariado, no de interinos.
+        // la página en vez de fijar la URL.
+        //
+        // El filtro va contra la ruta y no contra el rótulo a propósito: el
+        // rótulo lleva acentos ("PRÁCTICAS") y la comparación no los ignora,
+        // así que descartar por él dejaba pasar las plazas de funcionariado en
+        // prácticas, que no son de interinos.
         path: '/profesorado/interinos',
-        match: '^(?=.*vacante)(?!.*maestro)(?!.*practica)',
+        match: 'vacantes-resto-de-cuerpos-interinos',
       },
       {
         cos: 'primaria',
+        // La misma página cuelga el manual de ayuda para solicitarlas, cuyo
+        // nombre también menciona las vacantes.
         path: '/profesorado/interinos',
-        match: '^(?=.*vacante)(?=.*maestro)(?!.*practica)',
+        match: '^(?=.*vacantes-maestros)(?!.*practica)(?!.*manual)',
       },
     ],
   },

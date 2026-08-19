@@ -72,13 +72,13 @@
                  [class.border-primary]="dragging()"
                  [class.bg-primary/5]="dragging()"
                  (click)="landingPdfInput.click()">
-              <input accept=".pdf" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
+              <input [attr.accept]="acceptsSheet() ? '.pdf,.xlsx' : '.pdf'" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
               <div class="w-16 h-16 max-lg:w-12 max-lg:h-12 rounded-full bg-surface-container-high flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                 <span class="material-symbols-outlined text-4xl max-lg:text-3xl">cloud_upload</span>
               </div>
               <div class="space-y-xs">
                 <p class="text-body-lg font-bold text-on-surface">{{ t().dropPrompt }}</p>
-                <p class="font-label-md text-label-md text-on-surface-variant">{{ t().dropHint }}</p>
+                <p class="font-label-md text-label-md text-on-surface-variant">{{ acceptsSheet() ? t().dropHintSheet : t().dropHint }}</p>
               </div>
             </div>
 
@@ -92,22 +92,32 @@
               <p class="text-body-sm text-on-surface-variant max-w-lg">
                 {{ t().pdfFormatHint(activeAuthority()) }}
               </p>
-              <div class="flex gap-sm flex-wrap justify-center">
-                <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
-                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
-                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'secundaria'">
-                    {{ officialPdfsLoading() === 'secundaria' ? 'sync' : 'school' }}
-                  </span>
-                  {{ t().secundariaPdfLabel }}
-                </button>
-                <button (click)="loadOfficialPdfs('primaria')" [disabled]="officialPdfsLoading() === 'primaria'"
-                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
-                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'primaria'">
-                    {{ officialPdfsLoading() === 'primaria' ? 'sync' : 'school' }}
-                  </span>
-                  {{ t().primariaPdfLabel }}
-                </button>
-              </div>
+              @if (hasOfficialDownload()) {
+                <div class="flex gap-sm flex-wrap justify-center">
+                  <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
+                          class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                    <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'secundaria'">
+                      {{ officialPdfsLoading() === 'secundaria' ? 'sync' : 'school' }}
+                    </span>
+                    {{ t().secundariaPdfLabel }}
+                  </button>
+                  <button (click)="loadOfficialPdfs('primaria')" [disabled]="officialPdfsLoading() === 'primaria'"
+                          class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                    <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'primaria'">
+                      {{ officialPdfsLoading() === 'primaria' ? 'sync' : 'school' }}
+                    </span>
+                    {{ t().primariaPdfLabel }}
+                  </button>
+                </div>
+              } @else {
+                <!-- Sin descarga automática, dos botones que no devuelven nada
+                     solo confunden: se enlaza el portal y ya. -->
+                <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener"
+                   class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm">
+                  <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                  {{ t().openPortal(activeAuthority()) }}
+                </a>
+              }
 
               @let secundariaLinks = officialPdfs().secundaria;
               @if (secundariaLinks) {

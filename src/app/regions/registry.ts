@@ -11,6 +11,7 @@ import { CNT } from './cnt';
 import { AST } from './ast';
 import { NAV } from './nav';
 import { EXT } from './ext';
+import { MEL } from './mel';
 
 /**
  * Comunidades soportadas.
@@ -32,6 +33,7 @@ export const REGIONS: Record<RegionId, RegionConfig> = {
   ast: AST,
   nav: NAV,
   ext: EXT,
+  mel: MEL,
 } as Record<RegionId, RegionConfig>;
 
 /** Región por defecto cuando el usuario aún no ha elegido ninguna. */

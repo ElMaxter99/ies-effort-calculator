@@ -35,6 +35,10 @@ export const MAD: RegionConfig = {
   officialSource: {
     proxyPath: '/api/mad',
     baseUrl: 'https://sede.comunidad.madrid',
+    // La sede sirve sus documentos desde una ruta sin extensión
+    // (`/medias/vacantespdf-7/download`), así que no basta con buscar los
+    // enlaces acabados en .pdf.
+    documentPattern: '/medias/',
     pages: [
       { cos: 'secundaria', path: '/oferta-empleo/puestos-docentes-profesores-2026', match: 'vacante' },
       { cos: 'primaria', path: '/oferta-empleo/puestos-docentes-maestros-2026', match: 'vacante' },

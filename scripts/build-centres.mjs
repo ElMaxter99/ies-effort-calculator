@@ -305,6 +305,161 @@ async function geocodeMunicipality(name, ineCode, cache) {
   return result;
 }
 
+/**
+ * Centros de una ciudad autónoma según el Registro Estatal de Centros Docentes
+ * del ministerio.
+ *
+ * Es la única fuente que existe para Ceuta y Melilla: ni el ministerio ni las
+ * ciudades publican un directorio con coordenadas, y sus portales de datos
+ * abiertos no tienen nada educativo. El registro sí da código y domicilio, que
+ * es con lo que después se geocodifica.
+ *
+ * La exportación viene en Excel binario y en PDF; se usa el PDF porque el
+ * proyecto ya sabe leerlos y así no hace falta una dependencia más. Va girado:
+ * los rótulos de campo en el margen y cada centro en una columna.
+ */
+async function fetchRecdCentres(idComunidad) {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+
+  const body =
+    `idComunidad=${idComunidad}&nivel=0&idProvincia=&naturaleza=0&concertado=&familia=0` +
+    '&ensenanza=0&modalidad=0&tipoCentro=0&provincial=&comarca=&pais=&localidad=0' +
+    '&codCentro=&nombreCentro=&denominacion=0&ensenanzaFP=';
+
+  const res = await fetch('https://www.educacion.gob.es/centros/exportarListadoCentrosPdf', {
+    method: 'POST',
+    headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} al exportar el registro de centros`);
+
+  const doc = await pdfjs.getDocument({
+    data: new Uint8Array(await res.arrayBuffer()),
+    useSystemFonts: true,
+    standardFontDataUrl: path.resolve(__dirname, '../node_modules/pdfjs-dist/standard_fonts/'),
+  }).promise;
+
+  const FIELDS = {
+    Localidad: 'locality',
+    'Den. Específica': 'name',
+    Código: 'code',
+    Naturaleza: 'nature',
+    Domicilio: 'address',
+    'C. Postal': 'postal',
+  };
+
+  const out = [];
+
+  for (let page = 1; page <= doc.numPages; page++) {
+    const content = await (await doc.getPage(page)).getTextContent();
+    const items = content.items
+      .filter((i) => i.str && i.str.trim())
+      .map((i) => ({ x: i.transform[4], y: i.transform[5], s: i.str.trim() }))
+      .sort((a, b) => b.y - a.y);
+
+    // El rótulo del campo va en el margen y sus valores debajo, uno por
+    // columna. Un domicilio largo sigue en la línea de abajo, desplazado unos
+    // puntos, así que la columna se elige por cercanía y no por igualdad.
+    const cells = {};
+    let field = null;
+
+    for (const item of items) {
+      if (item.x < 175) {
+        field = FIELDS[item.s] ?? null;
+        continue;
+      }
+      if (!field) continue;
+
+      const column = Math.round((item.x - 183) / 60);
+      if (column < 0 || column > 9) continue;
+
+      cells[field] ??= {};
+      (cells[field][column] ??= []).push(item.s);
+    }
+
+    for (let column = 0; column <= 9; column++) {
+      const value = (name) => (cells[name]?.[column] ?? []).join(' ').replace(/\s+/g, ' ').trim();
+      const code = value('code');
+      if (!/^[0-9]{8}$/.test(code)) continue;
+
+      out.push({
+        code,
+        name: value('name'),
+        locality: value('locality'),
+        nature: value('nature'),
+        address: value('address'),
+        postal: value('postal'),
+      });
+    }
+  }
+
+  return out;
+}
+
+/** Abreviaturas con que el registro escribe los domicilios. */
+function expandAddress(address) {
+  return address
+    .replace(/^C\/\.?\s*/i, 'CALLE ')
+    .replace(/BDA\.?\s*/gi, 'BARRIADA ')
+    .replace(/AVDA?\.?\s*/gi, 'AVENIDA ')
+    .replace(/PZA\.?\s*/gi, 'PLAZA ')
+    .replace(/CTRA\.?\s*/gi, 'CARRETERA ')
+    .replace(/GRAL\.?\s*/gi, 'GENERAL ')
+    .replace(/N[ºo]\.?\s*/gi, ' ')
+    .replace(/S\/N/gi, ' ')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[,;].*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Sitúa un centro por su domicilio, en tres intentos cada vez menos precisos:
+ * la dirección entera, la calle sin número y, por último, el centroide de su
+ * código postal.
+ *
+ * Cada resultado se valida contra la caja de la ciudad. Hace falta: CartoCiudad
+ * no admite acotar la búsqueda por municipio y devuelve homónimos de media
+ * España sin avisar —"BARRIADA JUAN CARLOS I, Ceuta" cae en Albacete—, así que
+ * sin comprobar dónde ha caído el punto se cuelan coordenadas absurdas.
+ */
+async function geocodeCentre(centre, city, box, cache) {
+  const key = `${centre.code}|${centre.address}`;
+  if (key in cache) return cache[key];
+
+  const street = expandAddress(centre.address);
+  const queries = [
+    `${street}, ${city}, ${city}`,
+    `${street.replace(/\s+[0-9]+$/, '')}, ${city}, ${city}`,
+    centre.postal,
+  ].filter(Boolean);
+
+  const [south, north, west, east] = box;
+  let result = null;
+
+  for (const query of queries) {
+    try {
+      const res = await fetch(
+        'https://www.cartociudad.es/geocoder/api/geocoder/find?q=' + encodeURIComponent(query),
+        { headers: { 'User-Agent': UA } },
+      );
+      if (!res.ok) continue;
+
+      const json = await res.json();
+      if (!Number.isFinite(json.lat) || !Number.isFinite(json.lng)) continue;
+      if (json.lat < south || json.lat > north || json.lng < west || json.lng > east) continue;
+
+      result = { lat: json.lat, lng: json.lng };
+      break;
+    } catch {
+      // Se prueba el siguiente intento.
+    }
+  }
+
+  cache[key] = result;
+  return result;
+}
+
 /** Descarga todas las entidades de una capa ArcGIS, paginando. */
 async function fetchArcgisLayer(baseUrl, { outFields, maxAllowableOffset = 0.01 }) {
   const features = [];
@@ -535,6 +690,43 @@ const ADAPTERS = {
           });
         }
       }
+
+      return records;
+    },
+  },
+
+  /**
+   * Melilla — Registro Estatal de Centros Docentes del ministerio, geocodificado
+   * contra CartoCiudad del IGN.
+   *
+   * Es el único directorio que hay: Melilla no tiene infraestructura de datos
+   * espaciales, y su portal de datos abiertos no publica nada educativo. El
+   * registro da código y domicilio; las coordenadas hay que sacarlas de la
+   * dirección, y se cachean para no repetir la consulta en cada regeneración.
+   *
+   * Se queda solo con los centros públicos de la ciudad: la exportación incluye
+   * privados y, además, dos centros estatales con sede en Madrid.
+   */
+  mel: {
+    label: 'Melilla',
+    source: 'https://www.educacion.gob.es/centros/exportarListadoCentrosPdf (idComunidad=19)',
+    async fetch() {
+      const centres = (await fetchRecdCentres(19)).filter(
+        (c) => /p[úu]blico/i.test(c.nature) && /melilla/i.test(c.locality),
+      );
+
+      const cache = loadGeocodeCache();
+      const records = [];
+      let located = 0;
+
+      for (const centre of centres) {
+        const coords = await geocodeCentre(centre, 'MELILLA', [35.26, 35.33, -2.99, -2.91], cache);
+        if (coords) located++;
+        records.push({ ...centre, lat: coords?.lat, lng: coords?.lng });
+      }
+
+      saveGeocodeCache(cache);
+      console.log(`  situados por dirección: ${located} de ${centres.length}`);
 
       return records;
     },

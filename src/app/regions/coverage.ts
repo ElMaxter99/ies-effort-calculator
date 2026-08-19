@@ -66,10 +66,10 @@ export const COVERAGE: RegionCoverage[] = [
   {
     id: 'mur',
     name: { ca: 'Regió de Múrcia', es: 'Región de Murcia' },
-    status: 'beta',
+    status: 'manual-only',
     note: {
-      ca: 'Llistat de vacants per acte d\'adjudicació, i centres amb coordenades del Mapa Escolar.',
-      es: 'Listado de vacantes por acto de adjudicación, y centros con coordenadas del Mapa Escolar.',
+      ca: "Llistat de vacants per acte d'adjudicació, i centres amb coordenades del Mapa Escolar. Els llistats només es publiquen dins de cada acte, així que cal baixar-los del portal i pujar-los a mà.",
+      es: 'Listado de vacantes por acto de adjudicación, y centros con coordenadas del Mapa Escolar. Los listados solo se publican dentro de cada acto, así que hay que bajarlos del portal y subirlos a mano.',
     },
   },
   {
@@ -186,18 +186,19 @@ export const COVERAGE: RegionCoverage[] = [
   },
   {
     name: { ca: 'Ceuta', es: 'Ceuta' },
-    status: 'pending',
+    status: 'blocked',
     note: {
-      ca: "Només publica l'adjudicació nominal, no les vacants, i el seu directori de centres no porta coordenades.",
-      es: 'Solo publica la adjudicación nominal, no las vacantes, y su directorio de centros no lleva coordenadas.',
+      ca: "No publica les vacants enlloc: l'interí demana centres a cegues, per ordre de preferència, i només les veu dins de la seu electrònica identificant-se. L'únic document obert és l'adjudicació ja feta, amb noms.",
+      es: 'No publica las vacantes en ninguna parte: el interino pide centros a ciegas, por orden de preferencia, y solo las ve dentro de la sede electrónica identificándose. El único documento abierto es la adjudicación ya hecha, con nombres.',
     },
   },
   {
+    id: 'mel',
     name: { ca: 'Melilla', es: 'Melilla' },
-    status: 'pending',
+    status: 'beta',
     note: {
-      ca: 'Sí publica vacants per centre i especialitat, però en forma de matriu. Falta un directori de centres amb coordenades.',
-      es: 'Sí publica vacantes por centro y especialidad, pero en forma de matriz. Falta un directorio de centros con coordenadas.',
+      ca: "Única administració que no publica el llistat en PDF: des del curs 26-27 el dóna en full de càlcul. Com que no hi porta el codi del centre, es creua pel nom, i les coordenades surten de geocodificar els domicilis del registre estatal.",
+      es: 'Única administración que no publica el listado en PDF: desde el curso 26-27 lo da en hoja de cálculo. Como no lleva el código del centro, se cruza por el nombre, y las coordenadas salen de geocodificar los domicilios del registro estatal.',
     },
   },
 ];

@@ -10,6 +10,7 @@ import { RegionService } from './regions/region.service';
 import { RegionId, RegionStatus } from './regions/region.types';
 import { COVERAGE, CoverageStatus } from './regions/coverage';
 import { PdfSourceService, Cos, OfficialPdfLink } from './services/pdf-source.service';
+import { SheetParserService } from './services/sheet-parser.service';
 import { inject } from '@vercel/analytics';
 import L from 'leaflet';
 
@@ -54,6 +55,9 @@ export class App implements OnDestroy {
 
   step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy' | 'source'>('landing');
   pdfPortalHubUrl = computed(() => this.region.current().portalHubUrl);
+  hasOfficialDownload = computed(() => !!this.region.current().officialSource);
+  /** La comunidad publica su listado en hoja de cálculo y no en PDF. */
+  acceptsSheet = computed(() => !!this.region.current().sheetHints);
   activeRegionId = computed<RegionId>(() => this.region.currentId());
   activeRegion = computed(() => this.region.current());
   activeAuthority = computed(() => this.region.current().authority[this.i18n.lang()]);
@@ -177,6 +181,7 @@ export class App implements OnDestroy {
     public geo: GeocodingService,
     public centresDb: CentresDatabaseService,
     private pdfSource: PdfSourceService,
+    private sheetParser: SheetParserService,
     public i18n: I18nService,
     public region: RegionService
   ) {
@@ -418,7 +423,7 @@ export class App implements OnDestroy {
     this.dragging.set(false);
 
     const file = event.dataTransfer?.files?.[0];
-    if (file && file.name.toLowerCase().endsWith('.pdf')) {
+    if (file && this.isSupportedFile(file)) {
       this.processFile(file);
     } else {
       this.error.set(this.i18n.t().dropValidPDF);
@@ -432,8 +437,19 @@ export class App implements OnDestroy {
     input.value = '';
   }
 
+  /**
+   * Formatos que acepta la comunidad activa.
+   *
+   * Casi todas publican un PDF; Melilla dejó de hacerlo y publica una hoja de
+   * cálculo, así que solo a ella se le admite.
+   */
+  private isSupportedFile(file: File): boolean {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.pdf') || (this.acceptsSheet() && name.endsWith('.xlsx'));
+  }
+
   private async processFile(file: File) {
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
+    if (!this.isSupportedFile(file)) {
       this.error.set(this.i18n.t().errorPDFFormat);
       return;
     }
@@ -444,7 +460,11 @@ export class App implements OnDestroy {
     this.filteredCentres.set([]);
 
     try {
-      this.rawRecords = await this.pdfParser.parsePdf(file, this.region.current().parserHints ?? {});
+      const sheet = this.region.current().sheetHints;
+      this.rawRecords =
+        sheet && file.name.toLowerCase().endsWith('.xlsx')
+          ? await this.sheetParser.parseSheet(file, sheet)
+          : await this.pdfParser.parsePdf(file, this.region.current().parserHints ?? {});
       this.pdfLoaded.set(true);
 
       if (this.rawRecords.length > 0) {

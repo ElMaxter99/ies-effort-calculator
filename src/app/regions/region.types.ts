@@ -1,6 +1,7 @@
 import { CentreRecord, Cos, LocalityRecord } from '../types';
 import { Lang } from '../services/i18n.service';
 import { ParserHints } from '../services/pdf-parser.service';
+import { SheetHints } from '../services/sheet-parser.service';
 
 /**
  * Identificador de comunidad autónoma. Se usa como clave de configuración, de
@@ -21,7 +22,8 @@ export type RegionId =
   | 'cnt' // Cantabria
   | 'ast' // Principado de Asturias
   | 'nav' // Comunidad Foral de Navarra
-  | 'ext'; // Extremadura
+  | 'ext' // Extremadura
+  | 'mel'; // Ciudad Autónoma de Melilla
 
 /**
  * Hasta dónde llega el soporte de una comunidad.
@@ -56,6 +58,16 @@ export interface OfficialSource {
   proxyPath: string;
   /** Origen real, para resolver los href relativos que devuelve el portal. */
   baseUrl: string;
+  /**
+   * Patrón (como texto) de los enlaces que son documentos descargables, para
+   * los portales que los sirven sin extensión.
+   *
+   * Por defecto solo se recogen los href que acaban en `.pdf`. Cantabria
+   * publica los suyos con una URL amistosa sin extensión
+   * (`/documents/d/educantabria/vacantes-maestros-por-centro`), que devuelve un
+   * PDF igualmente; sin declararlo, su listado no se encontraba.
+   */
+  documentPattern?: string;
   pages: OfficialSourcePage[];
 }
 
@@ -98,4 +110,9 @@ export interface RegionConfig {
 
   officialSource?: OfficialSource;
   parserHints?: ParserHints;
+  /**
+   * Cómo leer el listado cuando la comunidad lo publica en hoja de cálculo en
+   * lugar de en PDF. Es el caso de Melilla, la única por ahora.
+   */
+  sheetHints?: SheetHints;
 }

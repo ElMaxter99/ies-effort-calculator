@@ -59,6 +59,25 @@ describe('expresiones regulares declaradas como texto', () => {
     }
   });
 
+  it('los patrones de documento compilan y no usan clases de escape', () => {
+    for (const region of regions) {
+      const pattern = region.officialSource?.documentPattern;
+      if (!pattern) continue;
+
+      expect(() => new RegExp(pattern, 'i'), region.id).not.toThrow();
+      expect(pattern, `${region.id}: escribe [0-9] en vez de \d`).not.toMatch(suspicious);
+    }
+  });
+
+  it('una región sin descarga automática no declara rutas de proxy muertas', () => {
+    // Cuando se retira la auto-descarga hay que retirar también su rewrite:
+    // dejarlo apuntando a un portal que ya no se rastrea despista al siguiente
+    // que lo lea.
+    for (const region of regions.filter((r) => !r.officialSource)) {
+      expect(region.portalHubUrl, `${region.id} sin portal al que enviar al docente`).toBeTruthy();
+    }
+  });
+
   it('los patrones de modalidad compilan y no usan clases de escape', () => {
     for (const region of regions) {
       const pattern = region.parserHints?.modalityPattern;

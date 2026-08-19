@@ -9,9 +9,11 @@ import { RegionConfig } from './region.types';
  * página, "Vacantes de PLANTILLA" y "Vacantes de SUSTITUCIÓN", cada uno con su
  * propia columna de rótulos.
  *
- * Los listados se publican colgados de cada acto de adjudicación telemático,
- * con URLs de descarga que llevan un IDCONTENIDO distinto cada vez, así que la
- * auto-descarga rastrea la página del acto en lugar de guardar una URL fija.
+ * No hay descarga automática. Los listados no cuelgan de ninguna página índice:
+ * cada acto de adjudicación telemático publica los suyos dentro de su propia
+ * entrada, en otro dominio (carm.es) y con enlaces sin rótulo, un icono por
+ * toda pista. Rastrear eso pediría seguir dos saltos y adivinar qué documento
+ * es cuál, así que el docente abre el acto y sube el PDF.
  */
 export const MUR: RegionConfig = {
   id: 'mur',
@@ -20,7 +22,7 @@ export const MUR: RegionConfig = {
     ca: "la Conselleria d'Educació de la Regió de Múrcia",
     es: 'la Consejería de Educación de la Región de Murcia',
   },
-  status: 'beta',
+  status: 'manual-only',
 
   geocodeSuffix: 'Región de Murcia, Spain',
   mapBounds: [
@@ -32,23 +34,6 @@ export const MUR: RegionConfig = {
   loadCentres: () => import('../data/centres/mur.json').then((m) => m.default),
 
   portalHubUrl: 'https://rrhheducacion.carm.es/servicio-de-personal-docente/',
-
-  officialSource: {
-    proxyPath: '/api/mur',
-    baseUrl: 'https://rrhheducacion.carm.es',
-    pages: [
-      {
-        cos: 'secundaria',
-        path: '/category/direccion-general-de-recursos-humanos-y-riesgos-laborales/servicio-de-personal-docente/',
-        match: '^(?=.*vacantes)(?=.*(sec|eoi))',
-      },
-      {
-        cos: 'primaria',
-        path: '/category/direccion-general-de-recursos-humanos-y-riesgos-laborales/servicio-de-personal-docente/',
-        match: '^(?=.*vacantes)(?=.*(maestro|prim))',
-      },
-    ],
-  },
 
   parserHints: {
     strategy: 'transposed',

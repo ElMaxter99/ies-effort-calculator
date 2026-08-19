@@ -68,7 +68,8 @@ export class PdfSourceService {
   }
 
   private extractPdfLinks(root: ParentNode, source: OfficialSource): OfficialPdfLink[] {
-    const anchors = Array.from(root.querySelectorAll<HTMLAnchorElement>('a[href*=".pdf"]'));
+    const anchors = Array.from(root.querySelectorAll<HTMLAnchorElement>('a[href]'));
+    const isDocument = source.documentPattern ? new RegExp(source.documentPattern, 'i') : null;
     const seen = new Set<string>();
     const links: OfficialPdfLink[] = [];
 
@@ -76,6 +77,10 @@ export class PdfSourceService {
       const href = a.getAttribute('href');
       const label = a.textContent?.trim();
       if (!href || !label) continue;
+
+      // La extensión es la señal habitual, pero hay portales que sirven el PDF
+      // desde una URL amistosa que no la lleva.
+      if (!href.includes('.pdf') && !isDocument?.test(href)) continue;
 
       let url: string;
       try {

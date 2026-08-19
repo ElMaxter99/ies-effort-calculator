@@ -40,6 +40,7 @@ export interface I18nTranslations {
   uploadDesc: string;
   dropPrompt: string;
   dropHint: string;
+  dropHintSheet: string;
   footerCopyright: string;
   footerPrivacy: string;
   footerTerms: string;
@@ -176,6 +177,7 @@ export interface I18nTranslations {
   officialPdfsEmpty: string;
   officialPdfsVerifyNotice: string;
   openPortalFallback: (authority: string) => string;
+  openPortal: (authority: string) => string;
   sampleFileDisclaimer: string;
   selectAll: string;
   deselectAll: string;
@@ -279,6 +281,7 @@ const CA: I18nTranslations = {
   uploadDesc: 'Posa a prova el sistema amb el teu propi fitxer de vacants en format PDF.',
   dropPrompt: 'Arrossega el PDF aquí o fes clic per seleccionar el fitxer',
   dropHint: 'Només fitxers PDF vàlids (Màx. 10MB)',
+  dropHintSheet: 'Aquesta comunitat publica el llistat en full de càlcul: puja el .xlsx (o un PDF, si en tens)',
   footerCopyright: '© 2026 Distància IES',
   footerPrivacy: 'Privacitat',
   footerTerms: 'Termes d\'ús',
@@ -424,6 +427,7 @@ const CA: I18nTranslations = {
   officialPdfsEmpty: 'No s\'ha pogut detectar automàticament cap PDF en aquesta pàgina. Visita el',
   officialPdfsVerifyNotice: 'Verifica que el document és el vigent abans d\'utilitzar-lo: aquests enllaços es detecten automàticament del portal oficial i la seua estructura pot canviar.',
   openPortalFallback: (authority: string) => `portal oficial de ${authority}`,
+  openPortal: (authority: string) => `Obrir el portal de ${authority}`,
   sampleFileDisclaimer: 'Fitxer d\'exemple estàtic per a provar l\'aplicació — no reflecteix les vacants vigents.',
   selectAll: 'Seleccionar totes',
   deselectAll: 'Desseleccionar totes',
@@ -516,6 +520,7 @@ const ES: I18nTranslations = {
   uploadDesc: 'Pon a prueba el sistema con tu propio archivo de vacantes en formato PDF.',
   dropPrompt: 'Arrastra el PDF aquí o haz clic para seleccionar el archivo',
   dropHint: 'Sólo archivos PDF válidos (Máx. 10MB)',
+  dropHintSheet: 'Esta comunidad publica el listado en hoja de cálculo: sube el .xlsx (o un PDF, si lo tienes)',
   footerCopyright: '© 2026 Distancia IES',
   footerPrivacy: 'Privacidad',
   footerTerms: 'Términos de uso',
@@ -661,6 +666,7 @@ const ES: I18nTranslations = {
   officialPdfsEmpty: 'No se ha podido detectar automáticamente ningún PDF en esta página. Visita el',
   officialPdfsVerifyNotice: 'Verifica que el documento es el vigente antes de usarlo: estos enlaces se detectan automáticamente del portal oficial y su estructura puede cambiar.',
   openPortalFallback: (authority: string) => `portal oficial de ${authority}`,
+  openPortal: (authority: string) => `Abrir el portal de ${authority}`,
   sampleFileDisclaimer: 'Archivo de ejemplo estático para probar la aplicación — no refleja las vacantes vigentes.',
   selectAll: 'Seleccionar todas',
   deselectAll: 'Deseleccionar todas',

@@ -14,6 +14,7 @@
     { "source": "/api/mur/(.*)", "destination": "https://rrhheducacion.carm.es/$1" },
     { "source": "/api/cyl/(.*)", "destination": "https://www.educa.jcyl.es/$1" },
     { "source": "/api/mad/(.*)", "destination": "https://sede.comunidad.madrid/$1" },
+    { "source": "/api/cnt/(.*)", "destination": "https://www.educantabria.es/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

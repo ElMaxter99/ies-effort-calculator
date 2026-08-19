@@ -5,6 +5,9 @@ import { CAN } from './can';
 import { MUR } from './mur';
 import { CYL } from './cyl';
 import { MAD } from './mad';
+import { ARA } from './ara';
+import { RIO } from './rio';
+import { CNT } from './cnt';
 
 /**
  * Comunidades soportadas.
@@ -20,6 +23,9 @@ export const REGIONS: Record<RegionId, RegionConfig> = {
   mur: MUR,
   cyl: CYL,
   mad: MAD,
+  ara: ARA,
+  rio: RIO,
+  cnt: CNT,
 } as Record<RegionId, RegionConfig>;
 
 /** Región por defecto cuando el usuario aún no ha elegido ninguna. */

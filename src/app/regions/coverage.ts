@@ -6,10 +6,12 @@ import { RegionId } from './region.types';
  *
  * - `stable`: verificada de principio a fin, con directorio de centros propio.
  * - `beta`: funciona sobre documentos reales, pero con alguna limitación.
+ * - `manual-only`: el listado se parsea bien, pero su portal no deja
+ *   descargarlo automáticamente; el docente sube el PDF a mano.
  * - `pending`: todavía no soportada. La nota dice qué falta.
  * - `blocked`: verificada y descartada por ahora, con un obstáculo concreto.
  */
-export type CoverageStatus = 'stable' | 'beta' | 'pending' | 'blocked';
+export type CoverageStatus = 'stable' | 'beta' | 'manual-only' | 'pending' | 'blocked';
 
 export interface RegionCoverage {
   /** Identificador de región, solo si está implementada. */
@@ -95,24 +97,29 @@ export const COVERAGE: RegionCoverage[] = [
     },
   },
   {
+    id: 'ara',
     name: { ca: 'Aragó', es: 'Aragón' },
-    status: 'pending',
-    note: { ca: 'Pendent de verificar.', es: 'Pendiente de verificar.' },
+    status: 'manual-only',
+    note: {
+      ca: "Fitxes de vacant amb jornada, durada i causa, i directori de centres amb coordenades. El seu servidor no presenta la cadena completa del certificat, així que no es poden descarregar els PDF automàticament: cal pujar-los a mà.",
+      es: 'Fichas de vacante con jornada, duración y causa, y directorio de centros con coordenadas. Su servidor no presenta la cadena completa del certificado, así que no se pueden descargar los PDF automáticamente: hay que subirlos a mano.',
+    },
   },
   {
     name: { ca: 'Astúries', es: 'Asturias' },
     status: 'pending',
     note: {
-      ca: "El llistat de vacants sí és parsejable i porta codi de centre, però el seu directori de centres està darrere d'un accés autenticat: caldria una altra font de coordenades.",
-      es: 'El listado de vacantes sí es parseable y trae código de centro, pero su directorio de centros está detrás de un acceso autenticado: haría falta otra fuente de coordenadas.',
+      ca: "L'oferta setmanal es publica en obert, porta codi de centre i el servei cartogràfic del Principat en dona les coordenades. El que no publica com a document és l'adjudicació d'inici de curs, que és la que mou més places.",
+      es: 'La oferta semanal se publica en abierto, trae código de centro y el servicio cartográfico del Principado da sus coordenadas. Lo que no publica como documento es la adjudicación de inicio de curso, que es la que mueve más plazas.',
     },
   },
   {
+    id: 'cnt',
     name: { ca: 'Cantàbria', es: 'Cantabria' },
-    status: 'pending',
+    status: 'beta',
     note: {
-      ca: "El llistat no porta codi de centre, i el 'directori de centres' oficial resulta ser estadística per municipi. Caldria creuar per nom i localitat.",
-      es: "El listado no trae código de centro, y el 'directorio de centros' oficial resulta ser estadística por municipio. Habría que cruzar por nombre y localidad.",
+      ca: "Publica les vacants en obert i en un sol document, amb la taula girada com la de Múrcia. El codi del centre no té columna pròpia: va dins del codi del lloc. Les coordenades surten del cercador de centres oficial.",
+      es: 'Publica las vacantes en abierto y en un solo documento, con la tabla girada como la de Murcia. El código del centro no tiene columna propia: va dentro del código del puesto. Las coordenadas salen del buscador de centros oficial.',
     },
   },
   {
@@ -126,16 +133,19 @@ export const COVERAGE: RegionCoverage[] = [
   },
   {
     name: { ca: 'Catalunya', es: 'Cataluña' },
-    status: 'pending',
+    status: 'blocked',
     note: {
-      ca: "Publica vacants, però repartides en tres circuits amb tres maquetes diferents i cap cobreix totes les places. La consulta de resultats demana identificació digital.",
-      es: 'Publica vacantes, pero repartidas en tres circuitos con tres maquetas distintas y ninguno cubre todas las plazas. La consulta de resultados pide identificación digital.',
+      ca: "L'adjudicació d'estiu no publica cap llista de vacants: es demanen centres a cegues i el resultat només es veu amb identificació digital. L'únic que es publica són llistes marginals per servei territorial, cadascuna amb la seua maqueta.",
+      es: 'La adjudicación de verano no publica ninguna lista de vacantes: se piden centros a ciegas y el resultado solo se ve con identificación digital. Lo único que se publica son listas marginales por servicio territorial, cada una con su maqueta.',
     },
   },
   {
     name: { ca: 'Extremadura', es: 'Extremadura' },
     status: 'pending',
-    note: { ca: 'Pendent de verificar.', es: 'Pendiente de verificar.' },
+    note: {
+      ca: "Les vacants d'interinitats demanen identificació. L'única alternativa pública és la plantilla orgànica, que diu on hi ha lloc però no és la mateixa oferta, i que a més maqueta dos centres costat per costat a cada pàgina. Les coordenades dels centres sí que existeixen.",
+      es: 'Las vacantes de interinidades piden identificación. La única alternativa pública es la plantilla orgánica, que dice dónde hay hueco pero no es la misma oferta, y que además maqueta dos centros lado a lado en cada página. Las coordenadas de los centros sí existen.',
+    },
   },
   {
     id: 'mad',
@@ -149,7 +159,10 @@ export const COVERAGE: RegionCoverage[] = [
   {
     name: { ca: 'Navarra', es: 'Navarra' },
     status: 'pending',
-    note: { ca: 'Pendent de verificar.', es: 'Pendiente de verificar.' },
+    note: {
+      ca: "Publica les vacants sense demanar identificació i el seu directori de centres té coordenades. El llistat de mestres porta codi de centre i creua sencer; el de secundària no el porta, i encertar el centre pel nom és cosa que l'aplicació encara no sap fer.",
+      es: 'Publica las vacantes sin pedir identificación y su directorio de centros tiene coordenadas. El listado de maestros trae código de centro y cruza entero; el de secundaria no lo trae, y acertar el centro por el nombre es algo que la aplicación todavía no sabe hacer.',
+    },
   },
   {
     name: { ca: 'País Basc', es: 'País Vasco' },
@@ -160,9 +173,13 @@ export const COVERAGE: RegionCoverage[] = [
     },
   },
   {
+    id: 'rio',
     name: { ca: 'La Rioja', es: 'La Rioja' },
-    status: 'pending',
-    note: { ca: 'Pendent de verificar.', es: 'Pendiente de verificar.' },
+    status: 'manual-only',
+    note: {
+      ca: "Un sol document recull les vacants de tots els cossos, amb columnes ben alineades, i hi ha coordenades per als centres. El seu portal, però, bloqueja les descàrregues automàtiques: el PDF s'hauria de pujar a mà.",
+      es: 'Un solo documento recoge las vacantes de todos los cuerpos, con columnas bien alineadas, y hay coordenadas para los centros. Su portal, en cambio, bloquea las descargas automáticas: el PDF habría que subirlo a mano.',
+    },
   },
   {
     name: { ca: 'Ceuta', es: 'Ceuta' },
@@ -184,7 +201,13 @@ export const COVERAGE: RegionCoverage[] = [
 
 /** Cuántas administraciones hay en cada estado, para el resumen de la tabla. */
 export function coverageSummary(): Record<CoverageStatus, number> {
-  const summary: Record<CoverageStatus, number> = { stable: 0, beta: 0, pending: 0, blocked: 0 };
+  const summary: Record<CoverageStatus, number> = {
+    stable: 0,
+    beta: 0,
+    'manual-only': 0,
+    pending: 0,
+    blocked: 0,
+  };
   for (const entry of COVERAGE) summary[entry.status]++;
   return summary;
 }

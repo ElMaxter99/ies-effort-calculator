@@ -460,6 +460,107 @@ const ADAPTERS = {
     },
   },
 
+  /**
+   * Aragón — capa "Centros educativos" de Aragón Open Data, en GeoJSON.
+   *
+   * La geometría viene en UTM 30N (EPSG:25830), pero las propiedades ya traen
+   * `latitud`/`longitud` en WGS84, así que no hace falta reproyectar nada.
+   *
+   * El `idcentrorc` es el código de 8 dígitos del Registro de Centros, el
+   * mismo que el listado de vacantes imprime entre paréntesis delante del
+   * nombre del centro.
+   */
+  ara: {
+    label: 'Aragón',
+    source: 'https://opendata.aragon.es/GA_OD_Core/download?view_id=167&formato=json',
+    async fetch() {
+      const geojson = await fetchJson(this.source);
+
+      return (geojson.features ?? []).map((feature) => {
+        const p = feature.properties ?? {};
+        return {
+          code: String(p.idcentrorc ?? ''),
+          name: p.nombre_cen,
+          locality: p.localidad,
+          lat: p.latitud,
+          lng: p.longitud,
+        };
+      });
+    },
+  },
+
+  /**
+   * La Rioja — capa "centros educativos" de la Base de Datos Geográfica de
+   * IDErioja, publicada como GeoJSON en su repositorio público.
+   *
+   * Es la única fuente riojana que trae a la vez código, nombre y coordenadas:
+   * el servicio INSPIRE del Gobierno de La Rioja publica los puntos pero sin
+   * identificarlos, y el mapa de centros de la Consejería usa un identificador
+   * interno que no es el código de centro.
+   *
+   * `T205_077_CODCENTRO` es el código sin la letra de control, que es
+   * justamente como el parser lo deja al leer el listado de vacantes.
+   *
+   * Los centros con varias sedes —los CRA— repiten código, así que se queda la
+   * primera sede: situar la plaza en una de sus aulas es mejor que descartarla.
+   */
+  rio: {
+    label: 'La Rioja',
+    source:
+      'https://raw.githubusercontent.com/iderioja/base_datos_geografica/master/centros_educativos.json',
+    async fetch() {
+      const geojson = await fetchJson(this.source);
+
+      return (geojson.features ?? []).map((feature) => {
+        const p = feature.properties ?? {};
+        const [lng, lat] = feature.geometry?.coordinates ?? [];
+        return {
+          code: String(p.T205_077_CODCENTRO ?? ''),
+          name: p.T205_077_NOMBRE || p.T205_NOMBRE,
+          locality: p.T205_000_NUCL_URB_DENO,
+          lat,
+          lng,
+        };
+      });
+    },
+  },
+
+  /**
+   * Cantabria — buscador de centros de educantabria.
+   *
+   * No hay CSV ni API: lo que el catálogo de datos abiertos publica como
+   * "directorio de centros" resulta ser estadística por municipio. Pero el
+   * mapa del buscador imprime el directorio completo en el propio HTML, como
+   * asignaciones de JavaScript, y se sirve sin login ni ejecutar nada.
+   *
+   * El código de 8 dígitos no es un campo suyo: va en el enlace a la ficha
+   * ("/39013897-dantea"), que es de donde se saca.
+   */
+  cnt: {
+    label: 'Cantabria',
+    source: 'https://www.educantabria.es/centros/buscador-de-centros',
+    async fetch() {
+      const html = await fetchText(this.source);
+
+      // Cada centro es un bloque "centroAux.<campo> = '<valor>';".
+      const blocks = html.split('var centroAux').slice(1);
+
+      return blocks.map((block) => {
+        const read = (field) =>
+          new RegExp("centroAux[.]" + field + "[ ]*=[ ]*'([^']*)'").exec(block)?.[1] ?? '';
+
+        const slug = read('urlCentroEducantabria');
+        return {
+          code: /^\/([0-9]{8})-/.exec(slug)?.[1] ?? '',
+          name: read('title'),
+          locality: read('localidad') || read('municipio'),
+          lat: read('latitud'),
+          lng: read('longitud'),
+        };
+      });
+    },
+  },
+
   can: {
     label: 'Canarias',
     source:

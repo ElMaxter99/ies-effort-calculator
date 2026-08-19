@@ -69,6 +69,33 @@ describe('expresiones regulares declaradas como texto', () => {
     }
   });
 
+  it('los patrones de fichas compilan y no usan clases de escape', () => {
+    for (const region of regions) {
+      const records = region.parserHints?.records;
+      if (!records) continue;
+
+      for (const [name, pattern] of Object.entries({
+        labelPattern: records.labelPattern,
+        ignorePattern: records.ignorePattern,
+      })) {
+        if (!pattern) continue;
+        expect(() => new RegExp(pattern), region.id + "/" + name).not.toThrow();
+        expect(pattern, region.id + "/" + name + ": usa clases explícitas").not.toMatch(suspicious);
+      }
+    }
+  });
+
+  it('el rótulo de ficha de Aragón captura el nombre y no casa con un valor', () => {
+    const label = new RegExp(REGIONS.ara.parserHints!.records!.labelPattern);
+
+    expect(label.exec('- Horas Lectivas -')?.[1]).toBe('Horas Lectivas');
+    expect(label.exec('- Cuerpo/Especialidad -')?.[1]).toBe('Cuerpo/Especialidad');
+    // Un valor no puede confundirse con un rótulo, o la ficha perdería datos.
+    expect(label.test('0590 - PROFESORES DE ENSEÑANZA SECUNDARIA')).toBe(false);
+    expect(label.test('(50008198) IES GOYA')).toBe(false);
+    expect(label.test('Parcial')).toBe(false);
+  });
+
   it('el patrón de modalidad de Canarias reconoce la especialidad y no la firma digital', () => {
     const pattern = new RegExp(REGIONS.can.parserHints!.modalityPattern!);
 
@@ -207,7 +234,10 @@ describe('tabla de cobertura de la portada', () => {
 
   it('no anuncia como operativa ninguna comunidad que no esté implementada', () => {
     // Es el error que haría mentir a la portada: prometer soporte inexistente.
-    for (const entry of COVERAGE.filter((c) => c.status === 'stable' || c.status === 'beta')) {
+    const operativas = COVERAGE.filter(
+      (c) => c.status === 'stable' || c.status === 'beta' || c.status === 'manual-only',
+    );
+    for (const entry of operativas) {
       expect(entry.id, `${entry.name.es} se anuncia operativa sin región`).toBeDefined();
       expect(REGIONS[entry.id!], `${entry.name.es} apunta a una región inexistente`).toBeDefined();
     }

@@ -82,6 +82,31 @@ export function matchHeaderField(text: string): ColumnField | null {
   return null;
 }
 
+/**
+ * Como `matchHeaderField`, pero exigiendo que el rótulo coincida entero.
+ *
+ * En una tabla girada no hay forma de saber por la posición si un texto es un
+ * rótulo o un valor, así que se compara estricto: "NÚMERO 1" es un instituto de
+ * Cantabria, no la columna "Número", y aceptarlo como rótulo dejaba sin centro
+ * a todas las plazas de ese panel.
+ *
+ * Tampoco se admite un rótulo de una sola letra. El único que hay es la "N" de
+ * "N.º", y en una tabla girada choca con los valores: la columna de itinerancia
+ * de Cantabria se rellena con "S" y "N", y sus "N" se leían como cabeceras.
+ */
+export function matchHeaderFieldExact(text: string): ColumnField | null {
+  const candidates = [text, ...text.split('/')]
+    .map(normalizeHeader)
+    .filter((candidate) => candidate.length > 1);
+
+  for (const candidate of candidates) {
+    const exact = LOOKUP.find((entry) => entry.text === candidate);
+    if (exact) return exact.field;
+  }
+
+  return null;
+}
+
 /** Una columna localizada en la cabecera, con la X donde empieza su rótulo. */
 export interface HeaderColumn {
   field: ColumnField;

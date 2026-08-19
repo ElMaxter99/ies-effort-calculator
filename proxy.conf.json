@@ -46,5 +46,13 @@
     "pathRewrite": {
       "^/api/mad": ""
     }
+  },
+  "/api/cnt": {
+    "target": "https://www.educantabria.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/cnt": ""
+    }
   }
 }

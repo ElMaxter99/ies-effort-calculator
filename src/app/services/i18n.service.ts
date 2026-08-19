@@ -166,6 +166,7 @@ export interface I18nTranslations {
   coverageColNote: string;
   coverageStable: string;
   coverageBeta: string;
+  coverageManualOnly: string;
   coveragePending: string;
   coverageBlocked: string;
   coverageSummary: (working: number, total: number) => string;
@@ -412,6 +413,7 @@ const CA: I18nTranslations = {
   coverageColNote: 'Detall',
   coverageStable: 'Funciona',
   coverageBeta: 'En proves',
+  coverageManualOnly: 'Pujada manual',
   coveragePending: 'Pendent',
   coverageBlocked: 'Bloquejada',
   coverageSummary: (working: number, total: number) => `${working} de ${total} administracions educatives operatives`,
@@ -647,6 +649,7 @@ const ES: I18nTranslations = {
   coverageColNote: 'Detalle',
   coverageStable: 'Funciona',
   coverageBeta: 'En pruebas',
+  coverageManualOnly: 'Subida manual',
   coveragePending: 'Pendiente',
   coverageBlocked: 'Bloqueada',
   coverageSummary: (working: number, total: number) => `${working} de ${total} administraciones educativas operativas`,

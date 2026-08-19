@@ -490,6 +490,40 @@ const ADAPTERS = {
   },
 
   /**
+   * Asturias — capa "Centros Educativos" del SITPA, el sistema de información
+   * territorial del Principado (ArcGIS REST, CC-BY 4.0).
+   *
+   * Es la única fuente asturiana con coordenadas: ni el listado de la
+   * Consejería ni el del Portal de Transparencia las traen. El servidor
+   * reproyecta él mismo si se le pide `outSR=4326`, así que no hace falta
+   * convertir desde el ETRS89/UTM30N nativo.
+   *
+   * El servicio devuelve 626 centros de una sola vez —su tope es 1.000—, así
+   * que tampoco hace falta paginar.
+   */
+  ast: {
+    label: 'Asturias',
+    source:
+      'https://sig.asturias.es/servicios/rest/services/Visor/Educacion/MapServer/0/query' +
+      '?where=1%3D1&outFields=codigo,nombre,localidad,municipio&returnGeometry=true&outSR=4326&f=geojson',
+    async fetch() {
+      const geojson = await fetchJson(this.source);
+
+      return (geojson.features ?? []).map((feature) => {
+        const p = feature.properties ?? {};
+        const [lng, lat] = feature.geometry?.coordinates ?? [];
+        return {
+          code: String(p.codigo ?? ''),
+          name: p.nombre,
+          locality: p.localidad || p.municipio,
+          lat,
+          lng,
+        };
+      });
+    },
+  },
+
+  /**
    * La Rioja — capa "centros educativos" de la Base de Datos Geográfica de
    * IDErioja, publicada como GeoJSON en su repositorio público.
    *

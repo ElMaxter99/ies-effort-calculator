@@ -106,11 +106,12 @@ export const COVERAGE: RegionCoverage[] = [
     },
   },
   {
+    id: 'ast',
     name: { ca: 'Astúries', es: 'Asturias' },
-    status: 'pending',
+    status: 'beta',
     note: {
-      ca: "L'oferta setmanal es publica en obert, porta codi de centre i el servei cartogràfic del Principat en dona les coordenades. El que no publica com a document és l'adjudicació d'inici de curs, que és la que mou més places.",
-      es: 'La oferta semanal se publica en abierto, trae código de centro y el servicio cartográfico del Principado da sus coordenadas. Lo que no publica como documento es la adjudicación de inicio de curso, que es la que mueve más plazas.',
+      ca: "Oferta de places de cada adjudicació setmanal, agrupada per centre i amb totes les coordenades. No cobreix l'adjudicació d'inici de curs, que Astúries no publica com a document sinó dins d'una consulta web.",
+      es: 'Oferta de plazas de cada adjudicación semanal, agrupada por centro y con todas las coordenadas. No cubre la adjudicación de inicio de curso, que Asturias no publica como documento sino dentro de una consulta web.',
     },
   },
   {

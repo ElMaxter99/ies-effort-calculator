@@ -156,8 +156,8 @@ export interface I18nTranslations {
   filterLocalitiesPlaceholder: string;
   regionDisclaimer: (region: string) => string;
   regionSelectorLabel: string;
-  regionStatusBeta: string;
-  regionStatusManualOnly: string;
+  regionSelectorHint: string;
+  regionCoverageLink: (total: number) => string;
   regionManualOnlyNotice: string;
   coverageTitle: string;
   coverageIntro: string;
@@ -170,7 +170,7 @@ export interface I18nTranslations {
   coveragePending: string;
   coverageBlocked: string;
   coverageSummary: (working: number, total: number) => string;
-  pdfFormatHint: (filename: string) => string;
+  pdfFormatHint: (authority: string) => string;
   secundariaPdfLabel: string;
   primariaPdfLabel: string;
   officialPdfsEmpty: string;
@@ -402,9 +402,9 @@ const CA: I18nTranslations = {
   pdfProcessingMessage: (page: number, total: number) => `Processant pàgina ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
   regionDisclaimer: (region: string) => `Estàs calculant distàncies per a centres de ${region}. Canvia de comunitat a dalt si no és la teua.`,
-  regionSelectorLabel: 'Comunitat autònoma',
-  regionStatusBeta: 'En proves',
-  regionStatusManualOnly: 'Només pujada manual',
+  regionSelectorLabel: 'Tria la teua comunitat autònoma',
+  regionSelectorHint: "D'ella depenen el llistat que has de pujar i els centres amb què es creua.",
+  regionCoverageLink: (total: number) => `Veure les ${total} administracions`,
   regionManualOnlyNotice: 'Aquesta comunitat no permet descarregar els llistats automàticament: has de baixar el PDF del portal oficial i pujar-lo tu.',
   coverageTitle: 'On funciona ara mateix',
   coverageIntro: "Cada administració publica les seues vacants a la seua manera, així que les comunitats es van afegint d'una en una. Aquest és l'estat real, comprovat sobre els documents oficials de cada una.",
@@ -417,7 +417,8 @@ const CA: I18nTranslations = {
   coveragePending: 'Pendent',
   coverageBlocked: 'Bloquejada',
   coverageSummary: (working: number, total: number) => `${working} de ${total} administracions educatives operatives`,
-  pdfFormatHint: (filename: string) => `Necessites el PDF oficial vigent de vacants d'educació secundària (mateix format que ${filename}, que és només un exemple).`,
+  pdfFormatHint: (authority: string) =>
+    `Necessites el PDF de vacants vigent, tal com el publica ${authority}. Si el descarregues d'un altre lloc o d'un altre curs, la maqueta pot no coincidir.`,
   secundariaPdfLabel: 'Secundària',
   primariaPdfLabel: 'Primària',
   officialPdfsEmpty: 'No s\'ha pogut detectar automàticament cap PDF en aquesta pàgina. Visita el',
@@ -638,9 +639,9 @@ const ES: I18nTranslations = {
   pdfProcessingMessage: (page: number, total: number) => `Procesando página ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
   regionDisclaimer: (region: string) => `Estás calculando distancias para centros de ${region}. Cambia de comunidad arriba si no es la tuya.`,
-  regionSelectorLabel: 'Comunidad autónoma',
-  regionStatusBeta: 'En pruebas',
-  regionStatusManualOnly: 'Solo subida manual',
+  regionSelectorLabel: 'Elige tu comunidad autónoma',
+  regionSelectorHint: 'De ella dependen el listado que tienes que subir y los centros con los que se cruza.',
+  regionCoverageLink: (total: number) => `Ver las ${total} administraciones`,
   regionManualOnlyNotice: 'Esta comunidad no permite descargar los listados automáticamente: tienes que bajar el PDF del portal oficial y subirlo tú.',
   coverageTitle: 'Dónde funciona ahora mismo',
   coverageIntro: 'Cada administración publica sus vacantes a su manera, así que las comunidades se van añadiendo de una en una. Este es el estado real, comprobado sobre los documentos oficiales de cada una.',
@@ -653,7 +654,8 @@ const ES: I18nTranslations = {
   coveragePending: 'Pendiente',
   coverageBlocked: 'Bloqueada',
   coverageSummary: (working: number, total: number) => `${working} de ${total} administraciones educativas operativas`,
-  pdfFormatHint: (filename: string) => `Necesitas el PDF oficial vigente de vacantes de educación secundaria (mismo formato que ${filename}, que es solo un ejemplo).`,
+  pdfFormatHint: (authority: string) =>
+    `Necesitas el PDF de vacantes vigente, tal como lo publica ${authority}. Si lo descargas de otro sitio o de otro curso, la maqueta puede no coincidir.`,
   secundariaPdfLabel: 'Secundaria',
   primariaPdfLabel: 'Primaria',
   officialPdfsEmpty: 'No se ha podido detectar automáticamente ningún PDF en esta página. Visita el',

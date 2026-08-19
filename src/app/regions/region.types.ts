@@ -18,7 +18,8 @@ export type RegionId =
   | 'mad' // Comunidad de Madrid
   | 'ara' // Aragón
   | 'rio' // La Rioja
-  | 'cnt'; // Cantabria
+  | 'cnt' // Cantabria
+  | 'ast'; // Principado de Asturias
 
 /**
  * Hasta dónde llega el soporte de una comunidad.

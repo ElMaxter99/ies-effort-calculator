@@ -31,6 +31,38 @@
             <h1 class="text-display-lg font-display-lg text-primary max-lg:text-headline-lg">{{ t().heroTitle }}</h1>
             <p class="text-body-lg font-body-lg text-on-surface-variant max-lg:text-body-md">{{ t().heroDescription }}</p>
           </div>
+          <div class="space-y-sm text-left">
+            <div class="flex items-baseline justify-between gap-sm flex-wrap">
+              <h2 id="region-selector-label" class="text-body-sm font-bold text-on-surface">{{ t().regionSelectorLabel }}</h2>
+              <a href="#coverage" class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity">
+                {{ t().regionCoverageLink(coverageTotal) }}
+              </a>
+            </div>
+            <p class="text-label-md font-label-md text-on-surface-variant">{{ t().regionSelectorHint }}</p>
+            <div role="radiogroup" aria-labelledby="region-selector-label"
+                 class="grid grid-cols-2 md:grid-cols-3 gap-sm">
+              @for (r of region.all; track r.id) {
+                <label class="block cursor-pointer">
+                  <input type="radio" name="region" class="sr-only peer" [value]="r.id"
+                         [checked]="activeRegionId() === r.id" (change)="selectRegion(r.id)" />
+                  <span class="flex items-start gap-1.5 h-full text-left rounded-xl border border-outline-variant bg-surface px-md py-sm min-h-[3.5rem] transition-colors
+                               peer-hover:border-primary peer-hover:bg-primary/5
+                               peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-checked:shadow-sm
+                               peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary">
+                    <span class="material-symbols-outlined text-[18px] leading-5 shrink-0 transition-opacity"
+                          [class.opacity-0]="activeRegionId() !== r.id" aria-hidden="true">check_circle</span>
+                    <span class="min-w-0">
+                      <span class="block text-body-sm font-bold leading-tight">{{ r.name[i18n.lang()] }}</span>
+                      @if (regionStatusLabel(r.status); as status) {
+                        <span class="block text-label-md font-label-md opacity-75 leading-tight mt-0.5">{{ status }}</span>
+                      }
+                    </span>
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+
           <div class="space-y-lg">
             <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant bg-white rounded-xl transition-all hover:border-primary hover:shadow-lg flex flex-col items-center justify-center gap-md p-12 max-lg:p-6"
                  id="drop-zone"
@@ -51,21 +83,6 @@
             </div>
 
             <div class="flex flex-col items-center gap-sm mt-md text-center">
-              <div class="flex items-center gap-sm flex-wrap justify-center">
-                <label for="region-select" class="text-body-sm font-bold text-on-surface-variant">{{ t().regionSelectorLabel }}</label>
-                <select id="region-select" class="bg-surface border border-outline-variant text-on-surface text-body-sm rounded-lg px-md py-sm cursor-pointer hover:border-primary transition-colors"
-                        [value]="activeRegionId()" (change)="onRegionChange($event)">
-                  @for (r of region.all; track r.id) {
-                    <option [value]="r.id">{{ r.name[i18n.lang()] }}</option>
-                  }
-                </select>
-                @if (activeRegion().status === 'beta') {
-                  <span class="text-label-md bg-tertiary/15 text-tertiary px-sm py-0.5 rounded font-bold">{{ t().regionStatusBeta }}</span>
-                }
-                @if (activeRegion().status === 'manual-only') {
-                  <span class="text-label-md bg-tertiary/15 text-tertiary px-sm py-0.5 rounded font-bold">{{ t().regionStatusManualOnly }}</span>
-                }
-              </div>
               <div class="bg-surface-container-low border border-outline-variant text-on-surface-variant text-body-sm px-lg py-md rounded-lg max-w-lg">
                 {{ t().regionDisclaimer(activeRegion().name[i18n.lang()]) }}
                 @if (activeRegion().status === 'manual-only') {
@@ -73,7 +90,7 @@
                 }
               </div>
               <p class="text-body-sm text-on-surface-variant max-w-lg">
-                {{ t().pdfFormatHint('Vacants_Supr_Despl_Secundaria_2.pdf') }}
+                {{ t().pdfFormatHint(activeAuthority()) }}
               </p>
               <div class="flex gap-sm flex-wrap justify-center">
                 <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
@@ -146,14 +163,16 @@
                 <p class="text-body-sm text-on-surface-variant/80 max-w-lg font-medium">{{ t().officialPdfsVerifyNotice }}</p>
               }
 
-              <div class="flex flex-col items-center gap-1 mt-xs">
-                <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
-                   class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
-                  <span class="material-symbols-outlined text-[16px]">download</span>
-                  {{ t().loadSample }}
-                </a>
-                <p class="text-body-sm text-on-surface-variant/70 max-w-lg">{{ t().sampleFileDisclaimer }}</p>
-              </div>
+              @if (activeRegionId() === 'val') {
+                <div class="flex flex-col items-center gap-1 mt-xs">
+                  <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
+                     class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
+                    <span class="material-symbols-outlined text-[16px]">download</span>
+                    {{ t().loadSample }}
+                  </a>
+                  <p class="text-body-sm text-on-surface-variant/70 max-w-lg">{{ t().sampleFileDisclaimer }}</p>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -219,7 +238,7 @@
     </section>
 
     <!-- Cobertura por comunidad autónoma -->
-    <section class="bg-surface py-xl border-t border-outline-variant">
+    <section id="coverage" class="bg-surface py-xl border-t border-outline-variant scroll-mt-16">
       <div class="max-w-container-max mx-auto px-gutter">
         <div class="text-center space-y-sm mb-lg">
           <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().coverageTitle }}</h2>

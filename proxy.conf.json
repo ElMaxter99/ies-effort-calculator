@@ -54,5 +54,13 @@
     "pathRewrite": {
       "^/api/cnt": ""
     }
+  },
+  "/api/ast": {
+    "target": "https://www.educastur.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/ast": ""
+    }
   }
 }

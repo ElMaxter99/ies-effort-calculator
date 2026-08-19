@@ -35,8 +35,11 @@ export interface ParserHints {
    *   Murcia, que además reparte las plazas en dos paneles por página.
    * - `records`: no hay tabla, sino una ficha por plaza que reimprime sus
    *   propios rótulos. Es el caso de Aragón.
+   * - `blocks`: bloques por centro, como `grouped`, pero con una fila por
+   *   plaza en lugar de recuentos, y sin rótulo que abra el bloque. Es el caso
+   *   de Asturias.
    */
-  strategy?: 'columns' | 'grouped' | 'transposed' | 'records';
+  strategy?: 'columns' | 'grouped' | 'transposed' | 'records' | 'blocks';
   /**
    * Rangos [min, max] de coordenada X por campo. Si se indican, tienen
    * prioridad sobre la detección de cabecera. Es la vía de escape para PDFs
@@ -52,6 +55,8 @@ export interface ParserHints {
   grouped?: GroupedHints;
   /** Rótulos que delimitan las fichas cuando `strategy` es `records`. */
   records?: RecordHints;
+  /** Rótulos que delimitan los bloques cuando `strategy` es `blocks`. */
+  blocks?: BlockHints;
   /**
    * Separación máxima en puntos para considerar que dos items están en la
    * misma fila. Por defecto 2, que sirve para la mayoría.
@@ -156,6 +161,39 @@ export interface GroupedHints {
 }
 
 /**
+ * Rótulos que estructuran un listado en bloques por centro, una fila por plaza.
+ *
+ * Se parece a `grouped`, pero con dos diferencias que no se pueden salvar con
+ * un interruptor: el bloque no lo abre ningún rótulo —lo abre el propio código
+ * del centro— y su subtabla no lleva recuentos, sino una fila por plaza con
+ * columna propia para la itinerancia y para los detalles de la plaza.
+ */
+export interface BlockHints {
+  /**
+   * Patrón (como texto) del código de centro que abre un bloque. El resto de
+   * esa fila es el nombre del centro.
+   */
+  centrePattern: string;
+  /**
+   * Abre la subtabla de plazas del centro en curso, y su fila da además los
+   * límites de las columnas: se reimprime en cada bloque, así que es una
+   * cabecera fiable aunque el documento no tenga ninguna global.
+   */
+  itemHeader: string;
+  /** Cierra el bloque de centro. */
+  totalMarker: string;
+  /**
+   * La localidad va en la fila inmediatamente anterior a la del centro, a la
+   * derecha del concejo.
+   *
+   * Asturias encabeza cada bloque con "ALLANDE ... POLA DE ALLANDE": el
+   * concejo a la izquierda y la localidad concreta a la derecha, que es la que
+   * sitúa el centro.
+   */
+  localityAbove?: boolean;
+}
+
+/**
  * Rótulos que estructuran un listado en fichas, una por plaza.
  *
  * A diferencia de una tabla, aquí los rótulos se reimprimen dentro de cada
@@ -219,6 +257,16 @@ export interface ParseState {
   counter?: number;
   /** Especialidad en curso, cuando la anuncia una fila con rótulo. */
   modality?: string;
+  /**
+   * X donde empieza cada columna de la subtabla de plazas (estrategia
+   * `blocks`).
+   *
+   * Se guarda aparte de `columns` porque no son campos reconocidos del
+   * diccionario: la subtabla de Asturias rotula "Código", "Especialidad",
+   * "Iti", "Jornada" y "Función", y ni "Código" es el del centro ni "Función"
+   * es una modalidad.
+   */
+  itemColumns?: number[] | null;
 }
 
 /**
@@ -308,6 +356,10 @@ export class PdfParserService {
 
     if (hints.strategy === 'records') {
       return this.parseRecordsPage(rows, hints, state);
+    }
+
+    if (hints.strategy === 'blocks') {
+      return this.parseBlocksPage(rows, hints, state);
     }
 
     const modality = this.detectModality(items, hints);
@@ -641,6 +693,163 @@ export class PdfParserService {
       observations: '',
       isItinerant,
       modality: `${short} - ${position.description}`,
+    };
+  }
+
+
+  /**
+   * Extrae un listado en bloques por centro con una fila por plaza.
+   *
+   * Asturias no rotula el comienzo del bloque: lo abre el propio código del
+   * centro, y la localidad va en la fila de encima, a la derecha del concejo.
+   *
+   *     ALLANDE                                        POLA DE ALLANDE
+   *     33027345   C.P.E.B. de Pola de Allande
+   *     Código        Especialidad                Iti   Jornada   Función
+   *     024296  0590  018  ORIENTACION EDUCATIVA   S
+   *     772076  0597  036  PEDAGOGIA TERAPEUTICA   N
+   *     Por centro hay 2 especialidades y 2 vacantes totales
+   *
+   * La cabecera de la subtabla se reimprime en cada bloque, así que de ella
+   * salen los límites de las columnas sin tener que codificarlos a mano.
+   */
+  private parseBlocksPage(
+    rows: TextRow[],
+    hints: ParserHints,
+    state: ParseState,
+  ): { rows: IesRow[]; state: ParseState } {
+    const blocks = hints.blocks;
+    if (!blocks) return { rows: [], state };
+
+    const centrePattern = new RegExp(blocks.centrePattern);
+    const itemHeader = normalizeHeader(blocks.itemHeader);
+    const totalMarker = normalizeHeader(blocks.totalMarker);
+
+    const out: IesRow[] = [];
+    let centre = state.centre ?? null;
+    let inItems = state.inItems ?? false;
+    let counter = state.counter ?? 0;
+    let columns = state.itemColumns ?? null;
+    let previous: TextRow | null = null;
+
+    for (const row of rows) {
+      const first = row.items[0]?.str.trim() ?? '';
+      const joined = normalizeHeader(row.items.map((i) => i.str).join(' '));
+
+      if (joined.startsWith(totalMarker)) {
+        inItems = false;
+        centre = null;
+        previous = row;
+        continue;
+      }
+
+      if (normalizeHeader(first) === itemHeader && row.items.length > 1) {
+        columns = row.items.map((item) => item.x);
+        inItems = true;
+        previous = row;
+        continue;
+      }
+
+      if (!inItems && centrePattern.test(first) && row.items.length > 1) {
+        centre = {
+          code: first,
+          name: row.items.slice(1).map((i) => i.str.trim()).join(' ').trim(),
+          locality: blocks.localityAbove ? this.localityFromRow(previous) : '',
+        };
+        previous = row;
+        continue;
+      }
+
+      if (inItems && centre && columns) {
+        const cells = this.splitByColumns(row, columns);
+
+        // Una especialidad larga se parte en varias líneas: la continuación
+        // solo trae texto en la columna de especialidad, sin código de plaza.
+        if (!cells[0].length && cells[1].length && out.length) {
+          const last = out[out.length - 1];
+          last.modality = `${last.modality} ${cells[1].join(' ')}`.trim();
+          previous = row;
+          continue;
+        }
+
+        const built = this.blockRow(++counter, centre, cells);
+        if (built) out.push(built);
+        else counter--;
+      }
+
+      previous = row;
+    }
+
+    return { rows: out, state: { ...state, centre, inItems, counter, itemColumns: columns } };
+  }
+
+  /** La localidad es el último item de la fila que encabeza el bloque. */
+  private localityFromRow(row: TextRow | null): string {
+    if (!row || !row.items.length) return '';
+    return row.items[row.items.length - 1].str.trim();
+  }
+
+  /**
+   * Reparte los items de una fila entre las celdas que delimita la cabecera.
+   *
+   * Cada columna abarca desde la X de su rótulo hasta la de la siguiente; a la
+   * primera se le deja además todo lo que quede a su izquierda.
+   */
+  private splitByColumns(row: TextRow, columns: number[]): string[][] {
+    const cells: string[][] = columns.map(() => []);
+
+    for (const item of row.items) {
+      let index = 0;
+      // La celda es la última columna que empieza a la izquierda del item; el
+      // margen absorbe los valores alineados a la derecha, que empiezan unos
+      // puntos antes que su rótulo.
+      for (let i = 0; i < columns.length; i++) {
+        if (item.x >= columns[i] - 4) index = i;
+      }
+      cells[index].push(item.str.trim());
+    }
+
+    return cells;
+  }
+
+  /**
+   * Compone una plaza a partir de sus celdas.
+   *
+   * La columna de código es compuesta: código de plaza, una marca opcional y
+   * el cuerpo. La de especialidad trae su código y su nombre. El resto
+   * —jornada y función— no tiene equivalente en el resto de comunidades, así
+   * que se recoge tal cual en las observaciones en vez de interpretarlo.
+   */
+  private blockRow(
+    number: number,
+    centre: { code: string; name: string; locality: string },
+    cells: string[][],
+  ): IesRow | null {
+    const [codeCell = [], modalityCell = [], itinerantCell = [], ...restCells] = cells;
+
+    const locationCode = codeCell[0] ?? '';
+    if (!locationCode) return null;
+
+    const body = codeCell.find((value) => /^[0-9]{4}$/.test(value)) ?? '';
+    const flags = codeCell.slice(1).filter((value) => value !== body);
+
+    const specialityCode = /^[0-9]{2,3}$/.test(modalityCell[0] ?? '') ? modalityCell[0] : '';
+    const specialityName = (specialityCode ? modalityCell.slice(1) : modalityCell).join(' ').trim();
+    const modality = specialityName
+      ? `${body}${specialityCode} - ${specialityName}`.replace(/^ - /, '')
+      : '';
+
+    const observations = [...flags, ...restCells.flat()].join(' ').trim();
+
+    return {
+      number,
+      centre: centre.name,
+      locality: centre.locality,
+      code: centre.code,
+      locationCode,
+      observations,
+      isItinerant: itinerantCell.join('').trim().toUpperCase() === 'S',
+      modality,
     };
   }
 

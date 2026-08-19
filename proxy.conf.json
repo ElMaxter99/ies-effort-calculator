@@ -62,5 +62,21 @@
     "pathRewrite": {
       "^/api/ast": ""
     }
+  },
+  "/api/nav": {
+    "target": "https://tramitespersonal.navarra.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/nav": ""
+    }
+  },
+  "/api/ext": {
+    "target": "https://profex.educarex.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/ext": ""
+    }
   }
 }

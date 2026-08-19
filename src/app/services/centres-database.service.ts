@@ -39,6 +39,58 @@ export function looseLocalityKey(name: string): string {
 }
 
 /**
+ * Nombres con los que una misma localidad puede aparecer en un listado.
+ *
+ * Los registros de las comunidades bilingües guardan el topónimo en las dos
+ * lenguas —"Pamplona / Iruña", "Estella-Lizarra"— o con el municipio detrás
+ * entre paréntesis —"Lekaroz (Baztan)"—, mientras que el listado de vacantes
+ * imprime una sola de las formas. Sin desdoblarlas, más de la mitad de las
+ * plazas navarras de secundaria se quedaban sin situar.
+ *
+ * Devuelve las claves ya canonizadas, empezando por el nombre completo.
+ */
+export function localityAliases(name: string): string[] {
+  const raw = String(name ?? '').replace(/\s*\([^)]*\)\s*$/, '');
+  const aliases = [localityKey(name), localityKey(raw)];
+
+  for (const part of raw.split(/\s*[\/-]\s*/)) {
+    const key = localityKey(part);
+    if (key.length > 2) aliases.push(key);
+  }
+
+  return [...new Set(aliases.filter(Boolean))];
+}
+
+/**
+ * Índice de nombres alternativos, con la misma cautela que el índice sin
+ * artículo: un alias al que llegan dos localidades distintas se descarta, para
+ * no situar la plaza en el municipio equivocado.
+ */
+function buildAliasIndex(
+  named: { name: string; coords: { lat: number; lng: number } }[],
+  byLocality: Map<string, { lat: number; lng: number }>,
+): Map<string, { lat: number; lng: number }> {
+  const candidates = new Map<string, { lat: number; lng: number }[]>();
+
+  for (const { name, coords } of named) {
+    for (const alias of localityAliases(name)) {
+      if (byLocality.has(alias)) continue;
+      const arr = candidates.get(alias) ?? [];
+      arr.push(coords);
+      candidates.set(alias, arr);
+    }
+  }
+
+  const index = new Map<string, { lat: number; lng: number }>();
+  for (const [alias, coords] of candidates) {
+    const distinct = new Set(coords.map((c) => `${c.lat},${c.lng}`));
+    if (distinct.size > 1) continue;
+    index.set(alias, coords[0]);
+  }
+  return index;
+}
+
+/**
  * Índice auxiliar sin artículo.
  *
  * Los listados a veces añaden un artículo que el registro oficial no lleva
@@ -81,6 +133,7 @@ export class CentresDatabaseService {
   private localityByCode = new Map<string, string>();
   private byLocality = new Map<string, { lat: number; lng: number }>();
   private byLocalityLoose = new Map<string, { lat: number; lng: number }>();
+  private byLocalityAlias = new Map<string, { lat: number; lng: number }>();
 
   private loadedId: RegionId | null = null;
   private loadingId: RegionId | null = null;
@@ -124,6 +177,7 @@ export class CentresDatabaseService {
     const locGroups = new Map<string, { lat: number; lng: number }[]>();
 
     const localityByCode = new Map<string, string>();
+    const localityNames = new Map<string, string>();
 
     for (const rec of centres) {
       if (!byCode.has(rec.code)) {
@@ -135,6 +189,8 @@ export class CentresDatabaseService {
       const arr = locGroups.get(key) ?? [];
       arr.push({ lat: rec.lat, lng: rec.lng });
       locGroups.set(key, arr);
+      // El nombre tal cual lo escribe el registro, para poder desdoblarlo.
+      if (rec.locality) localityNames.set(key, rec.locality);
     }
 
     const byLocality = new Map<string, { lat: number; lng: number }>();
@@ -142,6 +198,7 @@ export class CentresDatabaseService {
     // El centroide del municipio es el punto de partida...
     for (const rec of localities) {
       byLocality.set(localityKey(rec.name), { lat: rec.lat, lng: rec.lng });
+      localityNames.set(localityKey(rec.name), rec.name);
     }
 
     // ...pero si conocemos los centros de esa localidad, su promedio la sitúa
@@ -155,8 +212,14 @@ export class CentresDatabaseService {
 
     this.byCode = byCode;
     this.localityByCode = localityByCode;
+    const named = [...byLocality].map(([key, coords]) => ({
+      name: localityNames.get(key) ?? key,
+      coords,
+    }));
+
     this.byLocality = byLocality;
     this.byLocalityLoose = buildLooseIndex(byLocality);
+    this.byLocalityAlias = buildAliasIndex(named, byLocality);
     this.loadedId = id;
   }
 
@@ -193,12 +256,22 @@ export class CentresDatabaseService {
    *    ("CALZADA DE OROPESA (LA)" -> "Calzada de Oropesa").
    * 3. El registro lo lleva y el listado no ("Robledo" -> "El Robledo"),
    *    siempre que no haya dos municipios candidatos.
+   * 4. Uno de los dos escribe el topónimo bilingüe entero y el otro solo una de
+   *    sus mitades ("PAMPLONA" -> "Pamplona / Iruña").
    */
   getLocalityCoordinates(locality: string): { lat: number; lng: number } | null {
     const exact = this.byLocality.get(localityKey(locality));
     if (exact) return exact;
 
     const stripped = looseLocalityKey(locality);
-    return this.byLocality.get(stripped) ?? this.byLocalityLoose.get(stripped) ?? null;
+    const loose = this.byLocality.get(stripped) ?? this.byLocalityLoose.get(stripped);
+    if (loose) return loose;
+
+    for (const alias of localityAliases(locality)) {
+      const hit = this.byLocality.get(alias) ?? this.byLocalityAlias.get(alias);
+      if (hit) return hit;
+    }
+
+    return null;
   }
 }

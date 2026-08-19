@@ -9,6 +9,8 @@ import { ARA } from './ara';
 import { RIO } from './rio';
 import { CNT } from './cnt';
 import { AST } from './ast';
+import { NAV } from './nav';
+import { EXT } from './ext';
 
 /**
  * Comunidades soportadas.
@@ -28,6 +30,8 @@ export const REGIONS: Record<RegionId, RegionConfig> = {
   rio: RIO,
   cnt: CNT,
   ast: AST,
+  nav: NAV,
+  ext: EXT,
 } as Record<RegionId, RegionConfig>;
 
 /** Región por defecto cuando el usuario aún no ha elegido ninguna. */

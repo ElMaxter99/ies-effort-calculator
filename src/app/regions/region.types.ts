@@ -19,7 +19,9 @@ export type RegionId =
   | 'ara' // Aragón
   | 'rio' // La Rioja
   | 'cnt' // Cantabria
-  | 'ast'; // Principado de Asturias
+  | 'ast' // Principado de Asturias
+  | 'nav' // Comunidad Foral de Navarra
+  | 'ext'; // Extremadura
 
 /**
  * Hasta dónde llega el soporte de una comunidad.

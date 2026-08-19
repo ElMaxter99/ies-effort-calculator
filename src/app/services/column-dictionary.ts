@@ -16,6 +16,8 @@ export type ColumnField =
   | 'code'
   | 'itinerant'
   | 'vacancies'
+  | 'itinerantVacancies'
+  | 'hours'
   | 'modality'
   | 'observations';
 
@@ -36,6 +38,15 @@ const SYNONYMS: Record<ColumnField, string[]> = {
   itinerant: ['ITIN', 'ITINERANT', 'ITINERANTE', 'ITI'],
   modality: ['FUNCION', 'ESPECIALIDAD', 'ESPECIALITAT', 'FUNCION ESPECIALIDAD', 'CUERPO'],
   vacancies: ['VAC', 'VACANTES', 'VACANTS', 'VACANTE', 'PLAZAS', 'PLACES'],
+  // Recuento de vacantes itinerantes en columna propia, distinto de la marca
+  // booleana de `itinerant`. No lleva sinónimos a propósito: el rótulo que usa
+  // Navarra —"Itinerantes"— es indistinguible del de la columna booleana, así
+  // que solo se puede llegar a este campo declarando su rango en la región.
+  itinerantVacancies: [],
+  // Horas sueltas que no llegan a una plaza completa. Navarra las publica en
+  // columna aparte: una fila con 0 completas y 15 horas sigue siendo una plaza,
+  // solo que parcial.
+  hours: ['HORAS', 'HORES', 'ORDUAK'],
   observations: ['OBSERVACIONS', 'OBSERVACIONES', 'OBS', 'NOTAS', 'NOTES'],
 };
 

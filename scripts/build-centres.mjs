@@ -490,6 +490,86 @@ const ADAPTERS = {
   },
 
   /**
+   * Extremadura — capa de centros educativos de la IDE de Extremadura (CICTEX),
+   * publicada como servicio WFS.
+   *
+   * Es la única fuente extremeña con coordenadas: el listado del portal de
+   * datos abiertos no trae ni código de centro ni geometría. Solo sirve GML
+   * —no admite GeoJSON ni CSV—, así que se lee el XML directamente; a cambio,
+   * el propio servidor reproyecta a WGS84 si se le pide `SRSNAME=EPSG:4326`.
+   *
+   * Ojo con el orden de los ejes: en 4326 el servicio escribe latitud primero.
+   *
+   * Son tres capas —públicos y concertados, enseñanzas de arte e idiomas, y
+   * recursos— sin códigos comunes entre ellas, así que se concatenan sin más.
+   */
+  ext: {
+    label: 'Extremadura',
+    source: 'https://mapas.ideex.es/CICTEX/centrosEducativos',
+    layers: [
+      'CICTEX_CENTROS_EDUCATIVOS_PUBLICO_CONCERTADO',
+      'CICTEX_CENTROS_EDUCATIVOS_ARTE_IDIOMA_ADULTOS',
+      'CICTEX_CENTROS_EDUCATIVOS_RECURSOS',
+    ],
+    async fetch() {
+      const records = [];
+
+      for (const layer of this.layers) {
+        const url =
+          `${this.source}?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature` +
+          `&TYPENAMES=ms:${layer}&SRSNAME=EPSG:4326`;
+        const xml = await fetchText(url);
+
+        for (const [, member] of xml.matchAll(/<wfs:member>([\s\S]*?)<\/wfs:member>/g)) {
+          const pos = /<gml:pos>([-0-9.]+)\s+([-0-9.]+)<\/gml:pos>/.exec(member);
+          const code = /<ms:CODIGO>([\s\S]*?)<\/ms:CODIGO>/.exec(member);
+          if (!pos || !code) continue;
+
+          records.push({
+            // Algún registro pierde el cero inicial al viajar como número.
+            code: code[1].trim().padStart(8, '0'),
+            name: (/<ms:CENTRO>([\s\S]*?)<\/ms:CENTRO>/.exec(member)?.[1] ?? '').trim(),
+            locality: (/<ms:SEDE_LOCAL>([\s\S]*?)<\/ms:SEDE_LOCAL>/.exec(member)?.[1] ?? '').trim(),
+            lat: pos[1],
+            lng: pos[2],
+          });
+        }
+      }
+
+      return records;
+    },
+  },
+
+  /**
+   * Navarra — "Centros educativos" del portal de datos abiertos (CKAN).
+   *
+   * CSV con separador ',' y latitud y longitud ya en WGS84, calculadas por la
+   * propia fuente a partir de sus coordenadas SITNA (UTM 30N).
+   *
+   * Trae también centros de apoyo al profesorado y subsedes, con códigos que no
+   * son de 8 dígitos; normalize() los descarta al no cruzar con ningún listado.
+   */
+  nav: {
+    label: 'Navarra',
+    source:
+      'https://datosabiertos.navarra.es/dataset/37044915-b9fe-47f6-8e1e-f6bb9a3e1cc8/' +
+      'resource/39c2c8af-80b5-472a-b017-1ac196fafa59/download/centros-educativos-2025-2026.csv',
+    async fetch() {
+      const csv = await fetchText(this.source);
+
+      return parseCsv(csv, ',').map((r) => ({
+        code: r['Código'],
+        // El nombre corto es el que reconoce un docente ("CPEIP Larraga S.
+        // Miguel"); el largo es solo la advocación ("San Miguel de Larraga").
+        name: r['Nombre corto'] || r['Nombre'],
+        locality: r['Localidad'],
+        lat: r['Latitud (Google Maps)'],
+        lng: r['Longitud (Google Maps)'],
+      }));
+    },
+  },
+
+  /**
    * Asturias — capa "Centros Educativos" del SITPA, el sistema de información
    * territorial del Principado (ArcGIS REST, CC-BY 4.0).
    *

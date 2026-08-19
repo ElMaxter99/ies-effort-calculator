@@ -141,11 +141,12 @@ export const COVERAGE: RegionCoverage[] = [
     },
   },
   {
+    id: 'ext',
     name: { ca: 'Extremadura', es: 'Extremadura' },
-    status: 'pending',
+    status: 'beta',
     note: {
-      ca: "Les vacants d'interinitats demanen identificació. L'única alternativa pública és la plantilla orgànica, que diu on hi ha lloc però no és la mateixa oferta, i que a més maqueta dos centres costat per costat a cada pàgina. Les coordenades dels centres sí que existeixen.",
-      es: 'Las vacantes de interinidades piden identificación. La única alternativa pública es la plantilla orgánica, que dice dónde hay hueco pero no es la misma oferta, y que además maqueta dos centros lado a lado en cada página. Las coordenadas de los centros sí existen.',
+      ca: "Plantilla orgànica: diu quins llocs hi ha a cada centre i quants estan vacants. No és la mateixa oferta que la de les adjudicacions d'interins, que només es consulta dins de PROFEX amb identificació.",
+      es: 'Plantilla orgánica: dice qué puestos hay en cada centro y cuántos están vacantes. No es la misma oferta que la de las adjudicaciones de interinos, que solo se consulta dentro de PROFEX con identificación.',
     },
   },
   {
@@ -158,11 +159,12 @@ export const COVERAGE: RegionCoverage[] = [
     },
   },
   {
+    id: 'nav',
     name: { ca: 'Navarra', es: 'Navarra' },
-    status: 'pending',
+    status: 'beta',
     note: {
-      ca: "Publica les vacants sense demanar identificació i el seu directori de centres té coordenades. El llistat de mestres porta codi de centre i creua sencer; el de secundària no el porta, i encertar el centre pel nom és cosa que l'aplicació encara no sap fer.",
-      es: 'Publica las vacantes sin pedir identificación y su directorio de centros tiene coordenadas. El listado de maestros trae código de centro y cruza entero; el de secundaria no lo trae, y acertar el centro por el nombre es algo que la aplicación todavía no sabe hacer.',
+      ca: "Vacants definitives en obert, en dues maquetes que es reconeixen soles. La de mestres porta codi de centre; la de secundària no, i les seues places se situen al nucli de la localitat, no a l'edifici.",
+      es: 'Vacantes definitivas en abierto, en dos maquetas que se reconocen solas. La de maestros trae código de centro; la de secundaria no, y sus plazas se sitúan en el núcleo de la localidad, no en el edificio.',
     },
   },
   {

@@ -40,6 +40,7 @@ export interface I18nTranslations {
   uploadDesc: string;
   dropPrompt: string;
   dropHint: string;
+  dropHintSheet: string;
   footerCopyright: string;
   footerPrivacy: string;
   footerTerms: string;
@@ -154,13 +155,29 @@ export interface I18nTranslations {
 
   pdfProcessingMessage: (page: number, total: number) => string;
   filterLocalitiesPlaceholder: string;
-  regionDisclaimer: string;
-  pdfFormatHint: (filename: string) => string;
+  regionDisclaimer: (region: string) => string;
+  regionSelectorLabel: string;
+  regionSelectorHint: string;
+  regionCoverageLink: (total: number) => string;
+  regionManualOnlyNotice: string;
+  coverageTitle: string;
+  coverageIntro: string;
+  coverageColRegion: string;
+  coverageColStatus: string;
+  coverageColNote: string;
+  coverageStable: string;
+  coverageBeta: string;
+  coverageManualOnly: string;
+  coveragePending: string;
+  coverageBlocked: string;
+  coverageSummary: (working: number, total: number) => string;
+  pdfFormatHint: (authority: string) => string;
   secundariaPdfLabel: string;
   primariaPdfLabel: string;
   officialPdfsEmpty: string;
   officialPdfsVerifyNotice: string;
-  openPortalFallback: string;
+  openPortalFallback: (authority: string) => string;
+  openPortal: (authority: string) => string;
   sampleFileDisclaimer: string;
   selectAll: string;
   deselectAll: string;
@@ -172,12 +189,12 @@ export interface I18nTranslations {
   sourceUpdated: string;
   sourceIntro: string;
   sourceWhatTitle: string;
-  sourceWhatBody: string;
+  sourceWhatBody: (authority: string) => string;
   sourcePublisherTitle: string;
-  sourcePublisherBody: string;
+  sourcePublisherBody: (authority: string) => string;
   sourceStaleWarningTitle: string;
   sourceStaleWarning: string;
-  sourceCtaLabel: string;
+  sourceCtaLabel: (authority: string) => string;
   backToHome: string;
   observationsTitle: string;
   close: string;
@@ -185,7 +202,7 @@ export interface I18nTranslations {
 
   termsNatureTitle: string;
   termsNatureBody: string;
-  termsNatureNotice: string;
+  termsNatureNotice: (authority: string) => string;
   termsPrivacyTitle: string;
   termsPrivacyCard1Title: string;
   termsPrivacyCard1Desc: string;
@@ -264,6 +281,7 @@ const CA: I18nTranslations = {
   uploadDesc: 'Posa a prova el sistema amb el teu propi fitxer de vacants en format PDF.',
   dropPrompt: 'Arrossega el PDF aquí o fes clic per seleccionar el fitxer',
   dropHint: 'Només fitxers PDF vàlids (Màx. 10MB)',
+  dropHintSheet: 'Aquesta comunitat publica el llistat en full de càlcul: puja el .xlsx (o un PDF, si en tens)',
   footerCopyright: '© 2026 Distància IES',
   footerPrivacy: 'Privacitat',
   footerTerms: 'Termes d\'ús',
@@ -386,13 +404,30 @@ const CA: I18nTranslations = {
 
   pdfProcessingMessage: (page: number, total: number) => `Processant pàgina ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
-  regionDisclaimer: 'De moment, l\'aplicació només funciona per a centres de la Comunitat Valenciana.',
-  pdfFormatHint: (filename: string) => `Necessites el PDF oficial vigent de vacants d'educació secundària (mateix format que ${filename}, que és només un exemple).`,
+  regionDisclaimer: (region: string) => `Estàs calculant distàncies per a centres de ${region}. Canvia de comunitat a dalt si no és la teua.`,
+  regionSelectorLabel: 'Tria la teua comunitat autònoma',
+  regionSelectorHint: "D'ella depenen el llistat que has de pujar i els centres amb què es creua.",
+  regionCoverageLink: (total: number) => `Veure les ${total} administracions`,
+  regionManualOnlyNotice: 'Aquesta comunitat no permet descarregar els llistats automàticament: has de baixar el PDF del portal oficial i pujar-lo tu.',
+  coverageTitle: 'On funciona ara mateix',
+  coverageIntro: "Cada administració publica les seues vacants a la seua manera, així que les comunitats es van afegint d'una en una. Aquest és l'estat real, comprovat sobre els documents oficials de cada una.",
+  coverageColRegion: 'Comunitat',
+  coverageColStatus: 'Estat',
+  coverageColNote: 'Detall',
+  coverageStable: 'Funciona',
+  coverageBeta: 'En proves',
+  coverageManualOnly: 'Pujada manual',
+  coveragePending: 'Pendent',
+  coverageBlocked: 'Bloquejada',
+  coverageSummary: (working: number, total: number) => `${working} de ${total} administracions educatives operatives`,
+  pdfFormatHint: (authority: string) =>
+    `Necessites el PDF de vacants vigent, tal com el publica ${authority}. Si el descarregues d'un altre lloc o d'un altre curs, la maqueta pot no coincidir.`,
   secundariaPdfLabel: 'Secundària',
   primariaPdfLabel: 'Primària',
   officialPdfsEmpty: 'No s\'ha pogut detectar automàticament cap PDF en aquesta pàgina. Visita el',
   officialPdfsVerifyNotice: 'Verifica que el document és el vigent abans d\'utilitzar-lo: aquests enllaços es detecten automàticament del portal oficial i la seua estructura pot canviar.',
-  openPortalFallback: 'portal oficial de la GVA',
+  openPortalFallback: (authority: string) => `portal oficial de ${authority}`,
+  openPortal: (authority: string) => `Obrir el portal de ${authority}`,
   sampleFileDisclaimer: 'Fitxer d\'exemple estàtic per a provar l\'aplicació — no reflecteix les vacants vigents.',
   selectAll: 'Seleccionar totes',
   deselectAll: 'Desseleccionar totes',
@@ -404,12 +439,12 @@ const CA: I18nTranslations = {
   sourceUpdated: 'Darrera revisió: Agost 2026',
   sourceIntro: 'Aquesta aplicació no publica cap dada pròpia: tot el que veus ix del PDF que tu puges. Ací t\'expliquem d\'on ve eixe document i com aconseguir sempre la versió vigent.',
   sourceWhatTitle: 'Què és el PDF de vacants?',
-  sourceWhatBody: 'És el llistat oficial de vacants, supressions i desplaçaments del cos de secundària i altres cossos, publicat per la Conselleria d\'Educació de la Generalitat Valenciana dins dels procediments de provisió de llocs de treball docents.',
+  sourceWhatBody: (authority: string) => `És el llistat oficial de vacants, supressions i desplaçaments dels cossos docents, publicat per ${authority} dins dels procediments de provisió de llocs de treball docents.`,
   sourcePublisherTitle: 'Qui el publica i amb quina freqüència',
-  sourcePublisherBody: 'El publica la Conselleria d\'Educació (GVA) a través del portal de Recursos Humans - Educació. Cada curs se sol publicar primer una resolució/llistat <strong>provisional</strong> i després la versió <strong>definitiva</strong>, per la qual cosa el document canvia diverses vegades a l\'any.',
+  sourcePublisherBody: (authority: string) => `El publica ${authority} a través del seu portal de personal docent. Cada curs se sol publicar primer una resolució/llistat <strong>provisional</strong> i després la versió <strong>definitiva</strong>, per la qual cosa el document canvia diverses vegades a l'any.`,
   sourceStaleWarningTitle: 'El PDF d\'exemple pot estar desactualitzat',
   sourceStaleWarning: 'El PDF d\'exemple inclòs en aquesta app és un fitxer estàtic incrustat fa temps: és útil per a provar l\'eina, però <strong>no és el document vigent</strong>. Descarrega sempre el PDF actual des del portal oficial abans de fer-ne servir els resultats.',
-  sourceCtaLabel: 'Anar al portal oficial de la GVA',
+  sourceCtaLabel: (authority: string) => `Anar al portal oficial de ${authority}`,
   backToHome: 'Tornar a l\'inici',
   observationsTitle: 'Observacions de la plaça',
   close: 'Tancar',
@@ -417,7 +452,7 @@ const CA: I18nTranslations = {
 
   termsNatureTitle: 'Naturalesa de l\'Eina',
   termsNatureBody: 'Aquesta aplicació és una eina <strong>sense ànim de lucre</strong>, desenvolupada amb la finalitat de facilitar la visualització de dades de desplaçament per a personal docent.',
-  termsNatureNotice: '<strong>Avís d\'Independència:</strong> Aquest programari és totalment independent i no té cap vinculació oficial amb la <strong>Generalitat Valenciana</strong> ni amb la Conselleria d\'Educació.',
+  termsNatureNotice: (authority: string) => `<strong>Avís d'Independència:</strong> Aquest programari és totalment independent i no té cap vinculació oficial amb <strong>${authority}</strong>.`,
   termsPrivacyTitle: 'Privadesa i Gestió de Dades',
   termsPrivacyCard1Title: 'Sense emmagatzematge',
   termsPrivacyCard1Desc: 'No guardem dades ni fitxers als nostres servidors. Tota la informació es processa exclusivament al vostre navegador.',
@@ -485,6 +520,7 @@ const ES: I18nTranslations = {
   uploadDesc: 'Pon a prueba el sistema con tu propio archivo de vacantes en formato PDF.',
   dropPrompt: 'Arrastra el PDF aquí o haz clic para seleccionar el archivo',
   dropHint: 'Sólo archivos PDF válidos (Máx. 10MB)',
+  dropHintSheet: 'Esta comunidad publica el listado en hoja de cálculo: sube el .xlsx (o un PDF, si lo tienes)',
   footerCopyright: '© 2026 Distancia IES',
   footerPrivacy: 'Privacidad',
   footerTerms: 'Términos de uso',
@@ -607,13 +643,30 @@ const ES: I18nTranslations = {
 
   pdfProcessingMessage: (page: number, total: number) => `Procesando página ${page} de ${total}...`,
   filterLocalitiesPlaceholder: '',
-  regionDisclaimer: 'Por ahora, la aplicación solo funciona para centros de la Comunitat Valenciana.',
-  pdfFormatHint: (filename: string) => `Necesitas el PDF oficial vigente de vacantes de educación secundaria (mismo formato que ${filename}, que es solo un ejemplo).`,
+  regionDisclaimer: (region: string) => `Estás calculando distancias para centros de ${region}. Cambia de comunidad arriba si no es la tuya.`,
+  regionSelectorLabel: 'Elige tu comunidad autónoma',
+  regionSelectorHint: 'De ella dependen el listado que tienes que subir y los centros con los que se cruza.',
+  regionCoverageLink: (total: number) => `Ver las ${total} administraciones`,
+  regionManualOnlyNotice: 'Esta comunidad no permite descargar los listados automáticamente: tienes que bajar el PDF del portal oficial y subirlo tú.',
+  coverageTitle: 'Dónde funciona ahora mismo',
+  coverageIntro: 'Cada administración publica sus vacantes a su manera, así que las comunidades se van añadiendo de una en una. Este es el estado real, comprobado sobre los documentos oficiales de cada una.',
+  coverageColRegion: 'Comunidad',
+  coverageColStatus: 'Estado',
+  coverageColNote: 'Detalle',
+  coverageStable: 'Funciona',
+  coverageBeta: 'En pruebas',
+  coverageManualOnly: 'Subida manual',
+  coveragePending: 'Pendiente',
+  coverageBlocked: 'Bloqueada',
+  coverageSummary: (working: number, total: number) => `${working} de ${total} administraciones educativas operativas`,
+  pdfFormatHint: (authority: string) =>
+    `Necesitas el PDF de vacantes vigente, tal como lo publica ${authority}. Si lo descargas de otro sitio o de otro curso, la maqueta puede no coincidir.`,
   secundariaPdfLabel: 'Secundaria',
   primariaPdfLabel: 'Primaria',
   officialPdfsEmpty: 'No se ha podido detectar automáticamente ningún PDF en esta página. Visita el',
   officialPdfsVerifyNotice: 'Verifica que el documento es el vigente antes de usarlo: estos enlaces se detectan automáticamente del portal oficial y su estructura puede cambiar.',
-  openPortalFallback: 'portal oficial de la GVA',
+  openPortalFallback: (authority: string) => `portal oficial de ${authority}`,
+  openPortal: (authority: string) => `Abrir el portal de ${authority}`,
   sampleFileDisclaimer: 'Archivo de ejemplo estático para probar la aplicación — no refleja las vacantes vigentes.',
   selectAll: 'Seleccionar todas',
   deselectAll: 'Deseleccionar todas',
@@ -625,12 +678,12 @@ const ES: I18nTranslations = {
   sourceUpdated: 'Última revisión: Agosto 2026',
   sourceIntro: 'Esta aplicación no publica ningún dato propio: todo lo que ves sale del PDF que tú subes. Aquí te explicamos de dónde viene ese documento y cómo conseguir siempre la versión vigente.',
   sourceWhatTitle: '¿Qué es el PDF de vacantes?',
-  sourceWhatBody: 'Es el listado oficial de vacantes, supresiones y desplazamientos del cuerpo de secundaria y otros cuerpos, publicado por la Conselleria d\'Educació de la Generalitat Valenciana dentro de los procedimientos de provisión de puestos de trabajo docentes.',
+  sourceWhatBody: (authority: string) => `Es el listado oficial de vacantes, supresiones y desplazamientos de los cuerpos docentes, publicado por ${authority} dentro de los procedimientos de provisión de puestos de trabajo docentes.`,
   sourcePublisherTitle: 'Quién lo publica y con qué frecuencia',
-  sourcePublisherBody: 'Lo publica la Conselleria d\'Educació (GVA) a través del portal de Recursos Humanos - Educación. Cada curso se suele publicar primero una resolución/listado <strong>provisional</strong> y después la versión <strong>definitiva</strong>, por lo que el documento cambia varias veces al año.',
+  sourcePublisherBody: (authority: string) => `Lo publica ${authority} a través de su portal de personal docente. Cada curso se suele publicar primero una resolución/listado <strong>provisional</strong> y después la versión <strong>definitiva</strong>, por lo que el documento cambia varias veces al año.`,
   sourceStaleWarningTitle: 'El PDF de ejemplo puede estar desactualizado',
   sourceStaleWarning: 'El PDF de ejemplo incluido en esta app es un archivo estático incrustado hace tiempo: es útil para probar la herramienta, pero <strong>no es el documento vigente</strong>. Descarga siempre el PDF actual desde el portal oficial antes de usar los resultados.',
-  sourceCtaLabel: 'Ir al portal oficial de la GVA',
+  sourceCtaLabel: (authority: string) => `Ir al portal oficial de ${authority}`,
   backToHome: 'Volver al inicio',
   observationsTitle: 'Observaciones de la plaza',
   close: 'Cerrar',
@@ -638,7 +691,7 @@ const ES: I18nTranslations = {
 
   termsNatureTitle: 'Naturaleza de la Herramienta',
   termsNatureBody: 'Esta aplicación es una herramienta <strong>sin ánimo de lucro</strong>, desarrollada con la finalidad de facilitar la visualización de datos de desplazamiento para personal docente.',
-  termsNatureNotice: '<strong>Aviso de Independencia:</strong> Este software es totalmente independiente y no tiene ninguna vinculación oficial con la <strong>Generalitat Valenciana</strong> ni con la Conselleria d\'Educació.',
+  termsNatureNotice: (authority: string) => `<strong>Aviso de Independencia:</strong> Este software es totalmente independiente y no tiene ninguna vinculación oficial con <strong>${authority}</strong>.`,
   termsPrivacyTitle: 'Privacidad y Gestión de Datos',
   termsPrivacyCard1Title: 'Sin almacenamiento',
   termsPrivacyCard1Desc: 'No guardamos datos ni archivos en nuestros servidores. Toda la información se procesa exclusivamente en tu navegador.',

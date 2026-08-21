@@ -6,8 +6,11 @@ import { CentresDatabaseService } from './services/centres-database.service';
 import { I18nService } from './services/i18n.service';
 import { APP_VERSION } from './version';
 import { APP_ENV } from './env';
-import { PDF_PORTAL_HUB_URL } from './constants';
+import { RegionService } from './regions/region.service';
+import { RegionId, RegionStatus } from './regions/region.types';
+import { COVERAGE, CoverageStatus } from './regions/coverage';
 import { PdfSourceService, Cos, OfficialPdfLink } from './services/pdf-source.service';
+import { SheetParserService } from './services/sheet-parser.service';
 import { inject } from '@vercel/analytics';
 import L from 'leaflet';
 
@@ -51,7 +54,41 @@ export class App implements OnDestroy {
   }
 
   step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy' | 'source'>('landing');
-  pdfPortalHubUrl = PDF_PORTAL_HUB_URL;
+  pdfPortalHubUrl = computed(() => this.region.current().portalHubUrl);
+  hasOfficialDownload = computed(() => !!this.region.current().officialSource);
+  /** La comunidad publica su listado en hoja de cálculo y no en PDF. */
+  acceptsSheet = computed(() => !!this.region.current().sheetHints);
+  activeRegionId = computed<RegionId>(() => this.region.currentId());
+  activeRegion = computed(() => this.region.current());
+  activeAuthority = computed(() => this.region.current().authority[this.i18n.lang()]);
+
+  coverage = COVERAGE;
+  coverageWorking = COVERAGE.filter(
+    (c) => c.status === 'stable' || c.status === 'beta' || c.status === 'manual-only',
+  ).length;
+  coverageTotal = COVERAGE.length;
+
+  coverageLabel(status: CoverageStatus): string {
+    const t = this.t();
+    switch (status) {
+      case 'stable': return t.coverageStable;
+      case 'beta': return t.coverageBeta;
+      case 'manual-only': return t.coverageManualOnly;
+      case 'pending': return t.coveragePending;
+      case 'blocked': return t.coverageBlocked;
+    }
+  }
+
+  /** Color del distintivo de estado, con el mismo criterio que el mapa. */
+  coverageBadgeClasses(status: CoverageStatus): string {
+    switch (status) {
+      case 'stable': return 'bg-green-100 text-green-800';
+      case 'beta': return 'bg-amber-100 text-amber-800';
+      case 'manual-only': return 'bg-sky-100 text-sky-800';
+      case 'blocked': return 'bg-red-100 text-red-800';
+      default: return 'bg-surface-container-high text-on-surface-variant';
+    }
+  }
   officialPdfs = signal<Record<Cos, OfficialPdfLink[] | null>>({ secundaria: null, primaria: null });
   officialPdfsLoading = signal<Cos | null>(null);
   pdfLoaded = signal(false);
@@ -144,7 +181,9 @@ export class App implements OnDestroy {
     public geo: GeocodingService,
     public centresDb: CentresDatabaseService,
     private pdfSource: PdfSourceService,
-    public i18n: I18nService
+    private sheetParser: SheetParserService,
+    public i18n: I18nService,
+    public region: RegionService
   ) {
     this.process = this.pdfParser.process;
 
@@ -181,7 +220,7 @@ export class App implements OnDestroy {
       });
     });
 
-    this.initDefaultOrigins();
+    void this.initDefaultOrigins();
     inject();
 
     const mql = window.matchMedia('(max-width: 1023px)');
@@ -195,18 +234,44 @@ export class App implements OnDestroy {
     });
   }
 
-  private initDefaultOrigins() {
-    const defaults = [
-      { id: '1', name: 'València' },
-      { id: '2', name: 'Castelló de la Plana' },
-      { id: '3', name: 'Alacant' },
-    ];
-    const origins: Origin[] = [];
-    for (const d of defaults) {
-      const coords = this.centresDb.getLocalityCoordinates(d.name);
-      origins.push(coords ? { ...d, coordinates: coords } : d);
-    }
+  private async initDefaultOrigins() {
+    await this.centresDb.ensureLoaded();
+
+    const origins: Origin[] = this.region.current().defaultOrigins.map((name, i) => {
+      const id = String(i + 1);
+      const coords = this.centresDb.getLocalityCoordinates(name);
+      return coords ? { id, name, coordinates: coords } : { id, name };
+    });
+
     this.origins.set(origins);
+  }
+
+  /**
+   * Rótulo de estado de una comunidad en el selector.
+   *
+   * Reutiliza los de la tabla de cobertura para que una comunidad no se
+   * describa de dos maneras distintas en la misma página. Las que funcionan
+   * sin salvedades no llevan rótulo: lo normal no hace falta anunciarlo.
+   */
+  regionStatusLabel(status: RegionStatus): string {
+    const t = this.t();
+
+    switch (status) {
+      case 'beta': return t.coverageBeta;
+      case 'manual-only': return t.coverageManualOnly;
+      default: return '';
+    }
+  }
+
+  /** Cambia de comunidad y reinicia el proceso: los datos cargados ya no valen. */
+  async selectRegion(id: RegionId) {
+    if (id === this.region.currentId()) return;
+    this.region.select(id);
+    // Los centros, el PDF y los PDFs oficiales descubiertos son de la región
+    // anterior: no sirven para la nueva.
+    this.backToLanding();
+    this.officialPdfs.set({ secundaria: null, primaria: null });
+    await this.initDefaultOrigins();
   }
 
   ngOnDestroy() {
@@ -223,7 +288,8 @@ export class App implements OnDestroy {
   private initMap() {
     const el = this.mapContainer!.nativeElement;
 
-    this.map = L.map(el, { zoomControl: false }).setView([39.4699, -0.3763], 13);
+    this.map = L.map(el, { zoomControl: false });
+    this.map.fitBounds(this.region.current().mapBounds);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
@@ -357,7 +423,7 @@ export class App implements OnDestroy {
     this.dragging.set(false);
 
     const file = event.dataTransfer?.files?.[0];
-    if (file && file.name.toLowerCase().endsWith('.pdf')) {
+    if (file && this.isSupportedFile(file)) {
       this.processFile(file);
     } else {
       this.error.set(this.i18n.t().dropValidPDF);
@@ -371,8 +437,19 @@ export class App implements OnDestroy {
     input.value = '';
   }
 
+  /**
+   * Formatos que acepta la comunidad activa.
+   *
+   * Casi todas publican un PDF; Melilla dejó de hacerlo y publica una hoja de
+   * cálculo, así que solo a ella se le admite.
+   */
+  private isSupportedFile(file: File): boolean {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.pdf') || (this.acceptsSheet() && name.endsWith('.xlsx'));
+  }
+
   private async processFile(file: File) {
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
+    if (!this.isSupportedFile(file)) {
       this.error.set(this.i18n.t().errorPDFFormat);
       return;
     }
@@ -383,7 +460,11 @@ export class App implements OnDestroy {
     this.filteredCentres.set([]);
 
     try {
-      this.rawRecords = await this.pdfParser.parsePdf(file);
+      const sheet = this.region.current().sheetHints;
+      this.rawRecords =
+        sheet && file.name.toLowerCase().endsWith('.xlsx')
+          ? await this.sheetParser.parseSheet(file, sheet)
+          : await this.pdfParser.parsePdf(file, this.region.current().parserHints ?? {});
       this.pdfLoaded.set(true);
 
       if (this.rawRecords.length > 0) {
@@ -429,6 +510,8 @@ export class App implements OnDestroy {
   }
 
   async continueWithOrigin() {
+    await this.centresDb.ensureLoaded();
+    this.fillMissingLocalities();
     const origin = this.origins().find((o) => o.id === this.activeOrigin());
     if (!origin?.coordinates) {
       this.error.set(this.i18n.t().addComparisonOrigin);
@@ -496,6 +579,7 @@ export class App implements OnDestroy {
   }
 
   async addOrigin() {
+    await this.centresDb.ensureLoaded();
     const name = this.newOriginName().trim();
     if (!name) return;
 
@@ -545,6 +629,7 @@ export class App implements OnDestroy {
   }
 
   async selectOrigin(id: string) {
+    await this.centresDb.ensureLoaded();
     this.activeOrigin.set(id);
     const origin = this.origins().find((o) => o.id === id);
     if (!origin) return;
@@ -597,6 +682,7 @@ export class App implements OnDestroy {
   }
 
   async calculateDistancesForOrigin(origin: Origin) {
+    await this.centresDb.ensureLoaded();
     if (!origin.coordinates) return;
 
     const currentCentres = this.step() === 'main' ? this.filteredCentres() : this.centres();
@@ -673,6 +759,7 @@ export class App implements OnDestroy {
   }
 
   private async flushModalityChanges() {
+    await this.centresDb.ensureLoaded();
     const origin = this.origins().find((o) => o.id === this.activeOrigin());
     if (!origin?.coordinates) return;
 
@@ -725,6 +812,23 @@ export class App implements OnDestroy {
 
     this.calculating.set(false);
     this.geoProgress.set({ current: 0, total: 0, message: '' });
+  }
+
+  /** Completa la localidad desde el directorio cuando el listado no la trae. */
+  private fillMissingLocalities() {
+    let filled = false;
+
+    for (const centre of this.centres()) {
+      if (centre.locality || !centre.code) continue;
+      const locality = this.centresDb.getCentreLocality(centre.code);
+      if (!locality) continue;
+
+      centre.locality = locality;
+      for (const position of centre.positions) position.locality = locality;
+      filled = true;
+    }
+
+    if (filled) this.centres.update((list) => [...list]);
   }
 
   private async resolveMissingCoords(centres: IesCenter[], origin: Origin) {

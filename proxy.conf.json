@@ -1,10 +1,82 @@
 {
-  "/api/ceice": {
+  "/api/val": {
     "target": "https://ceice.gva.es",
     "secure": true,
     "changeOrigin": true,
     "pathRewrite": {
-      "^/api/ceice": ""
+      "^/api/val": ""
+    }
+  },
+  "/api/clm": {
+    "target": "https://educacion.castillalamancha.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/clm": ""
+    }
+  },
+  "/api/can": {
+    "target": "https://www.gobiernodecanarias.org",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/can": ""
+    }
+  },
+  "/api/cyl": {
+    "target": "https://www.educa.jcyl.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/cyl": ""
+    }
+  },
+  "/api/mad": {
+    "target": "https://sede.comunidad.madrid",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/mad": ""
+    }
+  },
+  "/api/cnt": {
+    "target": "https://www.educantabria.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/cnt": ""
+    }
+  },
+  "/api/ast": {
+    "target": "https://www.educastur.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/ast": ""
+    }
+  },
+  "/api/nav": {
+    "target": "https://tramitespersonal.navarra.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/nav": ""
+    }
+  },
+  "/api/ext": {
+    "target": "https://profex.educarex.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/ext": ""
+    }
+  },
+  "/api/mel": {
+    "target": "https://www.educacionfpydeportes.gob.es",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/mel": ""
     }
   }
 }

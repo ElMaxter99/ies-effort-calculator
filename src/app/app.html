@@ -31,6 +31,38 @@
             <h1 class="text-display-lg font-display-lg text-primary max-lg:text-headline-lg">{{ t().heroTitle }}</h1>
             <p class="text-body-lg font-body-lg text-on-surface-variant max-lg:text-body-md">{{ t().heroDescription }}</p>
           </div>
+          <div class="space-y-sm text-left">
+            <div class="flex items-baseline justify-between gap-sm flex-wrap">
+              <h2 id="region-selector-label" class="text-body-sm font-bold text-on-surface">{{ t().regionSelectorLabel }}</h2>
+              <a href="#coverage" class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity">
+                {{ t().regionCoverageLink(coverageTotal) }}
+              </a>
+            </div>
+            <p class="text-label-md font-label-md text-on-surface-variant">{{ t().regionSelectorHint }}</p>
+            <div role="radiogroup" aria-labelledby="region-selector-label"
+                 class="grid grid-cols-2 md:grid-cols-3 gap-sm">
+              @for (r of region.all; track r.id) {
+                <label class="block cursor-pointer">
+                  <input type="radio" name="region" class="sr-only peer" [value]="r.id"
+                         [checked]="activeRegionId() === r.id" (change)="selectRegion(r.id)" />
+                  <span class="flex items-start gap-1.5 h-full text-left rounded-xl border border-outline-variant bg-surface px-md py-sm min-h-[3.5rem] transition-colors
+                               peer-hover:border-primary peer-hover:bg-primary/5
+                               peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-checked:shadow-sm
+                               peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary">
+                    <span class="material-symbols-outlined text-[18px] leading-5 shrink-0 transition-opacity"
+                          [class.opacity-0]="activeRegionId() !== r.id" aria-hidden="true">check_circle</span>
+                    <span class="min-w-0">
+                      <span class="block text-body-sm font-bold leading-tight">{{ r.name[i18n.lang()] }}</span>
+                      @if (regionStatusLabel(r.status); as status) {
+                        <span class="block text-label-md font-label-md opacity-75 leading-tight mt-0.5">{{ status }}</span>
+                      }
+                    </span>
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+
           <div class="space-y-lg">
             <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant bg-white rounded-xl transition-all hover:border-primary hover:shadow-lg flex flex-col items-center justify-center gap-md p-12 max-lg:p-6"
                  id="drop-zone"
@@ -40,39 +72,52 @@
                  [class.border-primary]="dragging()"
                  [class.bg-primary/5]="dragging()"
                  (click)="landingPdfInput.click()">
-              <input accept=".pdf" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
+              <input [attr.accept]="acceptsSheet() ? '.pdf,.xlsx' : '.pdf'" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
               <div class="w-16 h-16 max-lg:w-12 max-lg:h-12 rounded-full bg-surface-container-high flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                 <span class="material-symbols-outlined text-4xl max-lg:text-3xl">cloud_upload</span>
               </div>
               <div class="space-y-xs">
                 <p class="text-body-lg font-bold text-on-surface">{{ t().dropPrompt }}</p>
-                <p class="font-label-md text-label-md text-on-surface-variant">{{ t().dropHint }}</p>
+                <p class="font-label-md text-label-md text-on-surface-variant">{{ acceptsSheet() ? t().dropHintSheet : t().dropHint }}</p>
               </div>
             </div>
 
             <div class="flex flex-col items-center gap-sm mt-md text-center">
               <div class="bg-surface-container-low border border-outline-variant text-on-surface-variant text-body-sm px-lg py-md rounded-lg max-w-lg">
-                {{ t().regionDisclaimer }}
+                {{ t().regionDisclaimer(activeRegion().name[i18n.lang()]) }}
+                @if (activeRegion().status === 'manual-only') {
+                  <span class="block mt-xs">{{ t().regionManualOnlyNotice }}</span>
+                }
               </div>
               <p class="text-body-sm text-on-surface-variant max-w-lg">
-                {{ t().pdfFormatHint('Vacants_Supr_Despl_Secundaria_2.pdf') }}
+                {{ t().pdfFormatHint(activeAuthority()) }}
               </p>
-              <div class="flex gap-sm flex-wrap justify-center">
-                <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
-                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
-                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'secundaria'">
-                    {{ officialPdfsLoading() === 'secundaria' ? 'sync' : 'school' }}
-                  </span>
-                  {{ t().secundariaPdfLabel }}
-                </button>
-                <button (click)="loadOfficialPdfs('primaria')" [disabled]="officialPdfsLoading() === 'primaria'"
-                        class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
-                  <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'primaria'">
-                    {{ officialPdfsLoading() === 'primaria' ? 'sync' : 'school' }}
-                  </span>
-                  {{ t().primariaPdfLabel }}
-                </button>
-              </div>
+              @if (hasOfficialDownload()) {
+                <div class="flex gap-sm flex-wrap justify-center">
+                  <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
+                          class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                    <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'secundaria'">
+                      {{ officialPdfsLoading() === 'secundaria' ? 'sync' : 'school' }}
+                    </span>
+                    {{ t().secundariaPdfLabel }}
+                  </button>
+                  <button (click)="loadOfficialPdfs('primaria')" [disabled]="officialPdfsLoading() === 'primaria'"
+                          class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
+                    <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'primaria'">
+                      {{ officialPdfsLoading() === 'primaria' ? 'sync' : 'school' }}
+                    </span>
+                    {{ t().primariaPdfLabel }}
+                  </button>
+                </div>
+              } @else {
+                <!-- Sin descarga automática, dos botones que no devuelven nada
+                     solo confunden: se enlaza el portal y ya. -->
+                <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener"
+                   class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm">
+                  <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                  {{ t().openPortal(activeAuthority()) }}
+                </a>
+              }
 
               @let secundariaLinks = officialPdfs().secundaria;
               @if (secundariaLinks) {
@@ -93,7 +138,7 @@
                   } @else {
                     <p class="text-body-sm text-on-surface-variant">
                       {{ t().officialPdfsEmpty }}
-                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                      <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback(activeAuthority()) }}</a>
                     </p>
                   }
                 </div>
@@ -118,7 +163,7 @@
                   } @else {
                     <p class="text-body-sm text-on-surface-variant">
                       {{ t().officialPdfsEmpty }}
-                      <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback }}</a>
+                      <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback(activeAuthority()) }}</a>
                     </p>
                   }
                 </div>
@@ -128,14 +173,16 @@
                 <p class="text-body-sm text-on-surface-variant/80 max-w-lg font-medium">{{ t().officialPdfsVerifyNotice }}</p>
               }
 
-              <div class="flex flex-col items-center gap-1 mt-xs">
-                <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
-                   class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
-                  <span class="material-symbols-outlined text-[16px]">download</span>
-                  {{ t().loadSample }}
-                </a>
-                <p class="text-body-sm text-on-surface-variant/70 max-w-lg">{{ t().sampleFileDisclaimer }}</p>
-              </div>
+              @if (activeRegionId() === 'val') {
+                <div class="flex flex-col items-center gap-1 mt-xs">
+                  <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
+                     class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
+                    <span class="material-symbols-outlined text-[16px]">download</span>
+                    {{ t().loadSample }}
+                  </a>
+                  <p class="text-body-sm text-on-surface-variant/70 max-w-lg">{{ t().sampleFileDisclaimer }}</p>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -196,6 +243,47 @@
             <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature4Title }}</h4>
             <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature4Desc }}</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cobertura por comunidad autónoma -->
+    <section id="coverage" class="bg-surface py-xl border-t border-outline-variant scroll-mt-16">
+      <div class="max-w-container-max mx-auto px-gutter">
+        <div class="text-center space-y-sm mb-lg">
+          <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().coverageTitle }}</h2>
+          <p class="text-body-md text-on-surface-variant max-w-3xl mx-auto">{{ t().coverageIntro }}</p>
+          <p class="font-label-md text-label-md font-bold text-on-surface-variant">
+            {{ t().coverageSummary(coverageWorking, coverageTotal) }}
+          </p>
+        </div>
+
+        <div class="overflow-x-auto border border-outline-variant rounded-xl bg-surface-container-lowest">
+          <table class="w-full border-collapse text-body-sm min-w-[36rem]">
+            <thead>
+              <tr class="bg-surface-container-low text-on-surface-variant text-left">
+                <th scope="col" class="px-lg py-md font-bold">{{ t().coverageColRegion }}</th>
+                <th scope="col" class="px-lg py-md font-bold whitespace-nowrap">{{ t().coverageColStatus }}</th>
+                <th scope="col" class="px-lg py-md font-bold">{{ t().coverageColNote }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of coverage; track entry.name.es) {
+                <tr class="border-t border-outline-variant/60">
+                  <th scope="row" class="px-lg py-md font-bold text-on-surface text-left whitespace-nowrap">
+                    {{ entry.name[i18n.lang()] }}
+                  </th>
+                  <td class="px-lg py-md align-top">
+                    <span class="inline-block px-sm py-0.5 rounded font-label-md text-label-md font-bold whitespace-nowrap"
+                          [class]="coverageBadgeClasses(entry.status)">
+                      {{ coverageLabel(entry.status) }}
+                    </span>
+                  </td>
+                  <td class="px-lg py-md text-on-surface-variant align-top">{{ entry.note[i18n.lang()] }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1481,7 +1569,7 @@
           </h2>
           <div class="space-y-sm text-on-surface-variant">
             <p [innerHTML]="t().termsNatureBody"></p>
-            <div class="bg-surface-container-low border-l-4 border-primary p-md rounded-r-lg italic" [innerHTML]="t().termsNatureNotice">
+            <div class="bg-surface-container-low border-l-4 border-primary p-md rounded-r-lg italic" [innerHTML]="t().termsNatureNotice(activeAuthority())">
             </div>
           </div>
         </article>
@@ -1659,18 +1747,18 @@
             <span class="material-symbols-outlined">picture_as_pdf</span>
             {{ t().sourceWhatTitle }}
           </h2>
-          <p class="text-on-surface-variant">{{ t().sourceWhatBody }}</p>
+          <p class="text-on-surface-variant">{{ t().sourceWhatBody(activeAuthority()) }}</p>
         </article>
         <article class="space-y-md border-t border-outline-variant pt-xl">
           <h2 class="text-headline-sm font-headline-sm text-primary flex items-center gap-sm">
             <span class="material-symbols-outlined">account_balance</span>
             {{ t().sourcePublisherTitle }}
           </h2>
-          <p class="text-on-surface-variant" [innerHTML]="t().sourcePublisherBody"></p>
-          <a [href]="pdfPortalHubUrl" target="_blank" rel="noopener"
+          <p class="text-on-surface-variant" [innerHTML]="t().sourcePublisherBody(activeAuthority())"></p>
+          <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener"
              class="inline-flex items-center gap-2 bg-primary text-on-primary px-lg py-3 rounded-lg font-bold text-label-md hover:opacity-90 transition-all shadow-md">
             <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-            {{ t().sourceCtaLabel }}
+            {{ t().sourceCtaLabel(activeAuthority()) }}
           </a>
         </article>
         <article class="space-y-md border-t border-outline-variant pt-xl">

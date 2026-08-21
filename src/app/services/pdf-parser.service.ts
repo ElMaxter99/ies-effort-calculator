@@ -1,6 +1,362 @@
 import { Injectable, signal } from '@angular/core';
 import { IesRow, ProcessInfo } from '../types';
 import { I18nService } from './i18n.service';
+import {
+  ColumnField,
+  HeaderColumn,
+  TextRow,
+  assignColumn,
+  detectHeaderRow,
+  matchHeaderField,
+  matchHeaderFieldExact,
+  normalizeHeader,
+} from './column-dictionary';
+
+/** Item de texto tal como lo entrega pdfjs (solo lo que necesitamos). */
+export interface PdfTextItem {
+  str: string;
+  transform: number[];
+}
+
+/**
+ * Ajustes de parseo específicos de una comunidad, para los casos en que la
+ * detección automática de cabecera no basta.
+ */
+export interface ParserHints {
+  /**
+   * Cómo está maquetado el listado:
+   * - `columns` (por defecto): una tabla plana, una fila por plaza, con una
+   *   cabecera de columnas reconocible. Es el caso de la Comunitat Valenciana.
+   * - `grouped`: bloques por centro, cada uno con una subtabla de
+   *   especialidades y sus recuentos de vacantes. Es el caso de
+   *   Castilla-La Mancha.
+   * - `transposed`: la tabla está girada. Cada *columna* es una plaza y cada
+   *   *fila* un campo, con el rótulo del campo a la izquierda. Es el caso de
+   *   Murcia, que además reparte las plazas en dos paneles por página.
+   * - `records`: no hay tabla, sino una ficha por plaza que reimprime sus
+   *   propios rótulos. Es el caso de Aragón.
+   * - `blocks`: bloques por centro, como `grouped`, pero con una fila por
+   *   plaza en lugar de recuentos, y sin rótulo que abra el bloque. Es el caso
+   *   de Asturias.
+   */
+  strategy?: 'columns' | 'grouped' | 'transposed' | 'records' | 'blocks';
+  /**
+   * Rangos [min, max] de coordenada X por campo. Si se indican, tienen
+   * prioridad sobre la detección de cabecera. Es la vía de escape para PDFs
+   * cuya cabecera no se reconoce.
+   */
+  columnOverrides?: Partial<Record<ColumnField, [number, number]>>;
+  /**
+   * Activa el tratamiento de plazas itinerantes con marcadores tipográficos
+   * (ü / º) en su propia fila, tal como los maqueta la Generalitat Valenciana.
+   */
+  itinerantMarkers?: boolean;
+  /** Rótulos que delimitan los bloques cuando `strategy` es `grouped`. */
+  grouped?: GroupedHints;
+  /** Rótulos que delimitan las fichas cuando `strategy` es `records`. */
+  records?: RecordHints;
+  /** Rótulos que delimitan los bloques cuando `strategy` es `blocks`. */
+  blocks?: BlockHints;
+  /**
+   * Separación máxima en puntos para considerar que dos items están en la
+   * misma fila. Por defecto 2, que sirve para la mayoría.
+   *
+   * Hay generadores que alinean las cifras con una línea base distinta de la
+   * del texto: en el anexo de vacantes de Canarias los recuentos van 3 pt por
+   * encima del nombre del centro, así que necesita un valor mayor.
+   */
+  rowTolerance?: number;
+  /**
+   * El código del centro va pegado a su nombre en la misma celda
+   * ("35000082 IES Joaquín Artiles"). Se separa el prefijo numérico.
+   */
+  splitCodeFromCentre?: boolean;
+  /**
+   * La fila indica cuántas vacantes hay en ese centro en lugar de repetirse
+   * una vez por plaza. Se expande a una fila por vacante para que el recuento
+   * de posiciones por centro siga siendo correcto.
+   */
+  expandVacancies?: boolean;
+  /**
+   * Patrón (como texto) del rótulo que identifica la modalidad —cuerpo y
+   * especialidad— que encabeza cada tabla.
+   *
+   * Por defecto reconoce el formato bilingüe de la Generalitat Valenciana
+   * ("201 - FILOSOFIA / FILOSOFÍA"). Conviene ajustarlo por comunidad: ese
+   * patrón, aplicado al anexo de Canarias, casaba con la cadena de la firma
+   * digital del documento en lugar de con la especialidad.
+   */
+  modalityPattern?: string;
+  /**
+   * Separación mínima en X para considerar que dos valores pertenecen a plazas
+   * distintas, en la estrategia `transposed`.
+   *
+   * Un valor largo se parte en varias líneas ligeramente desplazadas (unos
+   * 10 pt en Murcia), mientras que dos plazas contiguas distan unos 50, así
+   * que 25 separa bien sin partir un valor por la mitad.
+   */
+  transposedGap?: number;
+  /**
+   * Patrón (como texto) para sacar el código del centro del código del puesto,
+   * cuando el listado no lo imprime en columna propia.
+   *
+   * Cantabria no publica ninguna columna de código de centro, pero su código
+   * de puesto lo lleva dentro ("C39011441 0590007 0N004"): letra, código de
+   * centro, especialidad y correlativo. Sin extraerlo no habría forma de
+   * situar la plaza, porque el nombre del centro va abreviado y sin el tipo.
+   */
+  codeFromLocationCode?: string;
+  /**
+   * La página encabeza un valor que vale para todas sus plazas —la
+   * especialidad, o el centro— con un rótulo propio a la izquierda del de la
+   * columna, y lo imprime en una fila suelta a esa misma altura.
+   *
+   * Va detrás de un interruptor porque no es inocuo: en Múrcia hay filas
+   * sueltas ("ADJUDICADO EL 03/11/25") que se tomarían por ese valor.
+   */
+  transposedCaption?: boolean;
+  /**
+   * Campo del que salen las columnas de la tabla girada, en lugar de deducirlas
+   * de todos los valores de la página.
+   *
+   * Deducirlas de todo funciona mientras ningún valor se parta en dos líneas:
+   * en Cantabria una observación larga se desplaza 11 pt y abre una columna
+   * fantasma que, al estar a solo 6 pt de la plaza siguiente, se la traga. El
+   * código del puesto, en cambio, es un valor por plaza y nunca se parte.
+   */
+  transposedAnchorField?: ColumnField;
+  /**
+   * Descarta las filas que no traigan código de centro.
+   *
+   * Hay maquetas donde cada plaza ocupa varias filas: la primera lleva el
+   * centro y las siguientes solo detalles ("Provincia:", "Tipo Vacante:").
+   * Sin este filtro, esas filas de detalle se colarían como plazas fantasma.
+   */
+  requireCode?: boolean;
+  /**
+   * La celda del centro trae la localidad pegada detrás, separada por un guion
+   * ("I.E.S. SIERRA LEYRE- SANGUESA"). Se parte por el último guion.
+   *
+   * Sirve además de filtro: una fila cuya celda de centro no se parte no es una
+   * plaza. Es lo que descarta el membrete, la cabecera y la fila de totales de
+   * un listado que no trae código de centro con el que reconocerlas.
+   */
+  splitLocalityFromCentre?: boolean;
+  /**
+   * Une a la fila anterior las filas que solo continúan una celda.
+   *
+   * Un nombre de centro largo o una observación larga se parten en varias
+   * líneas, y la continuación queda como una fila suelta con una única celda
+   * rellena. Sin unirla, el nombre se queda a medias y la localidad que va
+   * detrás se pierde.
+   */
+  mergeWrappedRows?: boolean;
+  /**
+   * Patrón (como texto) de las filas que no son datos: membretes, cabeceras,
+   * totales y pies de página.
+   *
+   * Se prueba contra el texto de la fila entera.
+   */
+  ignoreRowPattern?: string;
+  /**
+   * Coordenada X por la que se parte la página en dos paneles independientes.
+   *
+   * Extremadura maqueta dos centros por página, uno al lado del otro, y cada
+   * panel lleva su propio hilo de bloques. Hay que separarlos antes de agrupar
+   * los items en filas: si no, la fila de un panel arrastra items del otro y
+   * los recuentos acaban en el centro equivocado.
+   */
+  panelSplitX?: number;
+  /**
+   * Maquetas alternativas de la misma comunidad, elegidas por lo que imprime el
+   * propio documento.
+   *
+   * Navarra publica sus vacantes en dos maquetas que no se parecen: la de
+   * maestros es una tabla con código de centro y columnas separadas, y la de
+   * secundaria no trae código y pega la localidad al nombre. El docente sube
+   * una u otra sin decir cuál, así que hay que reconocerla al abrirla.
+   */
+  variants?: ParserVariant[];
+  /**
+   * Rótulo de la fila que anuncia la especialidad en curso.
+   *
+   * En Castilla y León cada tramo del listado empieza con
+   * "Especialidad: 001 FILOSOFIA", y esa modalidad se aplica a todas las
+   * plazas siguientes hasta el próximo rótulo. Se arrastra entre páginas.
+   */
+  modalityLabel?: string;
+}
+
+/**
+ * Rótulos que estructuran un listado agrupado por centro.
+ *
+ * Se comparan ya normalizados (mayúsculas, sin acentos ni puntuación), así que
+ * basta con escribirlos de forma natural.
+ */
+export interface GroupedHints {
+  /** Abre un bloque de centro; en su misma fila van el código y la localidad. */
+  centreMarker: string;
+  /** Abre la subtabla de especialidades del centro en curso. */
+  itemHeader: string;
+  /** Cierra el bloque de centro. */
+  totalMarker: string;
+  /** Rótulo de la provincia, que encabeza el documento. */
+  provinceMarker?: string;
+}
+
+/** Maqueta alternativa, con el rastro que la delata en el propio documento. */
+export interface ParserVariant {
+  /**
+   * Texto que aparece en las primeras páginas de esta maqueta y no en las
+   * demás. Se compara normalizado (mayúsculas, sin acentos).
+   */
+  marker: string;
+  hints: ParserHints;
+}
+
+/**
+ * Rótulos que estructuran un listado en bloques por centro, una fila por plaza.
+ *
+ * Se parece a `grouped`, pero con dos diferencias que no se pueden salvar con
+ * un interruptor: el bloque no lo abre ningún rótulo —lo abre el propio código
+ * del centro— y su subtabla no lleva recuentos, sino una fila por plaza con
+ * columna propia para la itinerancia y para los detalles de la plaza.
+ */
+export interface BlockHints {
+  /**
+   * Patrón (como texto) del código de centro que abre un bloque. El resto de
+   * esa fila es el nombre del centro.
+   */
+  centrePattern: string;
+  /**
+   * Abre la subtabla de plazas del centro en curso, y su fila da además los
+   * límites de las columnas: se reimprime en cada bloque, así que es una
+   * cabecera fiable aunque el documento no tenga ninguna global.
+   */
+  itemHeader: string;
+  /**
+   * Cierra el bloque de centro.
+   *
+   * Es opcional: hay listados que no lo rotulan y el bloque acaba cuando
+   * empieza el siguiente centro.
+   */
+  totalMarker?: string;
+  /**
+   * La subtabla cuenta las vacantes en lugar de traer una fila por plaza.
+   *
+   * El rótulo indica de qué columna sale el recuento: Extremadura publica dos
+   * juntas —"Pl" son los puestos de la plantilla y "Va" los que están
+   * vacantes— y solo la segunda es una plaza a la que optar.
+   */
+  vacancyHeader?: string;
+  /**
+   * Patrón (como texto) del código de especialidad que marca plaza itinerante.
+   *
+   * Extremadura no le dedica columna: lo dice el propio código, que empieza por
+   * "IT" en lugar de por ceros.
+   */
+  itinerantPattern?: string;
+  /**
+   * La localidad va en la fila inmediatamente anterior a la del centro, a la
+   * derecha del concejo.
+   *
+   * Asturias encabeza cada bloque con "ALLANDE ... POLA DE ALLANDE": el
+   * concejo a la izquierda y la localidad concreta a la derecha, que es la que
+   * sitúa el centro.
+   */
+  localityAbove?: boolean;
+}
+
+/**
+ * Rótulos que estructuran un listado en fichas, una por plaza.
+ *
+ * A diferencia de una tabla, aquí los rótulos se reimprimen dentro de cada
+ * ficha, así que no vale localizar una cabecera y aplicarla al resto de la
+ * página: la ficha misma es la unidad, y sus rótulos hay que reconocerlos uno
+ * a uno.
+ */
+export interface RecordHints {
+  /**
+   * Rótulo que abre cada ficha.
+   *
+   * Su columna lleva el identificador de la plaza, así que se asigna a
+   * `number` sin consultar el diccionario: en Aragón el rótulo es
+   * "- Vacante -", que el diccionario leería como un recuento de vacantes.
+   */
+  startMarker: string;
+  /**
+   * Patrón (como texto) que reconoce un rótulo de la maqueta, con el nombre
+   * del rótulo en su primer grupo de captura.
+   *
+   * Aragón los envuelve entre guiones ("- Jornada -"), lo que permite separar
+   * rótulo de valor sin enumerarlos todos: los que no sirven para situar la
+   * plaza —jornada, duración, causa— se recogen igualmente como observaciones,
+   * que es donde el docente espera encontrarlos.
+   */
+  labelPattern: string;
+  /**
+   * Patrón (como texto) de las filas que no son datos, típicamente el pie de
+   * página. Sin él, el pie caería dentro de la última ficha de cada página.
+   */
+  ignorePattern?: string;
+}
+
+/**
+ * Ficha en construcción: sus columnas, el contenido de cada celda línea a
+ * línea, y los pares rótulo/valor de sus sub-bloques.
+ */
+interface OpenRecord {
+  columns: HeaderColumn[];
+  cells: Partial<Record<ColumnField, string[]>>;
+  details: { label: string; value: string }[];
+  /** Rótulos del sub-bloque en curso, a la espera de sus valores. */
+  pending: { label: string; x: number }[] | null;
+}
+
+/**
+ * Estado que se arrastra de una página a la siguiente.
+ *
+ * Los listados no son autocontenidos por página: la cabecera de columnas suele
+ * imprimirse solo la primera vez, y un bloque de centro puede quedar cortado
+ * por un salto de página.
+ */
+export interface ParseState {
+  /** Última cabecera de columnas detectada (estrategia `columns`). */
+  columns?: HeaderColumn[] | null;
+  /** Centro cuyo bloque está abierto (estrategia `grouped`). */
+  centre?: { code: string; name: string; locality: string } | null;
+  /** Si estamos dentro de la subtabla de especialidades (estrategia `grouped`). */
+  inItems?: boolean;
+  /** Contador correlativo de plazas, para numerarlas al vuelo. */
+  counter?: number;
+  /** Especialidad en curso, cuando la anuncia una fila con rótulo. */
+  modality?: string;
+  /**
+   * X donde empieza cada columna de la subtabla de plazas (estrategia
+   * `blocks`).
+   *
+   * Se guarda aparte de `columns` porque no son campos reconocidos del
+   * diccionario: la subtabla de Asturias rotula "Código", "Especialidad",
+   * "Iti", "Jornada" y "Función", y ni "Código" es el del centro ni "Función"
+   * es una modalidad.
+   */
+  itemColumns?: number[] | null;
+  /** Rótulos de esa misma subtabla, para saber qué columna es cuál. */
+  itemHeaders?: string[] | null;
+  /** Estado de cada panel, cuando la página se parte en varios (`panelSplitX`). */
+  panels?: ParseState[];
+}
+
+/**
+ * Tolerancia en puntos para considerar que dos items pertenecen a la misma fila.
+ *
+ * Los generadores de PDF no alinean exactamente la línea base de todas las
+ * celdas: en el listado de la GVA una misma fila reparte sus items entre tres
+ * valores de Y dentro de un margen de ~0,5 pt, mientras que dos filas
+ * consecutivas distan ~13,7 pt. Con 2 pt hay holgura de sobra dentro de la
+ * fila sin acercarse a la fila siguiente.
+ */
+const DEFAULT_ROW_TOLERANCE = 2;
 
 @Injectable({ providedIn: 'root' })
 export class PdfParserService {
@@ -8,7 +364,9 @@ export class PdfParserService {
 
   constructor(private i18n: I18nService) {}
 
-  async parsePdf(file: File): Promise<IesRow[]> {
+  async parsePdf(file: File, hints: ParserHints = {}): Promise<IesRow[]> {
+    // `hints` puede cambiar al abrir el documento, si la comunidad publica
+    // varias maquetas y hay que reconocer cuál es esta.
     const pdfjsLib = await import('pdfjs-dist');
     const worker = new Worker('/pdf.worker.min.mjs', { type: 'module' });
     pdfjsLib.GlobalWorkerOptions.workerPort = worker;
@@ -19,21 +377,30 @@ export class PdfParserService {
     this.process.set({ currentPage: 0, totalPages: pdf.numPages, percentage: 0, message: t.processingPDF });
 
     const allRows: IesRow[] = [];
+    // El estado cruza páginas: una tabla puede continuar sin repetir la
+    // cabecera, y un bloque de centro puede partirse por un salto de página.
+    let state: ParseState = {};
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-      this.process.set({
-        currentPage: i,
-        totalPages: pdf.numPages,
-        percentage: Math.round((i / pdf.numPages) * 100),
-        message: t.pdfProcessingMessage(i, pdf.numPages),
-      });
+    try {
+      for (let i = 1; i <= pdf.numPages; i++) {
+        this.process.set({
+          currentPage: i,
+          totalPages: pdf.numPages,
+          percentage: Math.round((i / pdf.numPages) * 100),
+          message: t.pdfProcessingMessage(i, pdf.numPages),
+        });
 
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
 
-      const modality = this.detectModality(content.items);
-      const pageRows = this.groupByRow(content.items, modality);
-      allRows.push(...pageRows);
+        if (i === 1) hints = this.selectVariant(content.items as PdfTextItem[], hints);
+
+        const result = this.parsePage(content.items as PdfTextItem[], hints, state);
+        state = result.state;
+        allRows.push(...result.rows);
+      }
+    } finally {
+      worker.terminate();
     }
 
     this.process.set({
@@ -46,33 +413,987 @@ export class PdfParserService {
     return allRows;
   }
 
-  private detectModality(items: any[]): string {
+  /**
+   * Elige la maqueta a la vista de lo que imprime la primera página.
+   *
+   * Una comunidad puede publicar sus vacantes en varias maquetas —Navarra usa
+   * una para maestros y otra para secundaria— y el docente sube el fichero sin
+   * decir cuál es. Se reconoce por un texto que solo aparece en una de ellas.
+   */
+  selectVariant(items: PdfTextItem[], hints: ParserHints): ParserHints {
+    if (!hints.variants?.length) return hints;
+
+    const text = normalizeHeader(items.map((item) => item.str).join(' '));
+    const match = hints.variants.find((variant) => text.includes(normalizeHeader(variant.marker)));
+
+    return match ? match.hints : hints;
+  }
+
+  /**
+   * Parsea una página. Función pura: no toca señales ni pdfjs, para poder
+   * ejercitarla en tests con items sintéticos o grabados.
+   *
+   * El `state` devuelto debe realimentarse en la llamada de la página
+   * siguiente: las tablas continúan entre páginas sin repetir la cabecera y un
+   * bloque de centro puede quedar partido por un salto de página.
+   */
+  parsePage(
+    items: PdfTextItem[],
+    hints: ParserHints = {},
+    state: ParseState = {},
+  ): { rows: IesRow[]; state: ParseState } {
+    const rows = this.toTextRows(items, hints.rowTolerance);
+
+    if (hints.strategy === 'grouped') {
+      return this.parseGroupedPage(rows, hints, state);
+    }
+
+    if (hints.strategy === 'transposed') {
+      return { rows: this.parseTransposedPage(rows, hints), state };
+    }
+
+    if (hints.strategy === 'records') {
+      return this.parseRecordsPage(rows, hints, state);
+    }
+
+    if (hints.strategy === 'blocks') {
+      if (hints.panelSplitX === undefined) return this.parseBlocksPage(rows, hints, state);
+      return this.parsePanels(items, hints, state);
+    }
+
+    const modality = this.detectModality(items, hints);
+    const usesOverrides = !!hints.columnOverrides && Object.keys(hints.columnOverrides).length > 0;
+
+    let columns = state.columns ?? null;
+    let dataRows = rows;
+
+    if (!usesOverrides) {
+      const header = detectHeaderRow(rows);
+      if (header) {
+        columns = header.columns;
+        // Solo las filas por debajo de la cabecera son datos; lo de arriba son
+        // membretes y títulos.
+        dataRows = rows.filter((r) => r.y < header.row.y);
+      }
+      if (!columns) return { rows: [], state: { ...state, columns: null } };
+    }
+
+    if (hints.ignoreRowPattern) {
+      const ignore = new RegExp(hints.ignoreRowPattern, 'i');
+      dataRows = dataRows.filter((row) => !ignore.test(row.items.map((i) => i.str).join(' ')));
+    }
+
+    if (hints.mergeWrappedRows) {
+      dataRows = this.mergeWrappedRows(dataRows, hints, columns);
+    }
+
+    const extracted = this.extractRows(dataRows, modality || (state.modality ?? ''), hints, columns);
+
+    return {
+      rows: extracted.rows,
+      state: { ...state, columns, modality: extracted.modality },
+    };
+  }
+
+  /**
+   * Extrae un listado con la tabla girada.
+   *
+   * Cada plaza es una *columna* y cada campo una *fila*, con el rótulo del
+   * campo a la izquierda:
+   *
+   *     Función        0590004 LENGUA    0590013 ITALIANO   0592002 ARABE
+   *     Localidad      CARTAGENA         MURCIA             MURCIA
+   *     Nombre Centro  IES MEDITERRÁNEO  IES SAAVEDRA ...   EOI ...
+   *     Cod. Centro    30012276          30006173           30009757
+   *
+   * Se localizan las filas cuyo primer texto es un rótulo conocido, y el resto
+   * de sus items se agrupan en columnas por cercanía en X: cada columna es una
+   * plaza. Los valores largos se parten en varias líneas ligeramente
+   * desplazadas, y por eso se agrupa por hueco y no por coincidencia exacta.
+   *
+   * Murcia imprime dos paneles por página ("Vacantes de PLANTILLA" y "de
+   * SUSTITUCIÓN"), cada uno con su propia columna de rótulos; como los rótulos
+   * se excluyen del agrupado, ambos paneles se resuelven a la vez.
+   */
+  private parseTransposedPage(rows: TextRow[], hints: ParserHints): IesRow[] {
+    const gap = hints.transposedGap ?? 25;
+
+    // Fila etiquetada: su primer item es un rótulo que el diccionario conoce.
+    const labelled: { field: ColumnField; values: { x: number; str: string }[] }[] = [];
+
+    // Rótulo de bloque: describe un valor que vale para toda la página, no
+    // para una plaza. Cantabria encabeza cada hoja con "Especialidad:" o
+    // "Centro:", y su valor va aparte, en una fila suelta a esa misma altura.
+    const captions: { field: ColumnField; x: number }[] = [];
+    const looseItems: { x: number; str: string }[] = [];
+
+    // Con rótulos de bloque la comparación tiene que ser estricta: los valores
+    // conviven en la misma fila que los rótulos de los demás paneles, y un
+    // parecido basta para tragarse un centro.
+    const asLabel = hints.transposedCaption ? matchHeaderFieldExact : matchHeaderField;
+
+    for (const row of rows) {
+      const labels = row.items.filter((i) => asLabel(i.str));
+      if (labels.length === 0) {
+        if (hints.transposedCaption) looseItems.push(...row.items);
+        continue;
+      }
+
+      const values = row.items.filter((i) => !labels.includes(i));
+      const firstValueX = values.length ? values[0].x : Infinity;
+      // Solo se miran los rótulos anteriores al primer valor cuando la maqueta
+      // declara que antepone un rótulo de bloque. Sin ese aviso no se puede
+      // distinguir un segundo rótulo de un valor que se le parece: Múrcia
+      // escribe "INCORPORACIÓN AL CENTRO" como observación, y el diccionario
+      // lo leería como la columna del centro.
+      const leading = hints.transposedCaption
+        ? labels.filter((l) => l.x < firstValueX)
+        : [];
+
+      // Con dos rótulos por delante, el primero es el del bloque y el segundo
+      // el de la columna. Quedarse con el primero, como se hacía antes,
+      // cambiaba el campo de toda la fila: en Cantabria los nombres de centro
+      // acababan guardados como especialidad.
+      const label = leading.length ? leading[leading.length - 1] : row.items[0];
+      const field = asLabel(label.str);
+      if (!field) continue;
+
+      // Una página puede traer varios paneles, cada uno con su propio rótulo de
+      // bloque delante del de la columna. Se reconocen por ir pegados: rótulo
+      // de bloque, rótulo de columna, y a continuación los valores del panel.
+      if (hints.transposedCaption) {
+        for (let i = 0; i + 1 < labels.length; i++) {
+          const captionField = asLabel(labels[i].str);
+          if (!captionField || captionField === field) continue;
+          if (asLabel(labels[i + 1].str) !== field) continue;
+          if (labels[i + 1].x - labels[i].x > 40) continue;
+          captions.push({ field: captionField, x: labels[i].x });
+        }
+      }
+
+      labelled.push({ field, values });
+    }
+
+    if (labelled.length === 0) return [];
+
+    // Las columnas salen de todas las X de valor vistas en la página, salvo que
+    // la comunidad señale un campo del que fiarse.
+    const anchorSource = hints.transposedAnchorField
+      ? labelled.filter((l) => l.field === hints.transposedAnchorField)
+      : labelled;
+    const xs = (anchorSource.length ? anchorSource : labelled)
+      .flatMap((l) => l.values.map((v) => v.x))
+      .sort((a, b) => a - b);
+    const anchors: number[] = [];
+    for (const x of xs) {
+      if (anchors.length === 0 || x - anchors[anchors.length - 1] > gap) anchors.push(x);
+    }
+
+    const columnOf = (x: number): number => {
+      let best = 0;
+      for (let i = 1; i < anchors.length; i++) {
+        if (Math.abs(x - anchors[i]) < Math.abs(x - anchors[best])) best = i;
+      }
+      return best;
+    };
+
+    const records = anchors.map(() => new Map<ColumnField, string[]>());
+
+    for (const { field, values } of labelled) {
+      for (const value of values) {
+        const record = records[columnOf(value.x)];
+        record.set(field, [...(record.get(field) ?? []), value.str.trim()]);
+      }
+    }
+
+    // Cada rótulo de bloque toma su valor de las filas sueltas que caen a su
+    // misma altura, y vale para las plazas de su panel: las que quedan a su
+    // derecha, hasta donde empiece el panel siguiente.
+    const captionValues = captions
+      .map((c) => ({
+        ...c,
+        value: looseItems
+          .filter((i) => Math.abs(i.x - c.x) <= 6)
+          .map((i) => i.str.trim())
+          .join(' ')
+          .trim(),
+      }))
+      .sort((a, b) => a.x - b.x);
+
+    const captionFor = (x: number) => {
+      let best: (typeof captionValues)[number] | null = null;
+      for (const candidate of captionValues) {
+        if (candidate.x <= x) best = candidate;
+      }
+      return best;
+    };
+
+    const out: IesRow[] = [];
+
+    for (let column = 0; column < records.length; column++) {
+      const record = records[column];
+      const block = captionFor(anchors[column]);
+      const read = (field: ColumnField) => {
+        const own = (record.get(field) ?? []).join(' ').trim();
+        return own || (block?.field === field ? block.value : '');
+      };
+
+      const locationCode = read('locationCode');
+      let code = read('code');
+      if (!code && hints.codeFromLocationCode) {
+        const embedded = new RegExp(hints.codeFromLocationCode).exec(locationCode);
+        if (embedded) code = embedded[1] ?? embedded[0];
+      }
+
+      const centre = read('centre');
+      if (!/^\d{6,8}$/.test(code) || !centre) continue;
+
+      const itinerant = read('itinerant').toUpperCase();
+
+      out.push({
+        number: out.length + 1,
+        centre,
+        locality: read('locality'),
+        code,
+        locationCode,
+        observations: read('observations'),
+        isItinerant: itinerant.startsWith('S'),
+        modality: read('modality'),
+      });
+    }
+
+    return out;
+  }
+
+  /**
+   * Extrae un listado agrupado por centro.
+   *
+   * La maqueta es una jerarquía, no una tabla:
+   *
+   *     Provincia   CIUDAD REAL
+   *       Centro    13012465   ABENOJAR
+   *         CRA N.º 11
+   *         Función - Especialidad          Vacantes   Vacantes It.
+   *         0590018 - 018   PSICOLOGIA Y PEDAGOGIA    1    0
+   *         Total:                                    1    0
+   *
+   * Se recorre de arriba abajo llevando el centro en curso, y cada línea de
+   * especialidad se expande en tantas plazas como indiquen sus recuentos, para
+   * que la aplicación pueda seguir contando posiciones por centro.
+   */
+  private parseGroupedPage(
+    rows: TextRow[],
+    hints: ParserHints,
+    state: ParseState,
+  ): { rows: IesRow[]; state: ParseState } {
+    const grouped = hints.grouped;
+    if (!grouped) return { rows: [], state };
+
+    const centreMarker = normalizeHeader(grouped.centreMarker);
+    const itemHeader = normalizeHeader(grouped.itemHeader);
+    const totalMarker = normalizeHeader(grouped.totalMarker);
+    const provinceMarker = grouped.provinceMarker ? normalizeHeader(grouped.provinceMarker) : null;
+
+    const out: IesRow[] = [];
+    let centre = state.centre ?? null;
+    let inItems = state.inItems ?? false;
+    let counter = state.counter ?? 0;
+    let awaitingName = false;
+
+    for (const row of rows) {
+      const first = normalizeHeader(row.items[0]?.str ?? '');
+      const rest = row.items.slice(1);
+
+      if (provinceMarker && first === provinceMarker) {
+        inItems = false;
+        continue;
+      }
+
+      if (first === centreMarker) {
+        const code = rest.find((i) => /^\d{6,8}$/.test(i.str.trim()));
+        const locality = rest.find((i) => i !== code && i.str.trim().length > 1);
+        centre = {
+          code: code?.str.trim() ?? '',
+          locality: locality?.str.trim() ?? '',
+          name: '',
+        };
+        awaitingName = true;
+        inItems = false;
+        continue;
+      }
+
+      if (first === itemHeader) {
+        awaitingName = false;
+        inItems = true;
+        continue;
+      }
+
+      if (first.startsWith(totalMarker)) {
+        inItems = false;
+        centre = null;
+        continue;
+      }
+
+      // La línea inmediatamente posterior al rótulo del centro es su nombre.
+      if (awaitingName && centre) {
+        centre.name = row.items.map((i) => i.str.trim()).join(' ').trim();
+        awaitingName = false;
+        continue;
+      }
+
+      if (!inItems || !centre) continue;
+
+      const position = this.parseGroupedItem(row);
+      if (!position) continue;
+
+      for (let i = 0; i < position.ordinary; i++) {
+        out.push(this.groupedRow(++counter, centre, position, false));
+      }
+      for (let i = 0; i < position.itinerant; i++) {
+        out.push(this.groupedRow(++counter, centre, position, true));
+      }
+    }
+
+    return { rows: out, state: { ...state, centre, inItems, counter } };
+  }
+
+  /**
+   * Lee una línea de especialidad: código, descripción y los dos recuentos
+   * (ordinarias e itinerantes), que van siempre al final de la fila.
+   */
+  private parseGroupedItem(
+    row: TextRow,
+  ): { code: string; description: string; ordinary: number; itinerant: number } | null {
+    if (row.items.length < 3) return null;
+
+    const last = row.items[row.items.length - 1].str.trim();
+    const secondLast = row.items[row.items.length - 2].str.trim();
+    if (!/^\d+$/.test(last) || !/^\d+$/.test(secondLast)) return null;
+
+    const code = row.items[0].str.trim();
+    const description = row.items
+      .slice(1, -2)
+      .map((i) => i.str.trim())
+      .join(' ')
+      .trim();
+
+    if (!description) return null;
+
+    return { code, description, ordinary: parseInt(secondLast, 10), itinerant: parseInt(last, 10) };
+  }
+
+  private groupedRow(
+    number: number,
+    centre: { code: string; name: string; locality: string },
+    position: { code: string; description: string },
+    isItinerant: boolean,
+  ): IesRow {
+    // El código de especialidad viene como "0590018 - 018"; para la modalidad
+    // basta la parte corta, que es como la rotulan el resto de comunidades.
+    const short = position.code.split('-').pop()?.trim() || position.code;
+
+    return {
+      number,
+      centre: centre.name,
+      locality: centre.locality,
+      code: centre.code,
+      locationCode: position.code,
+      observations: '',
+      isItinerant,
+      modality: `${short} - ${position.description}`,
+    };
+  }
+
+
+  /**
+   * Extrae un listado en bloques por centro con una fila por plaza.
+   *
+   * Asturias no rotula el comienzo del bloque: lo abre el propio código del
+   * centro, y la localidad va en la fila de encima, a la derecha del concejo.
+   *
+   *     ALLANDE                                        POLA DE ALLANDE
+   *     33027345   C.P.E.B. de Pola de Allande
+   *     Código        Especialidad                Iti   Jornada   Función
+   *     024296  0590  018  ORIENTACION EDUCATIVA   S
+   *     772076  0597  036  PEDAGOGIA TERAPEUTICA   N
+   *     Por centro hay 2 especialidades y 2 vacantes totales
+   *
+   * La cabecera de la subtabla se reimprime en cada bloque, así que de ella
+   * salen los límites de las columnas sin tener que codificarlos a mano.
+   */
+  private parseBlocksPage(
+    rows: TextRow[],
+    hints: ParserHints,
+    state: ParseState,
+  ): { rows: IesRow[]; state: ParseState } {
+    const blocks = hints.blocks;
+    if (!blocks) return { rows: [], state };
+
+    const centrePattern = new RegExp(blocks.centrePattern);
+    const itemHeader = normalizeHeader(blocks.itemHeader);
+    const totalMarker = blocks.totalMarker ? normalizeHeader(blocks.totalMarker) : null;
+    const ignore = hints.ignoreRowPattern ? new RegExp(hints.ignoreRowPattern, 'i') : null;
+
+    // Los membretes se apartan de una pasada, para que mirar la fila siguiente
+    // valga para reconocer la que trae la localidad.
+    const dataRows = ignore
+      ? rows.filter((row) => !ignore.test(row.items.map((i) => i.str).join(' ')))
+      : rows;
+
+    const opensCentre = (row: TextRow | undefined) =>
+      !!row && row.items.length > 1 && centrePattern.test(row.items[0].str.trim());
+
+    const out: IesRow[] = [];
+    let centre = state.centre ?? null;
+    let inItems = state.inItems ?? false;
+    let counter = state.counter ?? 0;
+    let columns = state.itemColumns ?? null;
+    let headers = state.itemHeaders ?? null;
+    let previous: TextRow | null = null;
+
+    for (let index = 0; index < dataRows.length; index++) {
+      const row = dataRows[index];
+      const first = row.items[0]?.str.trim() ?? '';
+      const joined = normalizeHeader(row.items.map((item) => item.str).join(' '));
+
+      if (totalMarker && joined.startsWith(totalMarker)) {
+        inItems = false;
+        centre = null;
+        previous = row;
+        continue;
+      }
+
+      // El código del centro abre bloque siempre, esté cerrado el anterior o
+      // no: hay listados que no rotulan dónde acaba uno y empieza el siguiente.
+      if (opensCentre(row)) {
+        centre = {
+          code: first,
+          name: row.items.slice(1).map((item) => item.str.trim()).join(' ').trim(),
+          locality: blocks.localityAbove ? this.localityFromRow(previous) : '',
+        };
+        inItems = false;
+        previous = row;
+        continue;
+      }
+
+      if (normalizeHeader(first) === itemHeader && row.items.length > 1) {
+        columns = row.items.map((item) => item.x);
+        headers = row.items.map((item) => normalizeHeader(item.str));
+        inItems = true;
+        previous = row;
+        continue;
+      }
+
+      // La fila que precede al código del centro es la que trae la localidad;
+      // sin apartarla se confundiría con la continuación de una especialidad.
+      if (opensCentre(dataRows[index + 1])) {
+        previous = row;
+        continue;
+      }
+
+      if (inItems && centre && columns) {
+        const cells = this.splitByColumns(row, columns);
+        const built = blocks.vacancyHeader
+          ? this.blockCountRows(counter, centre, cells, headers, blocks)
+          : this.blockRowOrNone(counter, centre, cells);
+
+        // `null` es "esta fila no es una especialidad"; una lista vacía es "lo
+        // es, pero no tiene ninguna vacante", y también hay que respetarla: si
+        // no, las especialidades cubiertas —que son la mayoría— se tomarían por
+        // la continuación de la anterior y se le pegarían al nombre.
+        if (built) {
+          counter += built.length;
+          out.push(...built);
+          previous = row;
+          continue;
+        }
+
+        // Lo que queda es la continuación de una especialidad que no cabía en
+        // su línea.
+        const tail = cells.slice(0, 2).flat().join(' ').trim();
+        if (tail && out.length) {
+          const last = out[out.length - 1];
+          last.modality = `${last.modality} ${tail}`.trim();
+        }
+      }
+
+      previous = row;
+    }
+
+    return {
+      rows: out,
+      state: { ...state, centre, inItems, counter, itemColumns: columns, itemHeaders: headers },
+    };
+  }
+
+  /**
+   * Parsea una página repartida en paneles verticales independientes.
+   *
+   * Cada panel es un hilo de bloques con su propio estado, y hay que separarlos
+   * antes de agrupar los items en filas: dos centros contiguos rara vez alinean
+   * sus líneas base, así que una fila formada a lo ancho de la página mezcla el
+   * nombre de uno con los recuentos del otro.
+   */
+  private parsePanels(
+    items: PdfTextItem[],
+    hints: ParserHints,
+    state: ParseState,
+  ): { rows: IesRow[]; state: ParseState } {
+    const splitX = hints.panelSplitX!;
+    const previous = state.panels ?? [];
+    const panels = [
+      items.filter((item) => item.transform[4] < splitX),
+      items.filter((item) => item.transform[4] >= splitX),
+    ];
+
+    const out: IesRow[] = [];
+    const next: ParseState[] = [];
+    // El contador pasa de un panel al siguiente para que las plazas queden
+    // numeradas en el orden en que se leen, y no una vez por panel.
+    let counter = state.counter ?? 0;
+
+    for (let i = 0; i < panels.length; i++) {
+      const rows = this.toTextRows(panels[i], hints.rowTolerance);
+      const result = this.parseBlocksPage(rows, hints, { ...previous[i], counter });
+      counter = result.state.counter ?? counter;
+      out.push(...result.rows);
+      next.push(result.state);
+    }
+
+    return { rows: out, state: { ...state, counter, panels: next } };
+  }
+
+  /** Envuelve `blockRow` para poder tratarlo igual que a los recuentos. */
+  private blockRowOrNone(
+    counter: number,
+    centre: { code: string; name: string; locality: string },
+    cells: string[][],
+  ): IesRow[] | null {
+    const row = this.blockRow(counter + 1, centre, cells);
+    return row ? [row] : null;
+  }
+
+  /**
+   * Expande una línea de especialidad con recuentos en una plaza por vacante.
+   *
+   * La plantilla orgánica de Extremadura publica juntas las plazas que existen
+   * y las que están vacantes —"Pl" y "Va"—, y solo estas últimas son a las que
+   * se puede optar: leer la columna equivocada multiplicaría por doce el
+   * listado y lo llenaría de destinos ocupados.
+   */
+  private blockCountRows(
+    counter: number,
+    centre: { code: string; name: string; locality: string },
+    cells: string[][],
+    headers: string[] | null,
+    blocks: BlockHints,
+  ): IesRow[] | null {
+    const wanted = normalizeHeader(blocks.vacancyHeader!);
+    const column = headers ? headers.indexOf(wanted) : -1;
+    if (column < 0) return null;
+
+    const value = (cells[column] ?? []).join('').trim();
+    if (!/^[0-9]+$/.test(value)) return null;
+
+    // "00590001 FILOSOFÍA": el código va delante, en su propio item o unido al
+    // nombre según el listado.
+    const parts = /^(\S+)\s+(.+)$/.exec((cells[0] ?? []).join(' ').trim());
+    if (!parts) return null;
+
+    const isItinerant = blocks.itinerantPattern
+      ? new RegExp(blocks.itinerantPattern).test(parts[1])
+      : false;
+
+    const rows: IesRow[] = [];
+    for (let i = 0; i < parseInt(value, 10); i++) {
+      rows.push({
+        number: counter + rows.length + 1,
+        centre: centre.name,
+        locality: centre.locality,
+        code: centre.code,
+        locationCode: '',
+        observations: '',
+        isItinerant,
+        modality: `${parts[1]} - ${parts[2]}`,
+      });
+    }
+
+    return rows;
+  }
+
+  /** La localidad es el último item de la fila que encabeza el bloque. */
+  private localityFromRow(row: TextRow | null): string {
+    if (!row || !row.items.length) return '';
+    return row.items[row.items.length - 1].str.trim();
+  }
+
+  /**
+   * Reparte los items de una fila entre las celdas que delimita la cabecera.
+   *
+   * Cada columna abarca desde la X de su rótulo hasta la de la siguiente; a la
+   * primera se le deja además todo lo que quede a su izquierda.
+   */
+  private splitByColumns(row: TextRow, columns: number[]): string[][] {
+    const cells: string[][] = columns.map(() => []);
+
+    for (const item of row.items) {
+      let index = 0;
+      // La celda es la última columna que empieza a la izquierda del item; el
+      // margen absorbe los valores alineados a la derecha, que empiezan unos
+      // puntos antes que su rótulo.
+      for (let i = 0; i < columns.length; i++) {
+        if (item.x >= columns[i] - 4) index = i;
+      }
+      cells[index].push(item.str.trim());
+    }
+
+    return cells;
+  }
+
+  /**
+   * Compone una plaza a partir de sus celdas.
+   *
+   * La columna de código es compuesta: código de plaza, una marca opcional y
+   * el cuerpo. La de especialidad trae su código y su nombre. El resto
+   * —jornada y función— no tiene equivalente en el resto de comunidades, así
+   * que se recoge tal cual en las observaciones en vez de interpretarlo.
+   */
+  private blockRow(
+    number: number,
+    centre: { code: string; name: string; locality: string },
+    cells: string[][],
+  ): IesRow | null {
+    const [codeCell = [], modalityCell = [], itinerantCell = [], ...restCells] = cells;
+
+    const locationCode = codeCell[0] ?? '';
+    if (!locationCode) return null;
+
+    const body = codeCell.find((value) => /^[0-9]{4}$/.test(value)) ?? '';
+    const flags = codeCell.slice(1).filter((value) => value !== body);
+
+    const specialityCode = /^[0-9]{2,3}$/.test(modalityCell[0] ?? '') ? modalityCell[0] : '';
+    const specialityName = (specialityCode ? modalityCell.slice(1) : modalityCell).join(' ').trim();
+    const modality = specialityName
+      ? `${body}${specialityCode} - ${specialityName}`.replace(/^ - /, '')
+      : '';
+
+    const observations = [...flags, ...restCells.flat()].join(' ').trim();
+
+    return {
+      number,
+      centre: centre.name,
+      locality: centre.locality,
+      code: centre.code,
+      locationCode,
+      observations,
+      isItinerant: itinerantCell.join('').trim().toUpperCase() === 'S',
+      modality,
+    };
+  }
+
+  /**
+   * Agrupa items en filas por su coordenada Y, de arriba abajo.
+   *
+   * Agrupa por cercanía a un ancla, no redondeando a una rejilla fija: una
+   * rejilla parte por la mitad las filas que caen sobre una de sus fronteras
+   * (dos items separados por 0,12 pt pueden acabar en filas distintas), y al
+   * desgajarse pierden la localidad o el número de orden.
+   *
+   * El ancla es siempre el primer item de la fila —el más alto—, de modo que
+   * una sucesión de items poco separados no puede encadenarse hasta formar una
+   * fila arbitrariamente alta.
+   */
+  private toTextRows(items: PdfTextItem[], tolerance = DEFAULT_ROW_TOLERANCE): TextRow[] {
+    const entries = items
+      .filter((item) => item.str && item.str.trim())
+      .map((item) => ({ y: item.transform[5], x: Math.round(item.transform[4]), str: item.str }))
+      .sort((a, b) => b.y - a.y);
+
+    const rows: TextRow[] = [];
+    let anchor = Infinity;
+
+    for (const entry of entries) {
+      if (anchor - entry.y > tolerance) {
+        anchor = entry.y;
+        rows.push({ y: anchor, items: [] });
+      }
+      rows[rows.length - 1].items.push({ x: entry.x, str: entry.str });
+    }
+
+    for (const row of rows) {
+      row.items.sort((a, b) => a.x - b.x);
+    }
+
+    return rows;
+  }
+
+  /**
+   * Extrae un listado maquetado como fichas, una por plaza.
+   *
+   * Aragón no imprime una tabla sino una ficha por vacante, con sus rótulos
+   * repetidos dentro de cada una:
+   *
+   *     - Vacante -   - Cuerpo/Especialidad -              - Centro -
+   *                   0590 - PROFESORES DE ENS. SECUNDARIA (44003223) IES SEGUNDO DE CHOMÓN
+   *       13588       111 - ORGANIZACION Y PROCESOS DE     TERUEL (TERUEL)
+   *                   MANTENIMIENTO DE VEHICULOS
+   *     - Jornada -   - Duración -   - Obligación -   - Causa -
+   *     Parcial       Sustitución    Voluntaria       Paternidad
+   *
+   * La ficha se abre con el rótulo de inicio, cuya fila da además las columnas.
+   * Lo que sigue son los datos principales, hasta el primer sub-bloque: a
+   * partir de ahí cada fila de rótulos se empareja por X con sus valores y
+   * acaba en las observaciones.
+   *
+   * Una ficha nunca queda partida por un salto de página —el generador prefiere
+   * dejar el hueco en blanco—, así que la ficha abierta se cierra al terminar
+   * la página en vez de arrastrarse en el estado.
+   */
+  private parseRecordsPage(
+    rows: TextRow[],
+    hints: ParserHints,
+    state: ParseState,
+  ): { rows: IesRow[]; state: ParseState } {
+    const config = hints.records;
+    if (!config) return { rows: [], state };
+
+    const startMarker = normalizeHeader(config.startMarker);
+    const labelPattern = new RegExp(config.labelPattern);
+    const ignorePattern = config.ignorePattern ? new RegExp(config.ignorePattern) : null;
+
+    const out: IesRow[] = [];
+    let counter = state.counter ?? 0;
+    let open: OpenRecord | null = null;
+
+    const close = () => {
+      if (!open) return;
+      const row = this.recordRow(open, counter + 1);
+      if (row) {
+        counter++;
+        out.push(row);
+      }
+      open = null;
+    };
+
+    for (const row of rows) {
+      if (ignorePattern && row.items.some((i) => ignorePattern.test(i.str))) continue;
+
+      if (row.items.some((i) => normalizeHeader(i.str) === startMarker)) {
+        close();
+        open = {
+          columns: row.items
+            .map((item) => ({
+              field:
+                normalizeHeader(item.str) === startMarker
+                  ? ('number' as ColumnField)
+                  : matchHeaderField(item.str),
+              x: item.x,
+            }))
+            .filter((c): c is HeaderColumn => !!c.field),
+          cells: {},
+          details: [],
+          pending: null,
+        };
+        continue;
+      }
+
+      // Todo lo que hay antes de la primera ficha son membretes del documento.
+      if (!open) continue;
+
+      const labels = row.items.map((i) => labelPattern.exec(i.str.trim()));
+      if (labels.every((m) => !!m)) {
+        open.pending = row.items.map((item, i) => ({
+          label: (labels[i]![1] ?? item.str).trim(),
+          x: item.x,
+        }));
+        continue;
+      }
+
+      if (open.pending) {
+        for (const item of row.items) {
+          const label = this.nearestLabel(open.pending, item.x);
+          const detail = open.details.find((d) => d.label === label);
+          if (detail) detail.value = this.append(detail.value, item.str.trim());
+          else open.details.push({ label, value: item.str.trim() });
+        }
+        continue;
+      }
+
+      for (const item of row.items) {
+        const field = assignColumn(item.x, open.columns);
+        if (!field) continue;
+        (open.cells[field] ??= []).push(item.str.trim());
+      }
+    }
+
+    close();
+
+    return { rows: out, state: { ...state, counter } };
+  }
+
+  /** Rótulo del sub-bloque cuyo inicio cae más cerca del valor. */
+  private nearestLabel(pending: { label: string; x: number }[], x: number): string {
+    let best = pending[0];
+    for (const candidate of pending) {
+      if (Math.abs(candidate.x - x) < Math.abs(best.x - x)) best = candidate;
+    }
+    return best.label;
+  }
+
+  /**
+   * Convierte una ficha ya recorrida en una plaza.
+   *
+   * Las celdas guardan sus líneas por separado porque su reparto es
+   * significativo: en la de cuerpo/especialidad la primera línea es el cuerpo y
+   * el resto la especialidad (que puede partirse en varias), y en la del centro
+   * la última línea es la localidad con su provincia entre paréntesis.
+   */
+  private recordRow(open: OpenRecord, fallbackNumber: number): IesRow | null {
+    const centreLines = open.cells.centre ?? [];
+    if (centreLines.length === 0) return null;
+
+    let locality = (open.cells.locality ?? []).join(' ').trim();
+    let nameLines = centreLines;
+    if (!locality && centreLines.length > 1) {
+      nameLines = centreLines.slice(0, -1);
+      // "TERUEL (TERUEL)" -> "TERUEL": el paréntesis es la provincia, y si se
+      // deja, la localidad no casa con ningún municipio del directorio.
+      locality = centreLines[centreLines.length - 1].replace(/\s*\([^)]*\)\s*$/, '').trim();
+    }
+
+    let centre = nameLines.join(' ').trim();
+    let code = (open.cells.code ?? []).join('').trim();
+
+    // "(44003223) IES SEGUNDO DE CHOMÓN" -> código + nombre.
+    const split = /^\(?(\d{6,8})\)?\s+(.+)$/.exec(centre);
+    if (split) {
+      code = code || split[1];
+      centre = split[2];
+    }
+
+    // Sin código no es una plaza: es un membrete que se ha colado en la ficha.
+    if (!code) return null;
+
+    const modalityLines = open.cells.modality ?? [];
+    const modality = (modalityLines.length > 1 ? modalityLines.slice(1) : modalityLines)
+      .join(' ')
+      .trim();
+
+    const numberText = (open.cells.number ?? []).find((t) => /^\d+$/.test(t));
+
+    return {
+      number: numberText ? parseInt(numberText, 10) : fallbackNumber,
+      centre,
+      locality,
+      code,
+      locationCode: '',
+      observations: open.details.map((d) => `${d.label}: ${d.value}`).join(' · '),
+      isItinerant: open.details.some((d) => /itinera/i.test(`${d.label} ${d.value}`)),
+      modality,
+    };
+  }
+
+  /** La modalidad (cuerpo/especialidad) va en un rótulo suelto sobre la tabla. */
+  private detectModality(items: PdfTextItem[], hints: ParserHints): string {
+    const pattern = hints.modalityPattern
+      ? new RegExp(hints.modalityPattern)
+      : /^[\dA-Za-z]+\s*-\s*.+\s*\/\s*.+/;
+    const minLength = hints.modalityPattern ? 1 : 10;
+
     for (const item of items) {
       const txt = item.str.trim();
-      if (txt.length > 10 && /^[\dA-Za-z]+\s*-\s*.+\s*\/\s*.+/.test(txt)) {
+      if (txt.length >= minLength && pattern.test(txt)) {
         return txt;
       }
     }
     return '';
   }
 
-  private groupByRow(items: any[], modality: string): IesRow[] {
-    const TOL = 3;
-    const groups = new Map<number, any[]>();
+  /** Resuelve a qué campo pertenece un item por su coordenada X. */
+  /**
+   * Une a la fila anterior las filas que solo continúan una celda.
+   *
+   * Un nombre de centro o una observación que no caben en su columna siguen en
+   * la línea de abajo, y esa línea queda como una fila con una única celda
+   * rellena. En Navarra eso no es cosmético: "ESCUELA DE ARTE Y SUPERIOR DE
+   * DISEÑO DE" continúa en "CORELLA- CORELLA", y ahí va la localidad.
+   *
+   * Solo se unen las continuaciones de centro y observaciones, que son las
+   * únicas celdas de texto libre, y nunca la fila que anuncia la especialidad,
+   * que también ocupa una sola columna pero significa otra cosa.
+   */
+  private mergeWrappedRows(
+    rows: TextRow[],
+    hints: ParserHints,
+    columns: HeaderColumn[] | null,
+  ): TextRow[] {
+    const modalityLabel = hints.modalityLabel ? normalizeHeader(hints.modalityLabel) : null;
+    const out: TextRow[] = [];
 
-    for (const item of items) {
-      if (!item.str || !item.str.trim()) continue;
-      const y = Math.round(item.transform[5] / TOL) * TOL;
-      if (!groups.has(y)) groups.set(y, []);
-      groups.get(y)!.push(item);
+    for (const row of rows) {
+      const fields = new Set(row.items.map((item) => this.fieldFor(item.x, hints, columns)));
+      // Las dos celdas de texto libre se parten a la vez cuando las dos son
+      // largas, así que una continuación puede traer nombre y observaciones.
+      const wrapsText =
+        fields.size > 0 && [...fields].every((field) => field === 'centre' || field === 'observations');
+      const isLabel =
+        !!modalityLabel && normalizeHeader(row.items[0]?.str ?? '') === modalityLabel;
+
+      if (!isLabel && wrapsText && out.length > 0) {
+        out[out.length - 1].items.push(...row.items);
+        continue;
+      }
+
+      out.push({ y: row.y, items: [...row.items] });
     }
 
-    const rows: IesRow[] = [];
-    const ySorted = [...groups.keys()].sort((a, b) => b - a);
-    let lastRow: IesRow | null = null;
+    return out;
+  }
 
-    for (const y of ySorted) {
-      const items = groups.get(y)!;
+  private fieldFor(
+    x: number,
+    hints: ParserHints,
+    columns: HeaderColumn[] | null,
+  ): ColumnField | null {
+    const overrides = hints.columnOverrides;
+    if (overrides) {
+      for (const [field, range] of Object.entries(overrides)) {
+        if (range && x >= range[0] && x <= range[1]) return field as ColumnField;
+      }
+      return null;
+    }
+    return columns ? assignColumn(x, columns) : null;
+  }
+
+  private extractRows(
+    textRows: TextRow[],
+    initialModality: string,
+    hints: ParserHints,
+    columns: HeaderColumn[] | null,
+  ): { rows: IesRow[]; modality: string } {
+    // La especialidad puede venir anunciada por una fila con rótulo y aplicarse
+    // a todas las plazas siguientes, incluso pasando de página.
+    const modalityLabel = hints.modalityLabel ? normalizeHeader(hints.modalityLabel) : null;
+    let modality = initialModality;
+    const hasNumberColumn = columns
+      ? columns.some((c) => c.field === 'number')
+      : !!hints.columnOverrides?.number;
+
+    const rows: IesRow[] = [];
+
+    for (const textRow of textRows) {
+      if (modalityLabel && normalizeHeader(textRow.items[0]?.str ?? '') === modalityLabel) {
+        const announced = textRow.items
+          .slice(1)
+          .map((i) => i.str.trim())
+          .join(' ')
+          .trim();
+        // Un rótulo sin valor no anuncia un cambio de especialidad: es un
+        // renglón que el generador ha dejado en blanco. Si se tomara al pie de
+        // la letra, las plazas que vienen debajo se quedarían sin especialidad.
+        if (announced) modality = announced;
+        continue;
+      }
 
       let num = 0;
       let centre = '';
@@ -80,77 +1401,168 @@ export class PdfParserService {
       let code = '';
       let locationCode = '';
       let observations = '';
-
       let isItinerant = false;
+      let vacancies = 1;
+      let itinerantVacancies = 0;
+      let hours = 0;
+      let hoursText = '';
+      // Hay listados que traen la especialidad como una columna más, en vez de
+      // anunciarla en un rótulo por encima de la tabla.
+      let rowModality = '';
 
-      for (const item of items) {
-        const x = Math.round(item.transform[4]);
+      for (const item of textRow.items) {
         const text = item.str;
+        const field = this.fieldFor(item.x, hints, columns);
 
-        if (x >= 485 && /^\d{8}$/.test(text)) {
-          code = text;
-        } else if (x >= 485 && text.length >= 6 && /^\d{6,8}$/.test(text)) {
-          code = text;
-        } else if (x >= 70 && x <= 89 && /^\d{6,8}$/.test(text)) {
-          locationCode = text;
-        } else if (x >= 27 && x <= 45 && /^\d+$/.test(text)) {
-          num = parseInt(text, 10);
-        } else if (x >= 95 && x <= 120 && text.length > 2) {
-          locality = text;
-        } else if (x >= 230 && x <= 260 && text.length > 2) {
-          centre = text;
-        } else if (x >= 550) {
-          observations = (observations ? observations + ' ' : '') + text;
+        switch (field) {
+          case 'number':
+            if (/^\d+$/.test(text)) num = parseInt(text, 10);
+            break;
+          case 'code': {
+            // La Rioja imprime el código con letra de control ("26003507C").
+            // Se guarda solo la parte numérica, que es la que usan los
+            // directorios de centros para cruzar.
+            const withCheck = /^(\d{6,8})[A-Z]?$/.exec(text);
+            if (withCheck) code = withCheck[1];
+            break;
+          }
+
+          case 'locationCode':
+            if (/^\d{4,10}$/.test(text)) locationCode = text;
+            break;
+          case 'locality':
+            if (text.trim().length > 2) locality = this.append(locality, text);
+            break;
+          case 'centre':
+            if (text.trim().length > 2) centre = this.append(centre, text);
+            break;
+          case 'vacancies':
+            if (/^\d+$/.test(text)) vacancies = parseInt(text, 10);
+            break;
+          case 'itinerantVacancies':
+            if (/^\d+$/.test(text)) itinerantVacancies = parseInt(text, 10);
+            break;
+          case 'hours': {
+            // Los conservatorios cuentan medias horas ("9,5"), así que no vale
+            // con leer enteros: la mitad de sus plazas parciales se perderían.
+            const parsed = /^(\d+(?:[.,]\d+)?)$/.exec(text.trim());
+            if (parsed) {
+              hoursText = parsed[1];
+              hours = parseFloat(parsed[1].replace(',', '.'));
+            }
+            break;
+          }
+          case 'modality':
+            if (text.trim()) rowModality = this.append(rowModality, text);
+            break;
+          case 'observations':
+            observations = this.append(observations, text);
+            break;
+          case 'itinerant':
+            // Columna propia de itinerancia, marcada con una letra suelta.
+            // La Rioja la rotula "I" y no lo repite en las observaciones, así
+            // que sin leer la columna la plaza se daría por no itinerante.
+            if (text.trim()) isItinerant = true;
+            break;
         }
 
-        if (/ITIN|itinerant|ü|º/u.test(text)) {
+        if (hints.itinerantMarkers && /ITIN|itinerant|ü|º/u.test(text)) {
           isItinerant = true;
         }
       }
 
-      const isValid = (centre || locality) && !centre.startsWith('CENTRE') && !locality.startsWith('LOCALITAT') && num > 0;
+      if (hints.splitCodeFromCentre) {
+        // "35000082 IES Joaquín Artiles" -> código + nombre.
+        const split = /^(\d{6,8})\s+(.+)$/.exec(centre.trim());
+        if (split) {
+          code = code || split[1];
+          centre = split[2];
+        }
+      }
+
+      if (hints.splitLocalityFromCentre) {
+        // "I.E.S. SIERRA LEYRE- SANGUESA" -> centro + localidad, por el último
+        // guion. Que no haya guion significa que la fila no es una plaza: es el
+        // membrete, la cabecera o el total, que en este listado no se pueden
+        // reconocer de otra forma porque no trae código de centro.
+        const split = /^(.*\S)-\s+(\S.*)$/.exec(centre.trim());
+        if (split) {
+          centre = split[1].trim();
+          locality = locality || split[2].trim();
+        } else {
+          centre = '';
+        }
+      }
+
+      // Cuando la comunidad declara que el código va dentro de la celda del
+      // centro, una fila sin código es un título o un pie, no una plaza.
+      const codeRequired = !!hints.splitCodeFromCentre || !!hints.requireCode;
+      const isValid =
+        !!(centre || locality) && (!hasNumberColumn || num > 0) && (!codeRequired || !!code);
 
       if (isValid) {
         const cleanObservations = observations.replace(/[üº]/g, '').trim();
-        let itinerantCentre: string | undefined;
-        let hours: string | undefined;
 
-        if (isItinerant) {
-          const obsClean = cleanObservations;
-          const matchHours = obsClean.match(/(\d+[,.]?\d*)/);
-          if (matchHours) hours = matchHours[1];
+        const emit = (itinerant: boolean, partialHours: string) => {
+          const row: IesRow = {
+            number: hints.expandVacancies ? rows.length + 1 : num,
+            centre,
+            locality,
+            code,
+            locationCode,
+            observations: cleanObservations,
+            isItinerant: itinerant,
+            modality: rowModality || modality,
+          };
+          if (partialHours) row.hours = partialHours;
+          if (itinerant) this.enrichItinerant(row);
+          rows.push(row);
+        };
 
-          const parts = obsClean.replace(/-\s*\d+[,.]?\d*/, '').trim();
-          if (parts && /IES|CENTRE|COL\.?|CEIP/i.test(parts)) {
-            itinerantCentre = parts.replace(/[üº]/g, '').trim();
-          }
+        // Sin expansión, una fila es una plaza; con ella, la fila dice cuántas.
+        if (hints.expandVacancies) {
+          for (let i = 0; i < vacancies; i++) emit(isItinerant, '');
+          for (let i = 0; i < itinerantVacancies; i++) emit(true, '');
+          // Las horas sueltas que no llegan a jornada completa siguen siendo
+          // una plaza, solo que parcial, y hay centros que solo ofrecen eso:
+          // descartarlas dejaría fuera un tercio del listado navarro.
+          if (hours > 0) emit(isItinerant, hoursText);
+        } else {
+          emit(isItinerant, '');
         }
-
-        const row: IesRow = { number: num, centre, locality, code, locationCode, observations: cleanObservations, isItinerant, itinerantCentre, hours, modality };
-        rows.push(row);
-        lastRow = row;
-      } else if (isItinerant && lastRow && !lastRow.isItinerant) {
-        const hasMarker = items.some((i) => /[üº]/.test(i.str));
-        if (hasMarker) {
+      } else if (hints.itinerantMarkers && isItinerant && rows.length) {
+        // El marcador de itinerancia viene en una fila propia, ligeramente por
+        // debajo de la plaza a la que pertenece.
+        const lastRow = rows[rows.length - 1];
+        const hasMarker = textRow.items.some((i) => /[üº]/.test(i.str));
+        if (hasMarker && !lastRow.isItinerant) {
           lastRow.isItinerant = true;
-          if (observations.trim()) {
-            const clean = observations.replace(/[üº]/g, '').trim();
-            if (lastRow.observations) lastRow.observations += ' ' + clean;
-            else lastRow.observations = clean;
-          }
-          const obsClean = lastRow.observations || '';
-          const matchHours = obsClean.match(/(\d+[,.]?\d*)/);
-          if (matchHours) lastRow.hours = matchHours[1];
-          const parts = obsClean.replace(/-\s*\d+[,.]?\d*/, '').trim();
-          if (parts && /IES|CENTRE|COL\.?|CEIP/i.test(parts)) {
-            lastRow.itinerantCentre = parts.replace(/[üº]/g, '').trim();
-          }
+          const clean = observations.replace(/[üº]/g, '').trim();
+          if (clean) lastRow.observations = this.append(lastRow.observations, clean);
+          this.enrichItinerant(lastRow);
         }
       }
     }
 
     rows.sort((a, b) => a.number - b.number);
-    return rows;
+    return { rows, modality };
+  }
+
+  /** Deduce centro de itinerancia y horas a partir de las observaciones. */
+  private enrichItinerant(row: IesRow) {
+    const obs = row.observations || '';
+
+    const matchHours = obs.match(/(\d+[,.]?\d*)/);
+    if (matchHours) row.hours = matchHours[1];
+
+    const parts = obs.replace(/-\s*\d+[,.]?\d*/, '').trim();
+    if (parts && /IES|CENTRE|COL\.?|CEIP/i.test(parts)) {
+      row.itinerantCentre = parts.replace(/[üº]/g, '').trim();
+    }
+  }
+
+  private append(current: string, text: string): string {
+    return current ? `${current} ${text}` : text;
   }
 
   groupByCentre(records: IesRow[]): Map<string, { name: string; locality: string; code: string; positions: IesRow[]; totalItinerants: number }> {

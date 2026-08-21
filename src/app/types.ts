@@ -1,3 +1,35 @@
+/** Cuerpo docente al que corresponde un listado de vacantes. */
+export type Cos = 'secundaria' | 'primaria';
+
+/** Enlace a un PDF oficial descubierto en el portal de una administración. */
+export interface OfficialPdfLink {
+  label: string;
+  url: string;
+}
+
+/** Centro educativo ya geolocalizado, tal como se guarda en los datasets. */
+export interface CentreRecord {
+  code: string;
+  name: string;
+  locality: string;
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Municipio geolocalizado por su centroide.
+ *
+ * Es el recurso de última instancia para las comunidades que no publican un
+ * directorio de centros: sitúa la plaza en su municipio, no en su edificio.
+ */
+export interface LocalityRecord {
+  /** Código INE del municipio. */
+  code: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
 export interface IesRow {
   number: number;
   centre: string;

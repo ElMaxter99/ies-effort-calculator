@@ -8,16 +8,16 @@
   "rewrites": [
     { "source": "/api/nominatim/(.*)", "destination": "https://nominatim.openstreetmap.org/$1" },
     { "source": "/api/osrm/(.*)", "destination": "https://router.project-osrm.org/$1" },
-    { "source": "/api/val/(.*)", "destination": "https://ceice.gva.es/$1" },
-    { "source": "/api/clm/(.*)", "destination": "https://educacion.castillalamancha.es/$1" },
-    { "source": "/api/can/(.*)", "destination": "https://www.gobiernodecanarias.org/$1" },
-    { "source": "/api/cyl/(.*)", "destination": "https://www.educa.jcyl.es/$1" },
-    { "source": "/api/mad/(.*)", "destination": "https://sede.comunidad.madrid/$1" },
-    { "source": "/api/cnt/(.*)", "destination": "https://www.educantabria.es/$1" },
-    { "source": "/api/ast/(.*)", "destination": "https://www.educastur.es/$1" },
-    { "source": "/api/nav/(.*)", "destination": "https://tramitespersonal.navarra.es/$1" },
-    { "source": "/api/ext/(.*)", "destination": "https://profex.educarex.es/$1" },
-    { "source": "/api/mel/(.*)", "destination": "https://www.educacionfpydeportes.gob.es/$1" },
+    { "source": "/api/val/(.*)", "destination": "/api/proxy?region=val&path=$1" },
+    { "source": "/api/clm/(.*)", "destination": "/api/proxy?region=clm&path=$1" },
+    { "source": "/api/can/(.*)", "destination": "/api/proxy?region=can&path=$1" },
+    { "source": "/api/cyl/(.*)", "destination": "/api/proxy?region=cyl&path=$1" },
+    { "source": "/api/mad/(.*)", "destination": "/api/proxy?region=mad&path=$1" },
+    { "source": "/api/cnt/(.*)", "destination": "/api/proxy?region=cnt&path=$1" },
+    { "source": "/api/ast/(.*)", "destination": "/api/proxy?region=ast&path=$1" },
+    { "source": "/api/nav/(.*)", "destination": "/api/proxy?region=nav&path=$1" },
+    { "source": "/api/ext/(.*)", "destination": "/api/proxy?region=ext&path=$1" },
+    { "source": "/api/mel/(.*)", "destination": "/api/proxy?region=mel&path=$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

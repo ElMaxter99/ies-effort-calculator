@@ -7,6 +7,7 @@
   "ctaStart": "Començar ara",
   "howItWorks": "Com foncione",
   "features": "Foncionalitats",
+  "navStatus": "Estat operatiu",
   "howItWorksTitle": "Com foncione",
   "howItWorksDesc": "Tres pas simples entà optimizar era tua causida",
   "step1Title": "Amunta eth PDF",
@@ -233,5 +234,13 @@
   "metrics": "Metriques",
   "openInGoogleMaps": "Daurir en Google Maps",
   "minutes": "min",
-  "arrivalAtDestination": "Arribada ara destinacion"
+  "arrivalAtDestination": "Arribada ara destinacion",
+
+  "stepRegion": "Comunitat",
+  "stepLevel": "Ensenhament",
+  "stepFile": "Document",
+  "searchingPortal": "Cercant deth portal…",
+  "viewFile": "Véster",
+  "useThisFile": "Utilisa",
+  "orUploadManually": "ò carrega eth fichèr tù medish"
 }

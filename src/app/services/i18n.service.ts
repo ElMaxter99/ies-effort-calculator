@@ -33,6 +33,7 @@ export interface I18nTranslations {
   ctaStart: string;
   howItWorks: string;
   features: string;
+  navStatus: string;
   howItWorksTitle: string;
   howItWorksDesc: string;
   step1Title: string;
@@ -252,6 +253,14 @@ export interface I18nTranslations {
   openInGoogleMaps: string;
   minutes: string;
   arrivalAtDestination: string;
+
+  stepRegion: string;
+  stepLevel: string;
+  stepFile: string;
+  searchingPortal: string;
+  viewFile: string;
+  useThisFile: string;
+  orUploadManually: string;
 }
 
 /**
@@ -314,10 +323,28 @@ const TRANSLATIONS: Record<Lang, I18nTranslations> = {
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
-  lang = signal<Lang>('ca');
+  private static readonly LANG_KEY = 'ies_lang';
+
+  /** Castellano por defecto; si el usuario ya eligió idioma, se recuerda. */
+  private static loadLang(): Lang {
+    try {
+      const saved = localStorage.getItem(I18nService.LANG_KEY);
+      if (saved && AVAILABLE_LANGS.some((l) => l.id === saved)) return saved as Lang;
+    } catch {
+      // localStorage bloqueado (modo privado): se queda en el idioma por defecto.
+    }
+    return 'es';
+  }
+
+  lang = signal<Lang>(I18nService.loadLang());
 
   setLang(lang: Lang) {
     this.lang.set(lang);
+    try {
+      localStorage.setItem(I18nService.LANG_KEY, lang);
+    } catch {
+      // Sin persistencia disponible: el idioma vale para esta sesión.
+    }
   }
 
   t = computed(() => TRANSLATIONS[this.lang()]);

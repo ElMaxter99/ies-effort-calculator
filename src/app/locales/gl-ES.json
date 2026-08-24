@@ -7,6 +7,7 @@
   "ctaStart": "Comezar agora",
   "howItWorks": "Como funciona",
   "features": "Funcionalidades",
+  "navStatus": "Estado operativo",
   "howItWorksTitle": "Como funciona",
   "howItWorksDesc": "Tres pasos sinxelos para optimizar a túa elección",
   "step1Title": "Sube o PDF",
@@ -233,5 +234,13 @@
   "metrics": "Métricas",
   "openInGoogleMaps": "Abrir en Google Maps",
   "minutes": "min",
-  "arrivalAtDestination": "Chegada ao destino"
+  "arrivalAtDestination": "Chegada ao destino",
+
+  "stepRegion": "Comunidade",
+  "stepLevel": "Ensino",
+  "stepFile": "Documento",
+  "searchingPortal": "Buscando no portal…",
+  "viewFile": "Ver",
+  "useThisFile": "Usar",
+  "orUploadManually": "ou sube o arquivo ti mesmo"
 }

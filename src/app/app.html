@@ -1,11 +1,18 @@
 <div class="h-screen flex flex-col overflow-hidden bg-background text-on-background font-body-md">
-  <header class="bg-surface border-b border-outline-variant h-16 flex items-center shrink-0 z-50">
+  <header class="bg-surface border-b border-outline-variant h-16 flex items-center shrink-0 z-50 transition-shadow duration-200"
+          [class.shadow-md]="headerShadow()">
     <div class="flex justify-between items-center w-full px-gutter max-w-container-max mx-auto h-full">
       <div class="flex items-center gap-xl">
         <div class="flex items-center gap-sm">
           <img alt="Logo" class="w-8 h-8 object-contain" src="https://lh3.googleusercontent.com/aida/AP1WRLtk-DMa9gkw4ld-VbY9M2ybh-4pWCPzRHVf67dUZ9GGoPyMtjtlIYcoLBHJWuruaXioA7OxOlIkxkNJEyjxYX2Lhm9Rjq95_0fNu-QPhIrfgflV-QeZ8VFMxwsbg3-EqEiWcmzkcf96nfMImPGFdxksr4cnXVJFa_CnqEHE9tNxhxK1nKnDZMdcgyuN_oVlTwY1iTA8mJD1MMZfXPJGMdCbP9ZxUkaMz5t7zDWXc8VjI4GgHkD7GFo3qQ" />
-          <span class="text-headline-md font-headline-md font-bold text-primary">{{ t().appTitle }}</span>
+          <span class="text-headline-md font-headline-md font-bold text-primary tracking-tight">{{ t().appTitle }}</span>
         </div>
+        @if (step() === 'landing') {
+        <nav class="hidden md:flex items-center gap-lg">
+          <a href="#funcionalitats" class="text-label-md font-medium text-on-surface-variant hover:text-primary transition-colors">{{ t().features }}</a>
+          <a href="#coverage" class="text-label-md font-medium text-on-surface-variant hover:text-primary transition-colors">{{ t().navStatus }}</a>
+        </nav>
+        }
       </div>
       <div class="flex items-center gap-md">
         @if (step() === 'main') {
@@ -14,13 +21,13 @@
           <span class="material-symbols-outlined text-[20px]">refresh</span>
         </button>
         }
-        <select class="bg-primary text-on-primary px-sm py-1 rounded font-label-md text-label-md font-bold cursor-pointer border-0"
+        <select class="bg-primary text-on-primary px-sm py-1 rounded-lg font-label-md text-label-md font-bold cursor-pointer border-0 hover:bg-primary-container transition-colors"
                 [title]="t().langToggle" [value]="i18n.lang()" (change)="onLangChange($any($event.target).value)">
           @for (l of availableLangs; track l.id) {
           <option [value]="l.id">{{ l.label }}</option>
           }
         </select>
-        <span class="material-symbols-outlined text-on-surface-variant cursor-pointer" [title]="t().help" (click)="showSource()">help</span>
+        <button class="flex items-center material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1" [title]="t().help" (click)="showSource()">help</button>
         <span class="text-xs font-label-md text-on-surface-variant/60 select-none">{{ appVersionLabel() }}</span>
       </div>
     </div>
@@ -29,167 +36,23 @@
   @if (step() === 'landing') {
   <div class="flex-1 overflow-y-auto" (scroll)="onLandingScroll($event)">
     <!-- Hero / Upload Section -->
-    <section class="bg-surface py-xl border-b border-outline-variant">
-      <div class="max-w-container-max mx-auto px-gutter flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div class="max-w-2xl w-full space-y-xl">
+    <section class="relative bg-surface border-b border-outline-variant overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 blur-[100px] rounded-full"></div>
+        <div class="absolute top-1/3 -right-24 w-96 h-96 bg-secondary-container/40 blur-[100px] rounded-full"></div>
+      </div>
+      <div class="relative z-10 max-w-container-max mx-auto px-gutter py-xl md:py-[80px] flex flex-col items-center justify-center text-center">
+        <div class="max-w-3xl w-full space-y-xl">
           <div class="space-y-md">
-            <h1 class="text-display-lg font-display-lg text-primary max-lg:text-headline-lg">{{ t().heroTitle }}</h1>
+            <h1 class="text-display-lg font-display-lg text-primary tracking-tight max-lg:text-headline-lg">{{ t().heroTitle }}</h1>
             <p class="text-body-lg font-body-lg text-on-surface-variant max-lg:text-body-md">{{ t().heroDescription }}</p>
           </div>
-          <div class="space-y-sm text-left">
-            <div class="flex items-baseline justify-between gap-sm flex-wrap">
-              <h2 id="region-selector-label" class="text-body-sm font-bold text-on-surface">{{ t().regionSelectorLabel }}</h2>
-              <a href="#coverage" class="text-label-md font-label-md text-primary hover:opacity-80 transition-opacity">
-                {{ t().regionCoverageLink(coverageTotal) }}
-              </a>
-            </div>
-            <p class="text-label-md font-label-md text-on-surface-variant">{{ t().regionSelectorHint }}</p>
-            <div role="radiogroup" aria-labelledby="region-selector-label"
-                 class="grid grid-cols-2 md:grid-cols-3 gap-sm">
-              @for (r of region.all; track r.id) {
-                <label class="block cursor-pointer">
-                  <input type="radio" name="region" class="sr-only peer" [value]="r.id"
-                         [checked]="activeRegionId() === r.id" (change)="selectRegion(r.id)" />
-                  <span class="flex items-start gap-1.5 h-full text-left rounded-xl border border-outline-variant bg-surface px-md py-sm min-h-[3.5rem] transition-colors
-                               peer-hover:border-primary peer-hover:bg-primary/5
-                               peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-checked:shadow-sm
-                               peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary">
-                    <span class="material-symbols-outlined text-[18px] leading-5 shrink-0 transition-opacity"
-                          [class.opacity-0]="activeRegionId() !== r.id" aria-hidden="true">check_circle</span>
-                    <span class="min-w-0">
-                      <span class="block text-body-sm font-bold leading-tight">{{ r.name[i18n.lang()] }}</span>
-                      @if (regionStatusLabel(r.status); as status) {
-                        <span class="block text-label-md font-label-md opacity-75 leading-tight mt-0.5">{{ status }}</span>
-                      }
-                    </span>
-                  </span>
-                </label>
-              }
-            </div>
-          </div>
 
-          <div class="space-y-lg">
-            <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant bg-white rounded-xl transition-all hover:border-primary hover:shadow-lg flex flex-col items-center justify-center gap-md p-12 max-lg:p-6"
-                 id="drop-zone"
-                 (dragover)="onDragOver($event)"
-                 (dragleave)="onDragLeave($event)"
-                 (drop)="onDrop($event)"
-                 [class.border-primary]="dragging()"
-                 [class.bg-primary/5]="dragging()"
-                 (click)="landingPdfInput.click()">
-              <input [attr.accept]="acceptsSheet() ? '.pdf,.xlsx' : '.pdf'" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
-              <div class="w-16 h-16 max-lg:w-12 max-lg:h-12 rounded-full bg-surface-container-high flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary/10 transition-colors">
-                <span class="material-symbols-outlined text-4xl max-lg:text-3xl">cloud_upload</span>
-              </div>
-              <div class="space-y-xs">
-                <p class="text-body-lg font-bold text-on-surface">{{ t().dropPrompt }}</p>
-                <p class="font-label-md text-label-md text-on-surface-variant">{{ acceptsSheet() ? t().dropHintSheet : t().dropHint }}</p>
-              </div>
-            </div>
-
-            <div class="flex flex-col items-center gap-sm mt-md text-center">
-              <div class="bg-surface-container-low border border-outline-variant text-on-surface-variant text-body-sm px-lg py-md rounded-lg max-w-lg">
-                {{ t().regionDisclaimer(activeRegion().name[i18n.lang()]) }}
-                @if (activeRegion().status === 'manual-only') {
-                  <span class="block mt-xs">{{ t().regionManualOnlyNotice }}</span>
-                }
-              </div>
-              <p class="text-body-sm text-on-surface-variant max-w-lg">
-                {{ t().pdfFormatHint(activeAuthority()) }}
-              </p>
-              @if (hasOfficialDownload()) {
-                <div class="flex gap-sm flex-wrap justify-center">
-                  <button (click)="loadOfficialPdfs('secundaria')" [disabled]="officialPdfsLoading() === 'secundaria'"
-                          class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
-                    <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'secundaria'">
-                      {{ officialPdfsLoading() === 'secundaria' ? 'sync' : 'school' }}
-                    </span>
-                    {{ t().secundariaPdfLabel }}
-                  </button>
-                  <button (click)="loadOfficialPdfs('primaria')" [disabled]="officialPdfsLoading() === 'primaria'"
-                          class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm disabled:opacity-60">
-                    <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="officialPdfsLoading() === 'primaria'">
-                      {{ officialPdfsLoading() === 'primaria' ? 'sync' : 'school' }}
-                    </span>
-                    {{ t().primariaPdfLabel }}
-                  </button>
-                </div>
-              } @else {
-                <!-- Sin descarga automática, dos botones que no devuelven nada
-                     solo confunden: se enlaza el portal y ya. -->
-                <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener"
-                   class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm">
-                  <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-                  {{ t().openPortal(activeAuthority()) }}
-                </a>
-              }
-
-              @let secundariaLinks = officialPdfs().secundaria;
-              @if (secundariaLinks) {
-                <div class="w-full max-w-lg bg-surface-container-low border border-outline-variant rounded-lg p-md text-left">
-                  <p class="text-label-md font-bold text-on-surface mb-1">{{ t().secundariaPdfLabel }}</p>
-                  @if (secundariaLinks.length > 0) {
-                    <ul class="space-y-1">
-                      @for (link of secundariaLinks; track link.url) {
-                        <li>
-                          <a [href]="link.url" target="_blank" rel="noopener"
-                             class="flex items-center gap-1 text-primary text-body-sm font-medium hover:opacity-80 transition-opacity">
-                            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-                            {{ link.label }}
-                          </a>
-                        </li>
-                      }
-                    </ul>
-                  } @else {
-                    <p class="text-body-sm text-on-surface-variant">
-                      {{ t().officialPdfsEmpty }}
-                      <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback(activeAuthority()) }}</a>
-                    </p>
-                  }
-                </div>
-              }
-
-              @let primariaLinks = officialPdfs().primaria;
-              @if (primariaLinks) {
-                <div class="w-full max-w-lg bg-surface-container-low border border-outline-variant rounded-lg p-md text-left">
-                  <p class="text-label-md font-bold text-on-surface mb-1">{{ t().primariaPdfLabel }}</p>
-                  @if (primariaLinks.length > 0) {
-                    <ul class="space-y-1">
-                      @for (link of primariaLinks; track link.url) {
-                        <li>
-                          <a [href]="link.url" target="_blank" rel="noopener"
-                             class="flex items-center gap-1 text-primary text-body-sm font-medium hover:opacity-80 transition-opacity">
-                            <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-                            {{ link.label }}
-                          </a>
-                        </li>
-                      }
-                    </ul>
-                  } @else {
-                    <p class="text-body-sm text-on-surface-variant">
-                      {{ t().officialPdfsEmpty }}
-                      <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback(activeAuthority()) }}</a>
-                    </p>
-                  }
-                </div>
-              }
-
-              @if (officialPdfs().secundaria || officialPdfs().primaria) {
-                <p class="text-body-sm text-on-surface-variant/80 max-w-lg font-medium">{{ t().officialPdfsVerifyNotice }}</p>
-              }
-
-              @if (activeRegionId() === 'val') {
-                <div class="flex flex-col items-center gap-1 mt-xs">
-                  <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
-                     class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
-                    <span class="material-symbols-outlined text-[16px]">download</span>
-                    {{ t().loadSample }}
-                  </a>
-                  <p class="text-body-sm text-on-surface-variant/70 max-w-lg">{{ t().sampleFileDisclaimer }}</p>
-                </div>
-              }
-            </div>
-          </div>
+          <button (click)="startProcess()"
+                  class="mx-auto flex items-center gap-sm bg-primary text-on-primary px-xl py-4 rounded-xl font-bold text-body-md hover:bg-primary-container hover:shadow-lg transition-all shadow-md active:scale-95">
+            <span class="material-symbols-outlined text-[22px]">play_arrow</span>
+            {{ t().ctaStart }}
+          </button>
         </div>
       </div>
     </section>
@@ -198,55 +61,61 @@
     <section class="py-xl bg-white" id="com-funciona">
       <div class="max-w-container-max mx-auto px-gutter">
         <div class="text-center mb-xl">
-          <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().howItWorksTitle }}</h2>
+          <h2 class="text-headline-md font-headline-md font-bold text-primary">{{ t().howItWorksTitle }}</h2>
           <p class="text-body-md text-body-md text-on-surface-variant mt-sm">{{ t().howItWorksDesc }}</p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-xl">
-          <div class="flex flex-col items-center text-center space-y-md p-lg">
-            <span class="material-symbols-outlined text-4xl text-primary">upload_file</span>
-            <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step1Title }}</h3>
-            <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step1Desc }}</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-xl max-w-4xl mx-auto">
+          <div class="flex flex-col items-center text-center space-y-sm p-md">
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-sm">
+              <span class="material-symbols-outlined text-3xl text-primary">upload_file</span>
+            </div>
+            <h3 class="text-body-md font-bold">{{ t().step1Title }}</h3>
+            <p class="text-label-md font-label-md text-on-surface-variant max-w-xs">{{ t().step1Desc }}</p>
           </div>
-          <div class="flex flex-col items-center text-center space-y-md p-lg">
-            <span class="material-symbols-outlined text-4xl text-primary">settings_account_box</span>
-            <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step2Title }}</h3>
-            <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step2Desc }}</p>
+          <div class="flex flex-col items-center text-center space-y-sm p-md">
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-sm">
+              <span class="material-symbols-outlined text-3xl text-primary">settings_account_box</span>
+            </div>
+            <h3 class="text-body-md font-bold">{{ t().step2Title }}</h3>
+            <p class="text-label-md font-label-md text-on-surface-variant max-w-xs">{{ t().step2Desc }}</p>
           </div>
-          <div class="flex flex-col items-center text-center space-y-md p-lg">
-            <span class="material-symbols-outlined text-4xl text-primary">map</span>
-            <h3 class="text-headline-md font-headline-md font-semibold">{{ t().step3Title }}</h3>
-            <p class="text-body-md text-body-md text-on-surface-variant">{{ t().step3Desc }}</p>
+          <div class="flex flex-col items-center text-center space-y-sm p-md">
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-sm">
+              <span class="material-symbols-outlined text-3xl text-primary">map</span>
+            </div>
+            <h3 class="text-body-md font-bold">{{ t().step3Title }}</h3>
+            <p class="text-label-md font-label-md text-on-surface-variant max-w-xs">{{ t().step3Desc }}</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Features Section -->
-    <section class="py-xl bg-surface-container-low" id="funcionalitats">
+    <section class="py-xl bg-surface-container-low scroll-mt-16" id="funcionalitats">
       <div class="max-w-container-max mx-auto px-gutter">
         <div class="text-center mb-xl">
-          <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().featuresTitle }}</h2>
+          <h2 class="text-headline-md font-headline-md font-bold text-primary">{{ t().featuresTitle }}</h2>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-lg">
-          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-primary mb-md">auto_awesome</span>
-            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature1Title }}</h4>
-            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature1Desc }}</p>
+          <div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant hover:border-primary/50 hover:shadow-md transition-all">
+            <span class="material-symbols-outlined text-primary mb-md block">auto_awesome</span>
+            <h4 class="text-body-md font-bold mb-xs">{{ t().feature1Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant leading-relaxed">{{ t().feature1Desc }}</p>
           </div>
-          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-primary mb-md">route</span>
-            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature2Title }}</h4>
-            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature2Desc }}</p>
+          <div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant hover:border-primary/50 hover:shadow-md transition-all">
+            <span class="material-symbols-outlined text-primary mb-md block">route</span>
+            <h4 class="text-body-md font-bold mb-xs">{{ t().feature2Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant leading-relaxed">{{ t().feature2Desc }}</p>
           </div>
-          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-primary mb-md">speed</span>
-            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature3Title }}</h4>
-            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature3Desc }}</p>
+          <div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant hover:border-primary/50 hover:shadow-md transition-all">
+            <span class="material-symbols-outlined text-primary mb-md block">speed</span>
+            <h4 class="text-body-md font-bold mb-xs">{{ t().feature3Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant leading-relaxed">{{ t().feature3Desc }}</p>
           </div>
-          <div class="bg-white p-lg rounded-xl shadow-sm border border-outline-variant hover:shadow-md transition-shadow">
-            <span class="material-symbols-outlined text-primary mb-md">download</span>
-            <h4 class="text-body-lg font-body-lg font-bold mb-xs">{{ t().feature4Title }}</h4>
-            <p class="font-label-md text-label-md text-on-surface-variant">{{ t().feature4Desc }}</p>
+          <div class="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant hover:border-primary/50 hover:shadow-md transition-all">
+            <span class="material-symbols-outlined text-primary mb-md block">download</span>
+            <h4 class="text-body-md font-bold mb-xs">{{ t().feature4Title }}</h4>
+            <p class="font-label-md text-label-md text-on-surface-variant leading-relaxed">{{ t().feature4Desc }}</p>
           </div>
         </div>
       </div>
@@ -254,37 +123,37 @@
 
     <!-- Cobertura por comunidad autónoma -->
     <section id="coverage" class="bg-surface py-xl border-t border-outline-variant scroll-mt-16">
-      <div class="max-w-container-max mx-auto px-gutter">
-        <div class="text-center space-y-sm mb-lg">
-          <h2 class="text-headline-lg font-headline-lg font-bold text-primary">{{ t().coverageTitle }}</h2>
-          <p class="text-body-md text-on-surface-variant max-w-3xl mx-auto">{{ t().coverageIntro }}</p>
-          <p class="font-label-md text-label-md font-bold text-on-surface-variant">
+      <div class="max-w-5xl mx-auto px-gutter">
+        <div class="text-center space-y-sm mb-xl max-w-3xl mx-auto">
+          <h2 class="text-headline-md font-headline-md font-bold text-primary">{{ t().coverageTitle }}</h2>
+          <p class="text-body-md text-on-surface-variant">{{ t().coverageIntro }}</p>
+          <p class="text-body-md font-bold text-on-surface pt-sm">
             {{ t().coverageSummary(coverageWorking, coverageTotal) }}
           </p>
         </div>
 
-        <div class="overflow-x-auto border border-outline-variant rounded-xl bg-surface-container-lowest">
+        <div class="overflow-x-auto border border-outline-variant rounded-xl bg-surface-container-lowest shadow-sm">
           <table class="w-full border-collapse text-body-sm min-w-[36rem]">
             <thead>
-              <tr class="bg-surface-container-low text-on-surface-variant text-left">
-                <th scope="col" class="px-lg py-md font-bold">{{ t().coverageColRegion }}</th>
-                <th scope="col" class="px-lg py-md font-bold whitespace-nowrap">{{ t().coverageColStatus }}</th>
-                <th scope="col" class="px-lg py-md font-bold">{{ t().coverageColNote }}</th>
+              <tr class="bg-surface-container-low border-b border-outline-variant text-on-surface-variant text-left">
+                <th scope="col" class="px-lg py-md font-bold uppercase tracking-wider">{{ t().coverageColRegion }}</th>
+                <th scope="col" class="px-lg py-md font-bold uppercase tracking-wider whitespace-nowrap">{{ t().coverageColStatus }}</th>
+                <th scope="col" class="px-lg py-md font-bold uppercase tracking-wider">{{ t().coverageColNote }}</th>
               </tr>
             </thead>
             <tbody>
               @for (entry of coverage; track entry.name.es) {
-                <tr class="border-t border-outline-variant/60">
+                <tr class="border-t border-outline-variant/60 hover:bg-surface-variant/30 transition-colors">
                   <th scope="row" class="px-lg py-md font-bold text-on-surface text-left whitespace-nowrap">
                     {{ entry.name[i18n.lang()] }}
                   </th>
                   <td class="px-lg py-md align-top">
-                    <span class="inline-block px-sm py-0.5 rounded font-label-md text-label-md font-bold whitespace-nowrap"
+                    <span class="inline-block px-sm py-0.5 rounded font-label-md text-[11px] font-bold uppercase whitespace-nowrap"
                           [class]="coverageBadgeClasses(entry.status)">
                       {{ coverageLabel(entry.status) }}
                     </span>
                   </td>
-                  <td class="px-lg py-md text-on-surface-variant align-top">{{ entry.note[i18n.lang()] }}</td>
+                  <td class="px-lg py-md text-label-md text-on-surface-variant leading-relaxed align-top">{{ entry.note[i18n.lang()] }}</td>
                 </tr>
               }
             </tbody>
@@ -325,6 +194,203 @@
     }
 
   </div>
+  } @else if (step() === 'setup') {
+  <!-- Asistente de configuración: comunidad → enseñanza → documento -->
+  <main class="flex-1 flex flex-col items-center pt-16 pb-12 px-gutter overflow-y-auto">
+    <div class="w-full max-w-3xl mb-xl mt-xl">
+      <div class="flex items-center justify-between relative">
+        <div class="absolute top-1/2 left-0 w-full h-0.5 bg-surface-container-high -translate-y-1/2 z-0 max-lg:top-4"></div>
+        @for (label of [t().stepRegion, t().stepLevel, t().stepFile]; track $index) {
+        <div class="relative z-10 flex flex-col items-center max-lg:flex-row max-lg:gap-2">
+          <div class="w-10 h-10 max-lg:w-8 max-lg:h-8 rounded-full flex items-center justify-center font-bold"
+               [class.bg-primary]="wizardStep() >= $index + 1"
+               [class.text-white]="wizardStep() >= $index + 1"
+               [class.bg-surface-container-highest]="wizardStep() < $index + 1"
+               [class.text-on-surface-variant]="wizardStep() < $index + 1">{{ $index + 1 }}</div>
+          <span class="mt-2 font-label-md text-label-md max-lg:mt-0 max-lg:text-[10px]"
+                [class.text-primary]="wizardStep() === $index + 1"
+                [class.text-on-surface-variant]="wizardStep() !== $index + 1">{{ label }}</span>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.1)] p-lg border border-surface-variant">
+
+      @if (wizardStep() === 1) {
+      <!-- Paso 1: comunidad -->
+      <h1 id="region-selector-label" class="font-headline-lg text-headline-lg text-primary mb-sm text-center">{{ t().regionSelectorLabel }}</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mb-lg text-center">{{ t().regionSelectorHint }}</p>
+      <div role="radiogroup" aria-labelledby="region-selector-label"
+           class="grid grid-cols-2 md:grid-cols-4 gap-sm">
+        @for (r of region.all; track r.id) {
+          <label class="block cursor-pointer h-full">
+            <input type="radio" name="region" class="sr-only peer" [value]="r.id"
+                   [checked]="activeRegionId() === r.id" (change)="selectRegion(r.id)" />
+            <span class="flex flex-col h-full text-left rounded-xl border border-outline-variant bg-surface px-sm py-sm min-h-[3.75rem] transition-all
+                         peer-hover:border-primary/50 peer-hover:bg-surface-container-low
+                         peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-checked:shadow-sm
+                         peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary">
+              <span class="flex items-start gap-1 leading-tight">
+                <span class="material-symbols-outlined text-[16px] leading-5 shrink-0 transition-opacity"
+                      [class.opacity-0]="activeRegionId() !== r.id" aria-hidden="true">check_circle</span>
+                <span class="text-body-sm font-bold leading-snug">{{ r.name[i18n.lang()] }}</span>
+              </span>
+              @if (coverageLabel(r.status); as status) {
+                <span class="mt-xs">
+                  <span class="inline-block px-1 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap {{ coverageBadgeClasses(r.status) }}">{{ status }}</span>
+                </span>
+              }
+            </span>
+          </label>
+        }
+      </div>
+
+      } @else if (wizardStep() === 2) {
+      <!-- Paso 2: primaria o secundaria -->
+      <div role="radiogroup" class="grid grid-cols-1 md:grid-cols-2 gap-md">
+        @for (cos of cosOptions; track cos) {
+          <label class="block cursor-pointer h-full">
+            <input type="radio" name="cos" class="sr-only peer" [value]="cos"
+                   [checked]="selectedCos() === cos" (change)="selectCos(cos)" />
+            <span class="flex flex-col items-center text-center gap-sm h-full rounded-xl border border-outline-variant bg-surface p-lg transition-all
+                         peer-hover:border-primary/50 peer-hover:bg-surface-container-low
+                         peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-checked:shadow-sm
+                         peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary">
+              <span class="material-symbols-outlined text-[36px]">school</span>
+              <span class="text-body-md font-bold">{{ cos === 'secundaria' ? t().secundariaPdfLabel : t().primariaPdfLabel }}</span>
+              <span class="material-symbols-outlined text-[20px] transition-opacity"
+                    [class.opacity-0]="selectedCos() !== cos" aria-hidden="true">check_circle</span>
+            </span>
+          </label>
+        }
+      </div>
+
+      } @else {
+      <!-- Paso 3: documento oficial (auto si se puede, manual si no) -->
+      <div class="space-y-md">
+        <p class="text-body-sm text-on-surface-variant text-center">{{ t().pdfFormatHint(activeAuthority()) }}</p>
+        @if (activeRegion().status === 'manual-only') {
+          <p class="text-label-md text-on-surface-variant text-center">{{ t().regionManualOnlyNotice }}</p>
+        }
+
+        @if (hasOfficialDownload()) {
+          @let links = selectedCosLinks();
+          @if (!links || officialPdfsLoading() === selectedCos()) {
+            <div class="flex items-center justify-center gap-sm py-md text-on-surface-variant">
+              <span class="material-symbols-outlined animate-spin">sync</span>
+              <span class="font-label-md text-label-md">{{ t().searchingPortal }}</span>
+            </div>
+          } @else if (links.length > 0) {
+            <ul class="space-y-sm">
+              @for (link of links; track link.url) {
+                <li class="border border-outline-variant rounded-xl bg-surface-container-low overflow-hidden
+                           md:flex md:items-center md:justify-between md:gap-md md:px-md md:py-sm md:rounded-lg">
+                  <a [href]="link.url" target="_blank" rel="noopener"
+                     class="flex flex-col items-center gap-xs px-md pt-md pb-sm text-center min-w-0
+                            md:flex-row md:gap-1 md:p-0 md:text-left hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[30px] md:text-[18px] shrink-0" aria-hidden="true">picture_as_pdf</span>
+                    <span class="text-body-sm font-medium break-words max-w-full md:truncate">{{ link.label }}</span>
+                  </a>
+                  <div class="flex gap-xs px-md pb-md md:p-0 md:shrink-0">
+                    <a [href]="link.url" target="_blank" rel="noopener"
+                       class="flex-1 md:flex-none flex items-center justify-center gap-xs border border-outline text-on-surface-variant px-md py-1.5 rounded-lg font-bold text-label-md hover:border-primary hover:text-primary transition-colors whitespace-nowrap">
+                      <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                      {{ t().viewFile }}
+                    </a>
+                    <button (click)="useAutoPdf(link)" [disabled]="autoFetching() !== null"
+                            class="flex-1 md:flex-none flex items-center justify-center gap-xs bg-primary text-on-primary px-md py-1.5 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity disabled:opacity-60 whitespace-nowrap">
+                      <span class="material-symbols-outlined text-[16px]" [class.animate-spin]="autoFetching() === link.url">
+                        {{ autoFetching() === link.url ? 'sync' : 'bolt' }}
+                      </span>
+                      {{ t().useThisFile }}
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="text-body-sm text-on-surface-variant text-center">
+              {{ t().officialPdfsEmpty }}
+              <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener" class="text-primary font-bold hover:opacity-80">{{ t().openPortalFallback(activeAuthority()) }}</a>
+            </p>
+          }
+        } @else {
+          <div class="flex justify-center">
+            <a [href]="pdfPortalHubUrl()" target="_blank" rel="noopener"
+               class="flex items-center gap-2 bg-primary text-on-primary px-lg py-2 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity shadow-sm">
+              <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+              {{ t().openPortal(activeAuthority()) }}
+            </a>
+          </div>
+        }
+
+        <div class="flex items-center gap-md text-on-surface-variant/60">
+          <span class="flex-1 h-px bg-outline-variant"></span>
+          <span class="font-label-md text-label-md whitespace-nowrap">{{ t().orUploadManually }}</span>
+          <span class="flex-1 h-px bg-outline-variant"></span>
+        </div>
+
+        <div class="relative group cursor-pointer border-2 border-dashed border-primary/40 bg-surface-container-lowest/95 rounded-xl transition-all hover:border-primary hover:bg-white hover:shadow-lg flex flex-col items-center justify-center gap-md p-8 max-lg:p-6"
+             id="drop-zone"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)"
+             [class.border-primary]="dragging()"
+             [class.bg-primary/5]="dragging()"
+             (click)="landingPdfInput.click()">
+          <input [attr.accept]="acceptsSheet() ? '.pdf,.xlsx' : '.pdf'" class="hidden" #landingPdfInput id="file-input" type="file" (change)="onFileSelected($event)" />
+          <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-3xl">cloud_upload</span>
+          </div>
+          <div class="space-y-xs text-center">
+            <p class="text-body-md font-bold text-on-surface group-hover:text-primary transition-colors">{{ t().dropPrompt }}</p>
+            <p class="font-label-md text-label-md text-on-surface-variant">{{ acceptsSheet() ? t().dropHintSheet : t().dropHint }}</p>
+          </div>
+        </div>
+
+        @if (activeRegionId() === 'val' && selectedCos() === 'secundaria') {
+          <div class="flex flex-col items-center gap-1">
+            <a href="/Vacants_Supr_Despl_Secundaria_2.pdf" download
+               class="flex items-center gap-1 text-primary text-label-md font-bold hover:opacity-80 transition-opacity">
+              <span class="material-symbols-outlined text-[16px]">download</span>
+              {{ t().loadSample }}
+            </a>
+          </div>
+        }
+      </div>
+      }
+
+      <!-- Navegación del asistente -->
+      <div class="mt-xl flex items-center justify-between">
+        @if (wizardStep() === 1) {
+          <button class="px-lg py-3 rounded-lg border border-outline text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors"
+                  (click)="backToLanding()">
+            {{ t().cancel }}
+          </button>
+        } @else {
+          <button class="flex items-center gap-xs text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md group"
+                  (click)="wizardPrev()">
+            <span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
+            {{ t().back }}
+          </button>
+        }
+        @if (wizardStep() < 3) {
+          <button class="px-lg py-3 rounded-lg bg-primary text-white font-label-md text-label-md hover:opacity-90 transition-all shadow-md active:scale-95 flex items-center gap-sm"
+                  (click)="wizardNext()">
+            {{ t().continue }}
+            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Atmospheric Backdrop Decoration -->
+    <div class="fixed inset-0 -z-10 pointer-events-none opacity-40">
+      <div class="absolute top-1/4 -left-20 w-96 h-96 bg-primary-container/20 blur-[100px] rounded-full"></div>
+      <div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-secondary-container/20 blur-[100px] rounded-full"></div>
+    </div>
+  </main>
   } @else if (step() === 'modalities' || step() === 'origin') {
   <!-- Main Content Canvas -->
   <main class="flex-1 flex flex-col items-center pt-16 pb-12 px-gutter overflow-y-auto">

@@ -7,6 +7,7 @@
   "ctaStart": "Començar ara",
   "howItWorks": "Com funciona",
   "features": "Funcionalitats",
+  "navStatus": "Estat operatiu",
   "howItWorksTitle": "Com funciona",
   "howItWorksDesc": "Tres passos senzills per optimitzar la teua tria",
   "step1Title": "Puja el PDF",
@@ -233,5 +234,13 @@
   "metrics": "Mètriques",
   "openInGoogleMaps": "Obrir a Google Maps",
   "minutes": "min",
-  "arrivalAtDestination": "Arribada a la destinació"
+  "arrivalAtDestination": "Arribada a la destinació",
+
+  "stepRegion": "Comunitat",
+  "stepLevel": "Ensenyament",
+  "stepFile": "Document",
+  "searchingPortal": "Cercant al portal…",
+  "viewFile": "Veure",
+  "useThisFile": "Fer servir",
+  "orUploadManually": "o puja el fitxer tu mateix"
 }

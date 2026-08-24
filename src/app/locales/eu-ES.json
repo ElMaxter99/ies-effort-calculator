@@ -7,6 +7,7 @@
   "ctaStart": "Hasi orain",
   "howItWorks": "Nola funtzionatzen du",
   "features": "Funtzionalitateak",
+  "navStatus": "Egoera operatiboa",
   "howItWorksTitle": "Nola funtzionatzen du",
   "howItWorksDesc": "Hiru urrats sinple zure aukera optimizatzeko",
   "step1Title": "Igo PDFa",
@@ -233,5 +234,13 @@
   "metrics": "Metrikak",
   "openInGoogleMaps": "Ireki Google Mapsen",
   "minutes": "min",
-  "arrivalAtDestination": "Helmugara iristea"
+  "arrivalAtDestination": "Helmugara iristea",
+
+  "stepRegion": "Komunitatea",
+  "stepLevel": "Irakaskuntza",
+  "stepFile": "Dokumentua",
+  "searchingPortal": "Atarian bilatzen…",
+  "viewFile": "Ikusi",
+  "useThisFile": "Erabili",
+  "orUploadManually": "edo zeuk igo fitxategia"
 }

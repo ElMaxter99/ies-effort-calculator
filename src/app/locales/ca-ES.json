@@ -239,7 +239,8 @@
   "stepRegion": "Comunitat",
   "stepLevel": "Ensenyament",
   "stepFile": "Document",
-  "searchingPortal": "Cercant al portal oficial…",
-  "useThisFile": "Fes servir aquest document",
+  "searchingPortal": "Cercant al portal…",
+  "viewFile": "Veure",
+  "useThisFile": "Fer servir",
   "orUploadManually": "o puja el fitxer tu mateix"
 }

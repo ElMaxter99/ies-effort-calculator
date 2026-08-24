@@ -239,7 +239,8 @@
   "stepRegion": "Komunitatea",
   "stepLevel": "Irakaskuntza",
   "stepFile": "Dokumentua",
-  "searchingPortal": "Ofizialeko atarian bilatzen…",
-  "useThisFile": "Erabili dokumentu hau",
+  "searchingPortal": "Atarian bilatzen…",
+  "viewFile": "Ikusi",
+  "useThisFile": "Erabili",
   "orUploadManually": "edo zeuk igo fitxategia"
 }

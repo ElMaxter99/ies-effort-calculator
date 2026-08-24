@@ -239,7 +239,8 @@
   "stepRegion": "Comunidade",
   "stepLevel": "Ensino",
   "stepFile": "Documento",
-  "searchingPortal": "Buscando no portal oficial…",
-  "useThisFile": "Usar este documento",
+  "searchingPortal": "Buscando no portal…",
+  "viewFile": "Ver",
+  "useThisFile": "Usar",
   "orUploadManually": "ou sube o arquivo ti mesmo"
 }

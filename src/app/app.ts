@@ -312,10 +312,16 @@ export class App implements OnDestroy {
   async useAutoPdf(link: OfficialPdfLink) {
     const source = this.region.current().officialSource;
     let url = link.url;
-    // El documento vive en el portal oficial (CORS cerrado): se pide por el
-    // mismo proxy que usa el rastreo de enlaces.
-    if (source && url.startsWith(source.baseUrl)) {
-      url = source.proxyPath + url.slice(source.baseUrl.length);
+    if (source) {
+      // El documento vive en el portal oficial (CORS cerrado) y el host del
+      // enlace puede no coincidir exactamente con el baseUrl declarado: se
+      // pide siempre por el proxy usando solo la ruta.
+      try {
+        const u = new URL(url, location.href);
+        url = `${source.proxyPath}${u.pathname}${u.search}`;
+      } catch {
+        // URL inservible: se deja la original y el fetch lo reportará.
+      }
     }
 
     this.error.set('');
@@ -324,8 +330,10 @@ export class App implements OnDestroy {
       const res = await fetch(url);
       if (!res.ok) throw new Error(String(res.status));
       const blob = await res.blob();
-      const name = decodeURIComponent(new URL(link.url, location.href).pathname.split('/').pop() || 'listado.pdf');
-      const file = new File([blob], name.includes('.') ? name : `${name}.pdf`, { type: blob.type });
+      const segs = new URL(link.url, location.href).pathname.split('/').filter(Boolean);
+      const withExt = [...segs].reverse().find((s) => /\.[a-z0-9]{2,5}$/i.test(s));
+      const name = withExt ?? `${segs[segs.length - 1] ?? 'listado'}.pdf`;
+      const file = new File([blob], name, { type: blob.type });
       await this.processFile(file);
     } catch (e: any) {
       this.error.set(this.i18n.t().errorLoadingPDF(e?.message ?? ''));

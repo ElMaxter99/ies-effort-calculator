@@ -284,19 +284,28 @@
           } @else if (links.length > 0) {
             <ul class="space-y-sm">
               @for (link of links; track link.url) {
-                <li class="flex items-center justify-between gap-sm bg-surface-container-low border border-outline-variant rounded-lg px-md py-sm">
+                <li class="border border-outline-variant rounded-xl bg-surface-container-low overflow-hidden
+                           md:flex md:items-center md:justify-between md:gap-md md:px-md md:py-sm md:rounded-lg">
                   <a [href]="link.url" target="_blank" rel="noopener"
-                     class="flex items-center gap-1 text-on-surface text-body-sm font-medium hover:text-primary transition-colors min-w-0">
-                    <span class="material-symbols-outlined text-[18px] shrink-0">picture_as_pdf</span>
-                    <span class="truncate">{{ link.label }}</span>
+                     class="flex flex-col items-center gap-xs px-md pt-md pb-sm text-center min-w-0
+                            md:flex-row md:gap-1 md:p-0 md:text-left hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[30px] md:text-[18px] shrink-0" aria-hidden="true">picture_as_pdf</span>
+                    <span class="text-body-sm font-medium break-words max-w-full md:truncate">{{ link.label }}</span>
                   </a>
-                  <button (click)="useAutoPdf(link)" [disabled]="autoFetching() !== null"
-                          class="flex items-center gap-xs shrink-0 bg-primary text-on-primary px-md py-1.5 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity disabled:opacity-60">
-                    <span class="material-symbols-outlined text-[16px]" [class.animate-spin]="autoFetching() === link.url">
-                      {{ autoFetching() === link.url ? 'sync' : 'bolt' }}
-                    </span>
-                    {{ autoFetching() === link.url ? t().searchingPortal : t().useThisFile }}
-                  </button>
+                  <div class="flex gap-xs px-md pb-md md:p-0 md:shrink-0">
+                    <a [href]="link.url" target="_blank" rel="noopener"
+                       class="flex-1 md:flex-none flex items-center justify-center gap-xs border border-outline text-on-surface-variant px-md py-1.5 rounded-lg font-bold text-label-md hover:border-primary hover:text-primary transition-colors whitespace-nowrap">
+                      <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                      {{ t().viewFile }}
+                    </a>
+                    <button (click)="useAutoPdf(link)" [disabled]="autoFetching() !== null"
+                            class="flex-1 md:flex-none flex items-center justify-center gap-xs bg-primary text-on-primary px-md py-1.5 rounded-lg font-bold text-label-md hover:opacity-90 transition-opacity disabled:opacity-60 whitespace-nowrap">
+                      <span class="material-symbols-outlined text-[16px]" [class.animate-spin]="autoFetching() === link.url">
+                        {{ autoFetching() === link.url ? 'sync' : 'bolt' }}
+                      </span>
+                      {{ t().useThisFile }}
+                    </button>
+                  </div>
                 </li>
               }
             </ul>

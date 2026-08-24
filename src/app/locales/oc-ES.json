@@ -239,7 +239,8 @@
   "stepRegion": "Comunitat",
   "stepLevel": "Ensenhament",
   "stepFile": "Document",
-  "searchingPortal": "Cercant deth portal oficiau…",
-  "useThisFile": "Utilisa eth document aguest",
+  "searchingPortal": "Cercant deth portal…",
+  "viewFile": "Véster",
+  "useThisFile": "Utilisa",
   "orUploadManually": "ò carrega eth fichèr tù medish"
 }

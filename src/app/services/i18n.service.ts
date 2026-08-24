@@ -19,6 +19,7 @@ export interface I18nTranslations {
   ctaStart: string;
   howItWorks: string;
   features: string;
+  navStatus: string;
   howItWorksTitle: string;
   howItWorksDesc: string;
   step1Title: string;
@@ -260,6 +261,7 @@ const CA: I18nTranslations = {
   ctaStart: 'Començar ara',
   howItWorks: 'Com funciona',
   features: 'Funcionalitats',
+  navStatus: 'Estat operatiu',
   howItWorksTitle: 'Com funciona',
   howItWorksDesc: 'Tres passos senzills per optimitzar la teua tria',
   step1Title: 'Puja el PDF',
@@ -499,6 +501,7 @@ const ES: I18nTranslations = {
   ctaStart: 'Empezar ahora',
   howItWorks: 'Cómo funciona',
   features: 'Funcionalidades',
+  navStatus: 'Estado operativo',
   howItWorksTitle: 'Cómo funciona',
   howItWorksDesc: 'Tres pasos sencillos para optimizar tu elección',
   step1Title: 'Sube el PDF',

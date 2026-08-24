@@ -7,7 +7,7 @@ import { I18nService } from './services/i18n.service';
 import { APP_VERSION } from './version';
 import { APP_ENV } from './env';
 import { RegionService } from './regions/region.service';
-import { RegionId, RegionStatus } from './regions/region.types';
+import { RegionId } from './regions/region.types';
 import { COVERAGE, CoverageStatus } from './regions/coverage';
 import { PdfSourceService, Cos, OfficialPdfLink } from './services/pdf-source.service';
 import { SheetParserService } from './services/sheet-parser.service';
@@ -244,23 +244,6 @@ export class App implements OnDestroy {
     });
 
     this.origins.set(origins);
-  }
-
-  /**
-   * Rótulo de estado de una comunidad en el selector.
-   *
-   * Reutiliza los de la tabla de cobertura para que una comunidad no se
-   * describa de dos maneras distintas en la misma página. Las que funcionan
-   * sin salvedades no llevan rótulo: lo normal no hace falta anunciarlo.
-   */
-  regionStatusLabel(status: RegionStatus): string {
-    const t = this.t();
-
-    switch (status) {
-      case 'beta': return t.coverageBeta;
-      case 'manual-only': return t.coverageManualOnly;
-      default: return '';
-    }
   }
 
   /** Cambia de comunidad y reinicia el proceso: los datos cargados ya no valen. */

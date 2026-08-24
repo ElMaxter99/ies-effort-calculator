@@ -9,10 +9,13 @@ import { RegionConfig } from './region.types';
  */
 export const VAL: RegionConfig = {
   id: 'val',
-  name: { ca: 'Comunitat Valenciana', es: 'Comunitat Valenciana' },
+  name: { ca: 'Comunitat Valenciana', es: 'Comunitat Valenciana', eu: 'Valentziako Erkidegoa', gl: 'Comunidade Valenciana', oc: 'Comunautat Valenciana' },
   authority: {
     ca: "la Conselleria d'Educació de la Generalitat Valenciana",
     es: "la Conselleria d'Educació de la Generalitat Valenciana",
+    eu: 'Generalitat Valentzianako Hezkuntza Kontseilaritza',
+    gl: 'a Consellería de Educación da Generalitat Valenciana',
+    oc: "era Conselharia d'Educacion dera Generalitat Valenciana",
   },
   status: 'stable',
 

@@ -17,10 +17,13 @@ import { RegionConfig } from './region.types';
  */
 export const AST: RegionConfig = {
   id: 'ast',
-  name: { ca: 'Astúries', es: 'Asturias' },
+  name: { ca: 'Astúries', es: 'Asturias', eu: 'Asturias', gl: 'Asturias', oc: 'Asturies' },
   authority: {
     ca: "la Conselleria d'Educació del Principat d'Astúries",
     es: 'la Consejería de Educación del Principado de Asturias',
+    eu: 'Asturiasko Printzerriko Hezkuntza Kontseilaritza',
+    gl: 'a Consellería de Educación do Principado de Asturias',
+    oc: "era Conselharia d'Educacion deth Principat d'Asturies",
   },
   status: 'beta',
 

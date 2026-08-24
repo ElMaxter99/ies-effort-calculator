@@ -21,10 +21,13 @@ import { RegionConfig } from './region.types';
  */
 export const CNT: RegionConfig = {
   id: 'cnt',
-  name: { ca: 'Cantàbria', es: 'Cantabria' },
+  name: { ca: 'Cantàbria', es: 'Cantabria', eu: 'Kantabria', gl: 'Cantabria', oc: 'Cantàbria' },
   authority: {
     ca: "la Conselleria d'Educació, FP i Universitats de Cantàbria",
     es: 'la Consejería de Educación, FP y Universidades de Cantabria',
+    eu: 'Kantabriako Hezkuntza, LH eta Unibertsitateen Kontseilaritza',
+    gl: 'a Consellería de Educación, FP e Universidades de Cantabria',
+    oc: "era Conselharia d'Educacion, FP e Universitats de Cantàbria",
   },
   status: 'beta',
 

@@ -14,10 +14,13 @@ import { RegionConfig } from './region.types';
  */
 export const MAD: RegionConfig = {
   id: 'mad',
-  name: { ca: 'Madrid', es: 'Madrid' },
+  name: { ca: 'Madrid', es: 'Madrid', eu: 'Madril', gl: 'Madrid', oc: 'Madrid' },
   authority: {
     ca: "la Conselleria d'Educació de la Comunitat de Madrid",
     es: 'la Consejería de Educación de la Comunidad de Madrid',
+    eu: 'Madrilgo Erkidegoko Hezkuntza Kontseilaritza',
+    gl: 'a Consellería de Educación da Comunidade de Madrid',
+    oc: "era Conselharia d'Educacion dera Comunautat de Madrid",
   },
   status: 'beta',
 

@@ -23,10 +23,13 @@ import { RegionConfig } from './region.types';
  */
 export const ARA: RegionConfig = {
   id: 'ara',
-  name: { ca: 'Aragó', es: 'Aragón' },
+  name: { ca: 'Aragó', es: 'Aragón', eu: 'Aragoi', gl: 'Aragón', oc: 'Aragon' },
   authority: {
     ca: "el Departament d'Educació, Ciència i Universitats del Govern d'Aragó",
     es: 'el Departamento de Educación, Ciencia y Universidades del Gobierno de Aragón',
+    eu: 'Aragoiko Gobernuko Hezkuntza, Zientzia eta Unibertsitateen Departamentua',
+    gl: 'o Departamento de Educación, Ciencia e Universidades do Goberno de Aragón',
+    oc: "eth Departament d'Educacion, Sciéncia e Universitats deth Govèrn d'Aragon",
   },
   status: 'manual-only',
 

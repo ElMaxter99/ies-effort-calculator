@@ -67,10 +67,13 @@ const VACANTES_PATH =
  */
 export const MEL: RegionConfig = {
   id: 'mel',
-  name: { ca: 'Melilla', es: 'Melilla' },
+  name: { ca: 'Melilla', es: 'Melilla', eu: 'Melilla', gl: 'Melilla', oc: 'Melilla' },
   authority: {
     ca: "la Direcció Provincial del Ministeri d'Educació a Melilla",
     es: 'la Dirección Provincial del Ministerio de Educación en Melilla',
+    eu: 'Hezkuntza Ministerioaren Melillako Lurralde Ordezkaritza',
+    gl: 'a Dirección Provincial do Ministerio de Educación en Melilla',
+    oc: "era Direccion Provinciau deth Ministèri d'Educacion en Melilla",
   },
   status: 'beta',
 

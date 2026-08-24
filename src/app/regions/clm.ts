@@ -20,10 +20,13 @@ import { RegionConfig } from './region.types';
  */
 export const CLM: RegionConfig = {
   id: 'clm',
-  name: { ca: 'Castella-la Manxa', es: 'Castilla-La Mancha' },
+  name: { ca: 'Castella-la Manxa', es: 'Castilla-La Mancha', eu: 'Gaztela-Mantxa', gl: 'Castela-A Mancha', oc: 'Castela-La Mancha' },
   authority: {
     ca: 'la Conselleria d\'Educació, Cultura i Esports de Castella-la Manxa',
     es: 'la Consejería de Educación, Cultura y Deportes de Castilla-La Mancha',
+    eu: 'Gaztela-Mantxako Hezkuntza, Kultura eta Kirol Kontseilaritza',
+    gl: 'a Consellería de Educación, Cultura e Deportes de Castela-A Mancha',
+    oc: "era Conselharia d'Educacion, Cultura e Espòrts de Castela-La Mancha",
   },
   status: 'beta',
 

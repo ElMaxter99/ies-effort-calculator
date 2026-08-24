@@ -69,10 +69,13 @@ const SECUNDARIA: ParserHints = {
  */
 export const NAV: RegionConfig = {
   id: 'nav',
-  name: { ca: 'Navarra', es: 'Navarra' },
+  name: { ca: 'Navarra', es: 'Navarra', eu: 'Nafarroa', gl: 'Navarra', oc: 'Navarra' },
   authority: {
     ca: "el Departament d'Educació del Govern de Navarra",
     es: 'el Departamento de Educación del Gobierno de Navarra',
+    eu: 'Nafarroako Gobernuko Hezkuntza Departamentua',
+    gl: 'o Departamento de Educación do Goberno de Navarra',
+    oc: "eth Departament d'Educacion deth Govèrn de Navarra",
   },
   status: 'beta',
 

@@ -17,10 +17,13 @@ import { RegionConfig } from './region.types';
  */
 export const MUR: RegionConfig = {
   id: 'mur',
-  name: { ca: 'Regió de Múrcia', es: 'Región de Murcia' },
+  name: { ca: 'Regió de Múrcia', es: 'Región de Murcia', eu: 'Murtziako Eskualdea', gl: 'Rexión de Murcia', oc: 'Region de Murcia' },
   authority: {
     ca: "la Conselleria d'Educació de la Regió de Múrcia",
     es: 'la Consejería de Educación de la Región de Murcia',
+    eu: 'Murtziako Eskualdeko Hezkuntza Kontseilaritza',
+    gl: 'a Consellería de Educación da Rexión de Murcia',
+    oc: "era Conselharia d'Educacion dera Region de Murcia",
   },
   status: 'manual-only',
 

@@ -20,10 +20,13 @@ import { RegionConfig } from './region.types';
  */
 export const EXT: RegionConfig = {
   id: 'ext',
-  name: { ca: 'Extremadura', es: 'Extremadura' },
+  name: { ca: 'Extremadura', es: 'Extremadura', eu: 'Extremadura', gl: 'Estremadura', oc: 'Extremadura' },
   authority: {
     ca: "la Conselleria d'Educació de la Junta d'Extremadura",
     es: 'la Consejería de Educación de la Junta de Extremadura',
+    eu: 'Extremadurako Juntako Hezkuntza Kontseilaritza',
+    gl: 'a Consellería de Educación da Xunta de Estremadura',
+    oc: "era Conselharia d'Educacion dera Junta d'Extremadura",
   },
   status: 'beta',
 

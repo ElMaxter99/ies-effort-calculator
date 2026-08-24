@@ -25,10 +25,13 @@ import { RegionConfig } from './region.types';
  */
 export const RIO: RegionConfig = {
   id: 'rio',
-  name: { ca: 'La Rioja', es: 'La Rioja' },
+  name: { ca: 'La Rioja', es: 'La Rioja', eu: 'Errioxa', gl: 'A Rioxa', oc: 'La Rioja' },
   authority: {
     ca: "la Conselleria d'Educació i Ocupació del Govern de La Rioja",
     es: 'la Consejería de Educación y Empleo del Gobierno de La Rioja',
+    eu: 'Errioxako Gobernuko Hezkuntza eta Enplegu Kontseilaritza',
+    gl: 'a Consellería de Educación e Emprego do Goberno de La Rioxa',
+    oc: "era Conselharia d'Educacion e Emplec deth Govèrn de La Rioja",
   },
   status: 'manual-only',
 

@@ -21,7 +21,12 @@
           <span class="material-symbols-outlined text-[20px]">refresh</span>
         </button>
         }
-        <button class="bg-primary text-on-primary px-sm py-1 rounded-lg font-label-md text-label-md font-bold hover:bg-primary-container transition-colors cursor-pointer" (click)="i18n.toggleLang()">{{ t().langToggle }}</button>
+        <select class="bg-primary text-on-primary px-sm py-1 rounded-lg font-label-md text-label-md font-bold cursor-pointer border-0 hover:bg-primary-container transition-colors"
+                [title]="t().langToggle" [value]="i18n.lang()" (change)="onLangChange($any($event.target).value)">
+          @for (l of availableLangs; track l.id) {
+          <option [value]="l.id">{{ l.label }}</option>
+          }
+        </select>
         <button class="flex items-center material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1" [title]="t().help" (click)="showSource()">help</button>
         <span class="text-xs font-label-md text-on-surface-variant/60 select-none">{{ appVersionLabel() }}</span>
       </div>

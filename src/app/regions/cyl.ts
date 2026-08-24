@@ -18,10 +18,13 @@ import { RegionConfig } from './region.types';
  */
 export const CYL: RegionConfig = {
   id: 'cyl',
-  name: { ca: 'Castella i Lleó', es: 'Castilla y León' },
+  name: { ca: 'Castella i Lleó', es: 'Castilla y León', eu: 'Gaztela eta Leon', gl: 'Castela e León', oc: 'Castela e Léon' },
   authority: {
     ca: "la Conselleria d'Educació de la Junta de Castella i Lleó",
     es: 'la Consejería de Educación de la Junta de Castilla y León',
+    eu: 'Gaztela eta Leongo Juntako Hezkuntza Kontseilaritza',
+    gl: 'a Consellería de Educación da Xunta de Castela e León',
+    oc: "era Conselharia d'Educacion dera Junta de Castela e Léon",
   },
   status: 'beta',
 

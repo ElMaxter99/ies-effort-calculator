@@ -3,7 +3,7 @@ import { IesRow, IesCenter, ProcessInfo, Origin, EffortThresholds, TransportMode
 import { PdfParserService } from './services/pdf-parser.service';
 import { GeocodingService } from './services/geocoding.service';
 import { CentresDatabaseService } from './services/centres-database.service';
-import { I18nService } from './services/i18n.service';
+import { I18nService, AVAILABLE_LANGS, Lang } from './services/i18n.service';
 import { APP_VERSION } from './version';
 import { APP_ENV } from './env';
 import { RegionService } from './regions/region.service';
@@ -22,6 +22,12 @@ type ViewType = 'map' | 'table' | 'split';
   styleUrl: './app.css',
 })
 export class App implements OnDestroy {
+  readonly availableLangs = AVAILABLE_LANGS;
+
+  onLangChange(value: string) {
+    this.i18n.setLang(value as Lang);
+  }
+
   @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLElement>;
   @ViewChild('inputLocalitat') inputLocalitatRef?: ElementRef<HTMLInputElement>;
   @ViewChild('modalityFilterContainer') modalityFilterContainer?: ElementRef<HTMLElement>;

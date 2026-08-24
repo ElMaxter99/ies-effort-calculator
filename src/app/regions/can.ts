@@ -20,10 +20,13 @@ import { RegionConfig } from './region.types';
  */
 export const CAN: RegionConfig = {
   id: 'can',
-  name: { ca: 'Canàries', es: 'Canarias' },
+  name: { ca: 'Canàries', es: 'Canarias', eu: 'Kanariak', gl: 'Canarias', oc: 'Canàries' },
   authority: {
     ca: "la Conselleria d'Educació del Govern de Canàries",
     es: 'la Consejería de Educación del Gobierno de Canarias',
+    eu: 'Kanarietako Gobernuko Hezkuntza Kontseilaritza',
+    gl: 'a Consellería de Educación do Goberno de Canarias',
+    oc: "era Conselharia d'Educacion deth Govèrn de Canàries",
   },
   status: 'beta',
 

@@ -234,5 +234,12 @@
   "metrics": "Métricas",
   "openInGoogleMaps": "Abrir en Google Maps",
   "minutes": "min",
-  "arrivalAtDestination": "Llegada al destino"
+  "arrivalAtDestination": "Llegada al destino",
+
+  "stepRegion": "Comunidad",
+  "stepLevel": "Enseñanza",
+  "stepFile": "Documento",
+  "searchingPortal": "Buscando en el portal oficial…",
+  "useThisFile": "Usar este documento",
+  "orUploadManually": "o sube el archivo tú mismo"
 }

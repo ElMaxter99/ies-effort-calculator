@@ -253,6 +253,13 @@ export interface I18nTranslations {
   openInGoogleMaps: string;
   minutes: string;
   arrivalAtDestination: string;
+
+  stepRegion: string;
+  stepLevel: string;
+  stepFile: string;
+  searchingPortal: string;
+  useThisFile: string;
+  orUploadManually: string;
 }
 
 /**

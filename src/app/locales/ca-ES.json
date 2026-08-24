@@ -234,5 +234,12 @@
   "metrics": "Mètriques",
   "openInGoogleMaps": "Obrir a Google Maps",
   "minutes": "min",
-  "arrivalAtDestination": "Arribada a la destinació"
+  "arrivalAtDestination": "Arribada a la destinació",
+
+  "stepRegion": "Comunitat",
+  "stepLevel": "Ensenyament",
+  "stepFile": "Document",
+  "searchingPortal": "Cercant al portal oficial…",
+  "useThisFile": "Fes servir aquest document",
+  "orUploadManually": "o puja el fitxer tu mateix"
 }

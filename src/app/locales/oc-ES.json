@@ -234,5 +234,12 @@
   "metrics": "Metriques",
   "openInGoogleMaps": "Daurir en Google Maps",
   "minutes": "min",
-  "arrivalAtDestination": "Arribada ara destinacion"
+  "arrivalAtDestination": "Arribada ara destinacion",
+
+  "stepRegion": "Comunitat",
+  "stepLevel": "Ensenhament",
+  "stepFile": "Document",
+  "searchingPortal": "Cercant deth portal oficiau…",
+  "useThisFile": "Utilisa eth document aguest",
+  "orUploadManually": "ò carrega eth fichèr tù medish"
 }

@@ -234,5 +234,12 @@
   "metrics": "Metrikak",
   "openInGoogleMaps": "Ireki Google Mapsen",
   "minutes": "min",
-  "arrivalAtDestination": "Helmugara iristea"
+  "arrivalAtDestination": "Helmugara iristea",
+
+  "stepRegion": "Komunitatea",
+  "stepLevel": "Irakaskuntza",
+  "stepFile": "Dokumentua",
+  "searchingPortal": "Ofizialeko atarian bilatzen…",
+  "useThisFile": "Erabili dokumentu hau",
+  "orUploadManually": "edo zeuk igo fitxategia"
 }

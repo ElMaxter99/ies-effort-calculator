@@ -59,9 +59,18 @@ export class App implements OnDestroy {
     }
   }
 
-  step = signal<'landing' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy' | 'source'>('landing');
+  step = signal<'landing' | 'setup' | 'modalities' | 'origin' | 'main' | 'terms' | 'privacy' | 'source'>('landing');
+  /** Paso actual del asistente de configuración: comunidad, enseñanza y documento. */
+  wizardStep = signal<1 | 2 | 3>(1);
+  selectedCos = signal<Cos>('secundaria');
+  readonly cosOptions: Cos[] = ['secundaria', 'primaria'];
+  autoFetching = signal<string | null>(null);
+  selectedCosLinks = computed(() => this.officialPdfs()[this.selectedCos()]);
+  hasOfficialDownload = computed(() => {
+    const source = this.region.current().officialSource;
+    return !!source?.pages.some((p) => p.cos === this.selectedCos());
+  });
   pdfPortalHubUrl = computed(() => this.region.current().portalHubUrl);
-  hasOfficialDownload = computed(() => !!this.region.current().officialSource);
   /** La comunidad publica su listado en hoja de cálculo y no en PDF. */
   acceptsSheet = computed(() => !!this.region.current().sheetHints);
   activeRegionId = computed<RegionId>(() => this.region.currentId());
@@ -214,6 +223,14 @@ export class App implements OnDestroy {
       }
     });
 
+    // Al llegar al paso del documento, si la comunidad permite rastrear su
+    // portal se buscan solos los listados oficiales del cuerpo elegido.
+    effect(() => {
+      if (this.step() === 'setup' && this.wizardStep() === 3 && this.hasOfficialDownload()) {
+        void this.loadOfficialPdfs(this.selectedCos());
+      }
+    });
+
     effect(() => {
       const mode = this.transportMode();
       const step = untracked(() => this.step());
@@ -252,15 +269,69 @@ export class App implements OnDestroy {
     this.origins.set(origins);
   }
 
+  /** Suelta lo cargado: centros, PDF y enlaces oficiales dejan de valer. */
+  private resetLoadedData() {
+    this.pdfLoaded.set(false);
+    this.centres.set([]);
+    this.filteredCentres.set([]);
+    this.error.set('');
+    this.rawRecords = [];
+    this.officialPdfs.set({ secundaria: null, primaria: null });
+  }
+
   /** Cambia de comunidad y reinicia el proceso: los datos cargados ya no valen. */
   async selectRegion(id: RegionId) {
     if (id === this.region.currentId()) return;
     this.region.select(id);
-    // Los centros, el PDF y los PDFs oficiales descubiertos son de la región
-    // anterior: no sirven para la nueva.
-    this.backToLanding();
-    this.officialPdfs.set({ secundaria: null, primaria: null });
+    this.resetLoadedData();
     await this.initDefaultOrigins();
+  }
+
+  selectCos(cos: Cos) {
+    if (cos === this.selectedCos()) return;
+    this.selectedCos.set(cos);
+    this.resetLoadedData();
+  }
+
+  /** Entra en el asistente desde la mini home. */
+  startProcess() {
+    this.resetLoadedData();
+    this.wizardStep.set(1);
+    this.step.set('setup');
+  }
+
+  wizardNext() {
+    this.wizardStep.update((s) => Math.min(3, s + 1) as 1 | 2 | 3);
+  }
+
+  wizardPrev() {
+    this.wizardStep.update((s) => Math.max(1, s - 1) as 1 | 2 | 3);
+  }
+
+  /** Descarga por el proxy el listado oficial elegido y lo procesa. */
+  async useAutoPdf(link: OfficialPdfLink) {
+    const source = this.region.current().officialSource;
+    let url = link.url;
+    // El documento vive en el portal oficial (CORS cerrado): se pide por el
+    // mismo proxy que usa el rastreo de enlaces.
+    if (source && url.startsWith(source.baseUrl)) {
+      url = source.proxyPath + url.slice(source.baseUrl.length);
+    }
+
+    this.error.set('');
+    this.autoFetching.set(link.url);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(String(res.status));
+      const blob = await res.blob();
+      const name = decodeURIComponent(new URL(link.url, location.href).pathname.split('/').pop() || 'listado.pdf');
+      const file = new File([blob], name.includes('.') ? name : `${name}.pdf`, { type: blob.type });
+      await this.processFile(file);
+    } catch (e: any) {
+      this.error.set(this.i18n.t().errorLoadingPDF(e?.message ?? ''));
+    } finally {
+      this.autoFetching.set(null);
+    }
   }
 
   ngOnDestroy() {
@@ -1117,11 +1188,7 @@ export class App implements OnDestroy {
 
   backToLanding() {
     this.step.set('landing');
-    this.pdfLoaded.set(false);
-    this.centres.set([]);
-    this.filteredCentres.set([]);
-    this.error.set('');
-    this.rawRecords = [];
+    this.resetLoadedData();
     if (this.map) {
       this.map.remove();
       this.map = null;
@@ -1135,11 +1202,6 @@ export class App implements OnDestroy {
     this.showResetConfirm.set(false);
     this.geo.clearAllCaches();
     location.reload();
-  }
-
-  scrollToUpload() {
-    const el = document.querySelector('#drop-zone');
-    el?.scrollIntoView({ behavior: 'smooth' });
   }
 
   showTerms() {

@@ -98,7 +98,12 @@ function extractPdfLinks(html, source) {
   // portal de Castilla-La Mancha escribe `href= /sites/...pdf download`, que el
   // navegador acepta y una expresión regular ingenua se salta.
   const anchors = html.matchAll(/<a[^>]*\shref=\s*("[^"]*"|'[^']*'|[^\s>]+)[^>]*>([\s\S]*?)<\/a>/gi);
-  const isDocument = source.documentPattern ? new RegExp(source.documentPattern, 'i') : null;
+  let isDocument = null;
+  try {
+    isDocument = source.documentPattern ? new RegExp(source.documentPattern, 'i') : null;
+  } catch {
+    // malicious or malformed pattern → treat as "no extra document filter"
+  }
   const seen = new Set();
   const links = [];
 
@@ -130,8 +135,12 @@ function extractPdfLinks(html, source) {
 
 function applyMatch(links, match) {
   if (!match) return links;
-  const filter = new RegExp(match, 'i');
-  return links.filter((l) => filter.test(l.label) || filter.test(decodeURIComponent(l.url)));
+  try {
+    const filter = new RegExp(match, 'i');
+    return links.filter((l) => filter.test(l.label) || filter.test(decodeURIComponent(l.url)));
+  } catch {
+    return links;
+  }
 }
 
 async function checkRegion(region) {

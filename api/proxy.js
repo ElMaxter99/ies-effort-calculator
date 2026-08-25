@@ -49,7 +49,16 @@ module.exports = async function handler(req, res) {
     res.setHeader('cache-control', 'public, max-age=300');
 
     if (req.method === 'HEAD') return res.end();
-    res.end(Buffer.from(await upstream.arrayBuffer()));
+    const body = Buffer.from(await upstream.arrayBuffer());
+    if (type && type.includes('text/html')) {
+      const html = body.toString('utf8');
+      const safe = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+      res.end(safe);
+    } else {
+      res.end(body);
+    }
   } catch (e) {
     res.status(502).json({ error: String(e?.message ?? e) });
   }

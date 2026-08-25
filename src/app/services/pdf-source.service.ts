@@ -56,8 +56,12 @@ export class PdfSourceService {
       }
 
       if (page.match) {
-        const filter = new RegExp(page.match, 'i');
-        links = links.filter((l) => filter.test(l.label) || filter.test(decodeURIComponent(l.url)));
+        try {
+          const filter = new RegExp(page.match, 'i');
+          links = links.filter((l) => filter.test(l.label) || filter.test(decodeURIComponent(l.url)));
+        } catch {
+          // malformed match pattern → skip filter, return all links
+        }
       }
 
       this.setCached(cacheId, links);
@@ -69,7 +73,12 @@ export class PdfSourceService {
 
   private extractPdfLinks(root: ParentNode, source: OfficialSource): OfficialPdfLink[] {
     const anchors = Array.from(root.querySelectorAll<HTMLAnchorElement>('a[href]'));
-    const isDocument = source.documentPattern ? new RegExp(source.documentPattern, 'i') : null;
+    let isDocument: RegExp | null = null;
+    try {
+      isDocument = source.documentPattern ? new RegExp(source.documentPattern, 'i') : null;
+    } catch {
+      // malicious or malformed pattern → treat as "no extra document filter"
+    }
     const seen = new Set<string>();
     const links: OfficialPdfLink[] = [];
 
